@@ -456,18 +456,15 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
 int instance_of (char *str1, char *str2) {
         zend_class_entry **ce1;
         zend_class_entry **ce2;
-    //php_printf("TEST CLASS : %s = %s\n",str1,str2);
-//     if (zend_hash_find(EG(class_table), str1, strlen(str1), (void **) &ce1)) {
-//        php_printf("FAIL %s\n",str1);
-//        return 0;
-//     }
 
      if (zend_lookup_class(str1, strlen(str1), &ce1 TSRMLS_CC) == FAILURE) {
-//        php_printf("FAIL %s\n",str1);
         return 0;
      }
-     if (zend_lookup_class(str2, strlen(str2), &ce2 TSRMLS_CC) == FAILURE) {
-//        php_printf("FAIL %s\n",str2);
+     if (EG(class_table)==NULL) {
+	return 0;
+     }
+     php_strtolower(str2, strlen(str2));
+     if (zend_hash_find(EG(class_table), str2, strlen(str2)+1, (void **) &ce2)) {
         return 0;
      }
     return instanceof_function(*ce1, *ce2 TSRMLS_CC);
