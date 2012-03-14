@@ -470,25 +470,13 @@ int instance_of (char *str1, char *str2 TSRMLS_DC) {
     return instanceof_function(*ce1, *ce2 TSRMLS_CC);
 }
 
-char * substr (char *str,int start, int end) {
-    if (start>strlen(str)) {
-        return NULL;
-    }
-    if (end>strlen(str)) {
-        end = strlen(str);
-    }
-    char *tmp = ecalloc(end-start+1, 1);
-    strncat(tmp, str+start, end-start);
-    return tmp;
-}
-
 char* get_class_part (char *str) {
     char *endp;
     char *class_end;
     endp=str+strlen(str);
     class_end = php_memnstr(str, "::", 2, endp);
     if (class_end!=NULL) {
-        return substr(str,0,strlen(str)-strlen(class_end));
+        return estrndup(str, strlen(str)-strlen(class_end));
 
     }
     return NULL;
@@ -512,7 +500,7 @@ int strcmp_with_joker (char *str_with_jok, char *str) {
         }
     }
     if (joker) {
-        return !strcmp(substr(str_with_jok,0,joker),substr(str,0,joker));
+        return !strcmp(estrndup(str_with_jok,joker),estrndup(str,joker));
     } else {
         return !strcmp(str_with_jok,str);
     }
