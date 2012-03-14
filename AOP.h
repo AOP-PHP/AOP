@@ -31,12 +31,11 @@ typedef struct {
 static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 static char *get_function_name(zend_op_array *ops TSRMLS_DC);
-int compare (char *str1, char *str2);
+int compare (char *str1, char *str2 TSRMLS_DC);
 zval *pointcut_execute (ipointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
 zval *exec(AOP_object *obj, zval *args TSRMLS_DC);
-int instance_of (char *str1, char *str2);
-char * substr (char *str,int start, int end);
+int instance_of (char *str1, char *str2 TSRMLS_DC);
 char* get_class_part (char *str);
 char * get_method_part (char *str);
 int strcmp_with_joker (char *str_with_jok, char *str);

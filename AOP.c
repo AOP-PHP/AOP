@@ -195,7 +195,7 @@ PHP_METHOD(AOP, processWithArgs)
     }
 
     zval *toReturn;
-    toReturn = exec(obj, params);
+    toReturn = exec(obj, params TSRMLS_CC);
     if (toReturn != NULL) {
             COPY_PZVAL_TO_ZVAL(*return_value, toReturn);
     }
@@ -234,12 +234,12 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 	}
 	ipointcut *previous_ipc;
 	previous_ipc = NULL;
+        zval *object;
 	for (i=0;i<AOP_G(count_pcs);i++) {
-		if (compare(AOP_G(pcs)[i].selector,func)) {
+		if (compare(AOP_G(pcs)[i].selector,func TSRMLS_CC)) {
            arounded=1;
             
             zval *rtr=NULL;
-            zval *object;
             MAKE_STD_ZVAL(object);
             Z_TYPE_P(object) = IS_OBJECT;
             (object)->value.obj = AOP_create_handler(AOP_class_entry TSRMLS_CC);
@@ -453,7 +453,7 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
 
 }
 
-int instance_of (char *str1, char *str2) {
+int instance_of (char *str1, char *str2 TSRMLS_DC) {
         zend_class_entry **ce1;
         zend_class_entry **ce2;
 
@@ -519,7 +519,7 @@ int strcmp_with_joker (char *str_with_jok, char *str) {
 
 }
 
-int compare (char *str1, char *str2) {
+int compare (char *str1, char *str2 TSRMLS_DC) {
     char *class1 = get_class_part(str1);
     char *class2 = get_class_part(str2);
     // No class so simple comp
@@ -532,7 +532,7 @@ int compare (char *str1, char *str2) {
     }
 
     //Two different classes => false
-    if (class1!=NULL && class2!=NULL && !instance_of(class2,class1)) {
+    if (class1!=NULL && class2!=NULL && !instance_of(class2,class1 TSRMLS_CC)) {
         return 0;
     }
     //Method only joker
