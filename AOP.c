@@ -117,6 +117,12 @@ static const zend_function_entry AOP_methods[] = {
 
 PHP_MSHUTDOWN_FUNCTION(AOP)
 {
+/*	int i;
+	for (i=0;i<AOP_G(count_pcs);i++) {
+        	efree(AOP_G(pcs)[i].selector);
+	}
+	efree(AOP_G(pcs));
+*/
         return SUCCESS;
 }
 
@@ -273,6 +279,10 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 	} else {
 		_zend_execute(ops TSRMLS_CC);
 	}
+	if (previous_ipc!=NULL) {
+		//efree(previous_ipc);
+	}
+	efree(func);
 }
 
 static char *get_function_name(zend_op_array *ops TSRMLS_DC) {
@@ -342,7 +352,6 @@ static zval *get_current_args (zend_op_array *ops TSRMLS_DC) {
         int arg_count;
         int i;
     zval *return_value;
-    MAKE_STD_ZVAL(return_value);
     array_init(return_value);
     zend_execute_data *ex = EG(current_execute_data);
     if (!ex || !ex->function_state.arguments) {
@@ -512,6 +521,7 @@ int compare (char *str1, char *str2 TSRMLS_DC) {
     char *class2 = get_class_part(str2);
     // No class so simple comp
     if (class1==NULL && class2==NULL) {
+	efree(class1);efree(class2);
         return strcmp_with_joker(str1,str2);
     }
     // Only one with class => false
