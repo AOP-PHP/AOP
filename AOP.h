@@ -10,8 +10,8 @@ typedef struct {
 } pointcut;
 
 typedef struct {
-	zval *callback;
-	zval *object;
+    zval *callback;
+    zval *object;
 } ipointcut;
 
 typedef struct {
@@ -47,8 +47,8 @@ int strcmp_with_joker (char *str_with_jok, char *str);
 #endif
 
 ZEND_BEGIN_MODULE_GLOBALS(AOP)
-	pointcut *pcs;
-	int count_pcs;
+pointcut *pcs;
+int count_pcs;
 ZEND_END_MODULE_GLOBALS(AOP)
 
 #ifdef ZTS
