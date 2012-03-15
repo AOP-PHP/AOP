@@ -33,3 +33,4 @@ tests/*.php
 tests/*.sh
 .deps
 *.swp
+*~
