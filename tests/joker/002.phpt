@@ -1,5 +1,5 @@
 --TEST--
-Joker
+Function call with a Joker in selector
 --FILE--
 <?php 
 

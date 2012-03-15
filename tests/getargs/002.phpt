@@ -1,5 +1,5 @@
 --TEST--
-test getArgs
+getArgs return method caught arguments (in all arounder)
 --FILE--
 <?php 
 
@@ -10,11 +10,16 @@ class mytest {
 }
 
 AOP_add("mytest::test", function ($pObj) {var_dump($pObj->getArgs());$pObj->process(); });
+AOP_add("mytest::test", function ($pObj) {var_dump($pObj->getArgs());$pObj->process(); });
 $test = new mytest();
 $test->test("first");
 
 ?>
 --EXPECT--
+array(1) {
+  [0]=>
+  string(5) "first"
+}
 array(1) {
   [0]=>
   string(5) "first"

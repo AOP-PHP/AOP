@@ -1,5 +1,5 @@
 --TEST--
-private data
+Verify this context in method caught (private version)
 --FILE--
 <?php 
 
@@ -10,12 +10,10 @@ class A {
 	}
 }
 
-AOP_add("A::test", function ($pObj) { 
-	return $pObj->getFunctionName().'|'.$pObj->getFunctionName();
-});
+AOP_add("A::test", function ($pObj) { return "[".$pObj->process()."]";});
 $test = new A();
 echo $test->test();
 
 ?>
 --EXPECT--
-A::test|A::test
+[testvalue]

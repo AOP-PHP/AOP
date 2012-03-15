@@ -1,5 +1,5 @@
 --TEST--
-getThis
+Method getThis can overload public data
 --FILE--
 <?php 
 

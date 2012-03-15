@@ -1,5 +1,5 @@
 --TEST--
-add simple
+An around method test without call to process
 --FILE--
 <?php 
 

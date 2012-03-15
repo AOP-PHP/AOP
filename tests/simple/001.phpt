@@ -1,5 +1,5 @@
 --TEST--
-add simple
+Just an around method test (version with echo)
 --FILE--
 <?php 
 

@@ -1,5 +1,5 @@
 --TEST--
-Exception
+Verify this context in method caught (public version)
 --FILE--
 <?php 
 

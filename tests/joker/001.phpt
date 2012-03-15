@@ -1,5 +1,5 @@
 --TEST--
-Method is Joker
+Method in selector is just a Joker
 --FILE--
 <?php 
 

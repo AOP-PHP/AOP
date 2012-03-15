@@ -1,5 +1,5 @@
 --TEST--
-function call (exact name)
+Function call (exact name)
 --FILE--
 <?php 
 

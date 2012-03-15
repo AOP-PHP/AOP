@@ -1,5 +1,5 @@
 --TEST--
-Method is Partial Joker
+Method in selector is partial with a Joker
 --FILE--
 <?php 
 

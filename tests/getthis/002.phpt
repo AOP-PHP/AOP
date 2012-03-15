@@ -1,5 +1,5 @@
 --TEST--
-getThis function context
+In function context getThis return null
 --FILE--
 <?php 
 

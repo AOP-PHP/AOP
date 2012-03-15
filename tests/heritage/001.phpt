@@ -1,5 +1,5 @@
 --TEST--
-No Parent class
+Not Parent class, not caucht
 --FILE--
 <?php 
 

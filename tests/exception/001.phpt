@@ -1,5 +1,5 @@
 --TEST--
-Exception
+Exception in method caught
 --FILE--
 <?php 
 
