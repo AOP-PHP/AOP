@@ -465,20 +465,25 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
 }
 
 int instance_of (char *str1, char *str2 TSRMLS_DC) {
-    zend_class_entry **ce1;
-    zend_class_entry **ce2;
+    zend_class_entry **ce;
 
-    if (zend_lookup_class(str1, strlen(str1), &ce1 TSRMLS_CC) == FAILURE) {
+    if (zend_lookup_class(str1, strlen(str1), &ce TSRMLS_CC) == FAILURE) {
         return 0;
     }
-    if (EG(class_table)==NULL) {
-        return 0;
+    zend_uint i;
+    for (i=0; i<(*ce)->num_interfaces; i++) {
+        if (strcmp_with_joker(str2, (*ce)->interfaces[i]->name)) {
+            return 1;
+        }
     }
-    php_strtolower(str2, strlen(str2));
-    if (zend_hash_find(EG(class_table), str2, strlen(str2)+1, (void **) &ce2)) {
-        return 0;
+    while ((*ce)) {
+         if (strcmp_with_joker(str2, (*ce)->name)) {
+             return 1;
+         }
+         ce = &((*ce)->parent);
     }
-    return instanceof_function(*ce1, *ce2 TSRMLS_CC);
+
+    return 0;
 }
 
 char* get_class_part (char *str) {
@@ -501,7 +506,12 @@ char * get_method_part (char *str) {
     return (php_memnstr(str, "::", 2, endp)+2);
 }
 
-int strcmp_with_joker (char *str_with_jok, char *str) {
+int strcmp_with_joker (char *str_with_jok_orig, char *str_orig) {
+    char *str_with_jok = estrdup(str_with_jok_orig);
+    char *str = estrdup (str_orig);
+   
+    php_strtolower(str_with_jok, strlen(str_with_jok));
+    php_strtolower(str, strlen(str));
     int i;
     int joker=0;
     for (i=0;i<strlen(str_with_jok);i++) {
@@ -515,7 +525,8 @@ int strcmp_with_joker (char *str_with_jok, char *str) {
     } else {
         return !strcmp(str_with_jok,str);
     }
-
+    efree(str);
+    efree(str_with_jok);
 }
 
 int compare (char *str1, char *str2 TSRMLS_DC) {
