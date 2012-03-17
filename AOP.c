@@ -130,6 +130,7 @@ PHP_MSHUTDOWN_FUNCTION(AOP)
 PHP_RINIT_FUNCTION(AOP)
 {
     AOP_G(count_pcs)=0;
+    AOP_G(overloaded)=0;
     return SUCCESS;
 }
 
@@ -235,7 +236,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     arounded=0;
     char *func;
     func = get_function_name(ops TSRMLS_CC);
-    if (func==NULL) {
+    if (func==NULL || AOP_G(overloaded)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
@@ -269,8 +270,10 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         }
     }
     if (arounded) {
+        AOP_G(overloaded)=1;
         zval *ret;
         ret = pointcut_execute(previous_ipc);
+        AOP_G(overloaded)=0;
         if (!EG(exception)) {
             if (EG(return_value_ptr_ptr)) {
                 *EG(return_value_ptr_ptr)=ret;
@@ -318,10 +321,6 @@ static char *get_function_name(zend_op_array *ops TSRMLS_DC) {
     }
     return ret;
 }
-
-/*int compare (char *str1, char *str2) {
-	return !strcmp(str1,str2);
-}*/
 
 zval *pointcut_execute (ipointcut *pc) {
     zval *args[1];
@@ -423,7 +422,9 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
             zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)i TSRMLS_CC);
         }
 
+        AOP_G(overloaded)=0;
         _zend_execute(EG(active_op_array) TSRMLS_CC);
+        AOP_G(overloaded)=1;
 
         //Take previous context
         EG(This) = prev_this;
@@ -530,6 +531,9 @@ int strcmp_with_joker (char *str_with_jok_orig, char *str_orig) {
 }
 
 int compare (char *str1, char *str2 TSRMLS_DC) {
+    if (!strcmp(str1,"*")) {
+        return 1;
+    }
     char *class1 = get_class_part(str1);
     char *class2 = get_class_part(str2);
     // No class so simple comp

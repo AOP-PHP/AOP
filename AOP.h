@@ -49,6 +49,7 @@ int strcmp_with_joker (char *str_with_jok, char *str);
 ZEND_BEGIN_MODULE_GLOBALS(AOP)
 pointcut *pcs;
 int count_pcs;
+int overloaded;
 ZEND_END_MODULE_GLOBALS(AOP)
 
 #ifdef ZTS
