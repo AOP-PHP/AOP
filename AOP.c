@@ -520,6 +520,7 @@ int strcmp_with_joker (char *str_with_jok_orig, char *str_orig) {
     if (!strcmp(str_with_jok_orig,"*")) {
         return 1;
     }
+
     char *str_with_jok = estrdup(str_with_jok_orig);
     char *str = estrdup (str_orig);
    
@@ -527,19 +528,17 @@ int strcmp_with_joker (char *str_with_jok_orig, char *str_orig) {
     php_strtolower(str, strlen(str));
     int i;
     int joker=0;
-    for (i=0;i<strlen(str_with_jok);i++) {
-        if (str_with_jok[i]=='*') {
-            joker=i;
-            break;
+    if (str_with_jok[strlen(str_with_jok)-1]=='*') {
+        return !strcmp(estrndup(str_with_jok,strlen(str_with_jok)-2),estrndup(str,strlen(str_with_jok)-2));
+    }
+    if (str_with_jok[0]=='*') {
+        if (strlen(str)>strlen(str_with_jok)-1) {
+            return !strcmp(estrdup(str_with_jok+1),estrdup(str+(strlen(str)-(strlen(str_with_jok)-1))));
+        } else {
+            return 0;
         }
     }
-    if (joker) {
-        return !strcmp(estrndup(str_with_jok,joker),estrndup(str,joker));
-    } else {
-        return !strcmp(str_with_jok,str);
-    }
-    efree(str);
-    efree(str_with_jok);
+    return !strcmp(str_with_jok,str);
 }
 
 int compare (char *str1, char *str2 TSRMLS_DC) {
