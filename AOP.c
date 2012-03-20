@@ -625,6 +625,10 @@ class_struct *make_class_struct(zval *value) {
             cs->class_name = estrdup(Z_STRVAL_PP(zvalue));
         }
 
+        if (zend_hash_find(Z_ARRVAL_P(value), "namespace",10,(void **)&zvalue)!=FAILURE) {
+            cs->ns = estrdup(Z_STRVAL_PP(zvalue));
+        }
+
         if (zend_hash_find(Z_ARRVAL_P(value), "method",7,(void **)&zvalue)!=FAILURE) {
             cs->method = estrdup(Z_STRVAL_PP(zvalue));
         }
