@@ -11,6 +11,7 @@ ZEND_DECLARE_MODULE_GLOBALS(AOP)
 
 
 
+
 static void php_aop_init_globals(zend_AOP_globals *aop_globals)
 {
 }
@@ -137,6 +138,9 @@ PHP_RINIT_FUNCTION(AOP)
 PHP_MINIT_FUNCTION(AOP)
 {
     ZEND_INIT_MODULE_GLOBALS(AOP, php_aop_init_globals,NULL);
+    REGISTER_LONG_CONSTANT("AOP_PRIVATE", ZEND_ACC_PRIVATE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_PUBLIC", ZEND_ACC_PUBLIC, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_PROTECTED", ZEND_ACC_PROTECTED, CONST_CS | CONST_PERSISTENT);
 
     zend_class_entry ce;
 
@@ -226,7 +230,7 @@ ZEND_FUNCTION(AOP_add)
         AOP_G(pcs) = erealloc(AOP_G(pcs),AOP_G(count_pcs)*sizeof(pointcut));
     }
     int count=AOP_G(count_pcs)-1;
-    AOP_G(pcs)[count].selector = estrdup(Z_STRVAL_P(selector));
+    AOP_G(pcs)[count].selector = make_class_struct(selector);
     Z_ADDREF_P(callback);
     AOP_G(pcs[count]).callback = callback;
 }
@@ -235,16 +239,17 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     int i,arounded;
     arounded=0;
     char *func;
-    func = get_function_name(ops TSRMLS_CC);
-    if (func==NULL || AOP_G(overloaded)) {
+    class_struct *class = get_current_class_struct();
+    if (class->method==NULL || AOP_G(overloaded)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
+    get_current_class_struct();
     ipointcut *previous_ipc;
     previous_ipc = NULL;
     zval *object;
     for (i=0;i<AOP_G(count_pcs);i++) {
-        if (compare(AOP_G(pcs)[i].selector,func TSRMLS_CC)) {
+        if (compare_class_struct(AOP_G(pcs)[i].selector,class)) {
             arounded=1;
 
             zval *rtr=NULL;
@@ -255,7 +260,12 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
             obj->args = get_current_args(ops TSRMLS_CC);
             obj->argsOverload = 0;
             zval_copy_ctor(obj->args);
-            obj->funcName = estrdup(func);
+            if (class->class_name!=NULL) {
+                obj->funcName = emalloc(strlen(class->class_name)+strlen(class->method)+3);
+                snprintf(obj->funcName, strlen(class->class_name)+strlen(class->method)+3, "%s::%s", class->class_name, class->method);
+            } else {
+                obj->funcName = class->method;
+            }
             if (previous_ipc!=NULL) {
                 obj->ipointcut = previous_ipc;
             } else {
@@ -286,7 +296,6 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     if (previous_ipc!=NULL) {
         efree(previous_ipc);
     }
-    efree(func);
 }
 
 static char *get_function_name(zend_op_array *ops TSRMLS_DC) {
@@ -508,6 +517,9 @@ char * get_method_part (char *str) {
 }
 
 int strcmp_with_joker (char *str_with_jok_orig, char *str_orig) {
+    if (!strcmp(str_with_jok_orig,"*")) {
+        return 1;
+    }
     char *str_with_jok = estrdup(str_with_jok_orig);
     char *str = estrdup (str_orig);
    
@@ -558,3 +570,109 @@ int compare (char *str1, char *str2 TSRMLS_DC) {
     return strcmp_with_joker(get_method_part(str1),get_method_part(str2));
 }
 
+int compare_class_struct (class_struct *selector, class_struct *class) {
+    if (selector->static_state!=NULL && selector->static_state!=class->static_state) {
+        return 0;
+    }
+    if (selector->scope != NULL && !(selector->scope & class->scope)) {
+        return 0;
+    }
+    if (selector->class_name==NULL && !strcmp(selector->method,"*")) {
+        return 1;
+    }
+    if (!strcmp_with_joker(selector->method, class->method)) {
+        return 0;
+    }
+    if (selector->class_name==NULL && class->class_name==NULL) {
+        return 1;
+    }
+    if ((selector->class_name==NULL || class->class_name==NULL) && selector->class_name!=class->class_name) {
+        return 0;
+    }
+
+    zend_class_entry *ce = class->ce;
+    while (ce!=NULL) {
+         if (strcmp_with_joker(selector->class_name, ce->name)) {
+             return 1;
+         }
+         ce = ce->parent;
+    }
+    zend_uint i;
+    for (i=0; i<(class->ce)->num_interfaces; i++) {
+        if (strcmp_with_joker(selector->class_name, (class->ce)->interfaces[i]->name)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+class_struct *make_class_struct(zval *value) {
+    class_struct *cs = emalloc (sizeof(class_struct));
+    cs->method = NULL;
+    cs->class_name = NULL;
+    cs->scope = NULL;
+    cs->ce = NULL;
+    cs->static_state = NULL;
+    if (Z_TYPE_P(value)==IS_STRING) {
+        cs->class_name = get_class_part(estrdup(Z_STRVAL_P(value)));
+        if (cs->class_name!=NULL) {
+            cs->method = get_method_part(estrdup(Z_STRVAL_P(value)));
+        } else {
+            cs->method = estrdup(Z_STRVAL_P(value));
+        }
+    } else if (Z_TYPE_P(value)==IS_ARRAY) {
+        zval **zvalue;
+        if (zend_hash_find(Z_ARRVAL_P(value), "class",6,(void **)&zvalue)!=FAILURE) {
+            cs->class_name = estrdup(Z_STRVAL_PP(zvalue));
+        }
+
+        if (zend_hash_find(Z_ARRVAL_P(value), "method",7,(void **)&zvalue)!=FAILURE) {
+            cs->method = estrdup(Z_STRVAL_PP(zvalue));
+        }
+        
+        if (zend_hash_find(Z_LVAL_P(value), "scope",6,(void **)&zvalue)!=FAILURE) {
+            cs->scope = Z_LVAL_PP(zvalue);
+        }
+
+        if (zend_hash_find(Z_LVAL_P(value), "static",7,(void **)&zvalue)!=FAILURE) {
+            cs->static_state = Z_LVAL_PP(zvalue);
+        }
+    } else {
+        zend_error_noreturn(E_ERROR, "Bad parameter for AOP_add selector ");
+    }
+    return cs;
+}
+
+class_struct *get_current_class_struct() {
+    class_struct *cs = emalloc (sizeof(class_struct));
+    cs->method=NULL;
+    cs->class_name = NULL;
+    cs->ce = NULL;
+    cs->static_state = NULL;
+
+    zend_execute_data *data;
+    zend_function      *curr_func;
+
+    data = EG(current_execute_data);
+
+    if (data) {
+        curr_func = data->function_state.function;
+        cs->method = estrdup (curr_func->common.function_name);
+        cs->scope = curr_func->common.fn_flags;
+        cs->static_state = (curr_func->common.fn_flags & ZEND_ACC_STATIC);
+        if (cs->method) {
+            if (cs->static_state) {
+                cs->ce = curr_func->common.scope;
+                cs->class_name = cs->ce->name;
+            } else if (data->object) {
+                cs->ce = Z_OBJCE(*data->object);
+                cs->class_name = estrdup (Z_OBJCE(*data->object)->name);
+            }
+        }
+    }
+    return cs; 
+}
+
+#if ZEND_MODULE_API_NO >= 20100525
+    //Traits
+#endif

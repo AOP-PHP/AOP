@@ -5,8 +5,17 @@
 #define PHP_AOP_EXTNAME "AOP"
 
 typedef struct {
+    zend_uint scope;
+    int static_state;
+    char *class_name;
+    char *ns;
+    char *method;
+    zend_class_entry *ce;
+} class_struct;
+
+typedef struct {
     zval *callback;
-    char *selector;
+    class_struct *selector;
 } pointcut;
 
 typedef struct {
@@ -28,6 +37,8 @@ typedef struct {
 }  AOP_object;
 
 
+
+
 static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 static char *get_function_name(zend_op_array *ops TSRMLS_DC);
@@ -39,7 +50,8 @@ int instance_of (char *str1, char *str2 TSRMLS_DC);
 char* get_class_part (char *str);
 char * get_method_part (char *str);
 int strcmp_with_joker (char *str_with_jok, char *str);
-
+class_struct *make_class_struct(zval *value);
+class_struct *get_current_class_struct();
 
 
 #ifdef ZTS

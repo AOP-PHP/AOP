@@ -13,10 +13,8 @@ class A {
 	}
 }
 
-class B extends A {
-}
 AOP_add("*", function ($pObj) {echo $pObj->getThis()->test(); return "[".$pObj->process()."]";});
-$test = new B();
+$test = new A();
 echo $test->test();
 echo $test->test2();
 
