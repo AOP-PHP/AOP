@@ -602,6 +602,15 @@ int compare_class_struct (class_struct *selector, class_struct *class) {
             return 1;
         }
     }
+    #if ZEND_MODULE_API_NO >= 20100525
+    //Traits
+    for (i=0; i<(class->ce)->num_traits; i++) {
+        if (strcmp_with_joker(selector->class_name, (class->ce)->traits[i]->name)) {
+            return 1;
+        }
+    }
+    #endif
+
     return 0;
 }
 
@@ -676,6 +685,3 @@ class_struct *get_current_class_struct() {
     return cs; 
 }
 
-#if ZEND_MODULE_API_NO >= 20100525
-    //Traits
-#endif
