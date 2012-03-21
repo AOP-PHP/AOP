@@ -244,7 +244,6 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
-    get_current_class_struct();
     ipointcut *previous_ipc;
     previous_ipc = NULL;
     zval *object;
@@ -590,11 +589,17 @@ int compare_class_struct (class_struct *selector, class_struct *class) {
     }
 
     zend_class_entry *ce = class->ce;
+    char **ns;
+    ns = class->ns;
+    int num_ns = class->num_ns;
     while (ce!=NULL) {
-         if (strcmp_with_joker(selector->class_name, ce->name)) {
+         if (strcmp_with_joker(selector->class_name, get_class_part_with_ns(ce->name)) && compare_namespace(selector->num_ns, selector->ns, num_ns, ns)) {
              return 1;
          }
          ce = ce->parent;
+         if (ce!=NULL) {
+    //        num_ns = get_ns(ce->name, &ns);
+         }
     }
     zend_uint i;
     for (i=0; i<(class->ce)->num_interfaces; i++) {
@@ -614,6 +619,17 @@ int compare_class_struct (class_struct *selector, class_struct *class) {
     return 0;
 }
 
+char *get_class_part_with_ns(char *class) {
+    int i = strlen(class)-1;
+    while (i>=0 && class[i]!='\\') {
+        i--;
+    }
+    if (i<0) {
+        return estrdup(class);
+    }
+    return estrdup(class+i+1);
+}
+
 class_struct *make_class_struct(zval *value) {
     class_struct *cs = emalloc (sizeof(class_struct));
     cs->method = NULL;
@@ -625,9 +641,14 @@ class_struct *make_class_struct(zval *value) {
         cs->class_name = get_class_part(estrdup(Z_STRVAL_P(value)));
         if (cs->class_name!=NULL) {
             cs->method = get_method_part(estrdup(Z_STRVAL_P(value)));
+            cs->num_ns = get_ns(cs->class_name, &(cs->ns));
+            if (cs->num_ns>0) {
+                cs->class_name = get_class_part_with_ns(cs->class_name);
+            }
         } else {
             cs->method = estrdup(Z_STRVAL_P(value));
         }
+        
     } else if (Z_TYPE_P(value)==IS_ARRAY) {
         zval **zvalue;
         if (zend_hash_find(Z_ARRVAL_P(value), "class",6,(void **)&zvalue)!=FAILURE) {
@@ -635,7 +656,7 @@ class_struct *make_class_struct(zval *value) {
         }
 
         if (zend_hash_find(Z_ARRVAL_P(value), "namespace",10,(void **)&zvalue)!=FAILURE) {
-            cs->ns = estrdup(Z_STRVAL_PP(zvalue));
+            cs->num_ns = get_ns_without_class(Z_STRVAL_PP(zvalue), &(cs->ns));
         }
 
         if (zend_hash_find(Z_ARRVAL_P(value), "method",7,(void **)&zvalue)!=FAILURE) {
@@ -680,8 +701,72 @@ class_struct *get_current_class_struct() {
                 cs->ce = Z_OBJCE(*data->object);
                 cs->class_name = estrdup (Z_OBJCE(*data->object)->name);
             }
+            if (cs->ce!=NULL) {
+                cs->num_ns = get_ns(cs->ce->name, &(cs->ns));
+                if (cs->num_ns>0) {
+                    cs->class_name = get_class_part_with_ns(cs->class_name);
+                }
+            }
         }
     }
     return cs; 
 }
 
+int get_ns(char *class, char ***ns) {
+    int nb;
+    nb = get_ns_without_class(class,ns);
+    if (nb==1) {
+        (*ns)=NULL;
+    }
+    
+    return --nb;
+}
+
+int get_ns_without_class(char *class, char ***ns) {
+    int i;
+    int nb = 0;
+    int last = 0;
+    for (i=0;i<strlen(class);i++) {
+        if (class[i]=='\\') {
+            nb++;
+            if (nb==1) {
+                (*ns) = emalloc(sizeof(char *));
+            } else {
+                (*ns) = erealloc((*ns),nb*sizeof(char *));
+            }
+            (*ns)[nb-1] = estrndup(class+last,i-last);
+            last = i+1;
+        }
+    }
+    nb++;
+    if (nb==1) {
+        (*ns) = emalloc(sizeof(char *));
+    } else {
+        (*ns) = erealloc((*ns),nb*sizeof(char *));
+    }
+    (*ns)[nb-1] = estrndup(class+last,i-last);
+    return nb;
+
+}
+
+int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns) {
+    if (numns1==0 && numns2>0) {
+        return 0;
+    }
+    if (numns1==0 && numns2==0) {
+        return 1;
+    }
+    if (numns1>numns2) {
+        return 0;
+    }
+    if (numns2>numns1 && strcmp(ns_with_jok[numns1-1],"**")) {
+        return 0;
+    }
+    int i;
+    for (i=0;i<numns1;i++) {
+        if (!strcmp_with_joker(ns_with_jok[i],ns[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}

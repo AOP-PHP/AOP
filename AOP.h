@@ -8,7 +8,8 @@ typedef struct {
     zend_uint scope;
     int static_state;
     char *class_name;
-    char *ns;
+    char **ns;
+    int num_ns;
     char *method;
     zend_class_entry *ce;
 } class_struct;
@@ -52,7 +53,10 @@ char * get_method_part (char *str);
 int strcmp_with_joker (char *str_with_jok, char *str);
 class_struct *make_class_struct(zval *value);
 class_struct *get_current_class_struct();
-
+char *get_class_part_with_ns(char *class);
+int get_ns(char *class, char ***ns);
+int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
+int get_ns_without_class(char *class, char ***ns);
 
 #ifdef ZTS
 #include "TSRM.h"
