@@ -241,7 +241,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     arounded=0;
     char *func;
     class_struct *class = get_current_class_struct();
-    if (class->method==NULL || AOP_G(overloaded)) {
+    if (class==NULL || class->method==NULL || AOP_G(overloaded)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
@@ -774,6 +774,9 @@ class_struct *get_current_class_struct() {
 
     if (data) {
         curr_func = data->function_state.function;
+        if (curr_func->common.function_name==NULL) {
+            return NULL;
+        }
         cs->method = estrdup (curr_func->common.function_name);
         php_strtolower(cs->method, strlen(cs->method));
         cs->scope = curr_func->common.fn_flags;
