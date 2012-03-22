@@ -755,7 +755,7 @@ class_struct *make_class_struct(zval *value) {
             cs->static_state = Z_LVAL_PP(zvalue);
         }
     } else {
-        zend_error_noreturn(E_ERROR, "Bad parameter for AOP_add selector ");
+        zend_error(E_ERROR, "Bad parameter for AOP_add selector ");
     }
     return cs;
 }
