@@ -217,6 +217,7 @@ PHP_METHOD(AOP, processWithArgs)
 
 ZEND_FUNCTION(AOP_add)
 {
+
     zval *callback;
     zval *selector;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &selector, &callback) == FAILURE) {
@@ -494,16 +495,94 @@ int instance_of (char *str1, char *str2 TSRMLS_DC) {
 
     return 0;
 }
+int is_static (char *str) {
+    int i=0;
+    char *partial = NULL;
+    int last = 0;
+    while (i<strlen(str)) {
+        if (str[i]==' ') {
+            partial = estrndup(str+last,i-last);
+            if (!strcmp(partial, "static")) {
+                return 1;
+            }
+            if (!strcmp(partial, "!static")) {
+                return 0;
+            }
+            last = i+1;
+        }
+        i++;
+    }
+    return 2;
+
+}
+
+int get_scope_part_2 (char *partial) {
+     int i = 0;
+     int last = 0;
+     int toReturn = NULL;
+        while (i<strlen(partial)) {
+            if (partial[i]=='|') {
+                if (!strcmp(estrndup(partial+last,i-last), "public")) {
+                    toReturn = toReturn | ZEND_ACC_PUBLIC;
+                }
+                if (!strcmp(estrndup(partial+last,i-last), "private")) {
+                    toReturn = toReturn | ZEND_ACC_PRIVATE;
+                }
+                if (!strcmp(estrndup(partial+last,i-last), "protected")) {
+                    toReturn = toReturn | ZEND_ACC_PROTECTED;
+                }
+               last = i+1; 
+            }
+            i++;
+        }
+        if (!strcmp(estrdup(partial+last), "public")) {
+            toReturn = toReturn | ZEND_ACC_PUBLIC;
+        }
+        if (!strcmp(estrdup(partial+last), "private")) {
+            toReturn = toReturn | ZEND_ACC_PRIVATE;
+        }
+        if (!strcmp(estrdup(partial+last), "protected")) {
+            toReturn = toReturn | ZEND_ACC_PROTECTED;
+        }
+    return toReturn;
+}
+int get_scope_part (char *str) {
+    int i=0;
+    int toReturn = NULL;
+    char *partial = NULL;
+    int last = 0;
+    while (i<strlen(str)) {
+        if (str[i]==' ') {
+            partial = estrndup(str,i);
+            int temp_return = get_scope_part_2(partial);
+            if (temp_return!=NULL) {
+                toReturn |= get_scope_part_2(partial);
+            }
+            last = i;
+        }
+        i++;
+    }
+    return toReturn;
+}
 
 char* get_class_part (char *str) {
+    int i=0;
+    int last_space = 0;
+    while (i<strlen(str)) {
+        if (str[i]==' ') {
+            last_space = i+1;
+        }
+        i++;
+    }
+    str = str+last_space;
     char *endp;
     char *class_end;
     endp=str+strlen(str);
     class_end = php_memnstr(str, "::", 2, endp);
     if (class_end!=NULL) {
         return estrndup(str, strlen(str)-strlen(class_end));
-
     }
+    
     return NULL;
 
 }
@@ -515,16 +594,12 @@ char * get_method_part (char *str) {
     return (php_memnstr(str, "::", 2, endp)+2);
 }
 
-int strcmp_with_joker (char *str_with_jok_orig, char *str_orig) {
-    if (!strcmp(str_with_jok_orig,"*")) {
+int strcmp_with_joker (char *str_with_jok, char *str) {
+    php_strtolower(str, strlen(str));
+    if (!strcmp(str_with_jok,"*")) {
         return 1;
     }
 
-    char *str_with_jok = estrdup(str_with_jok_orig);
-    char *str = estrdup (str_orig);
-   
-    php_strtolower(str_with_jok, strlen(str_with_jok));
-    php_strtolower(str, strlen(str));
     int i;
     int joker=0;
     if (str_with_jok[strlen(str_with_jok)-1]=='*') {
@@ -569,7 +644,7 @@ int compare (char *str1, char *str2 TSRMLS_DC) {
 }
 
 int compare_class_struct (class_struct *selector, class_struct *class) {
-    if (selector->static_state!=NULL && selector->static_state!=class->static_state) {
+    if (selector->static_state!=2 && selector->static_state!=class->static_state) {
         return 0;
     }
     if (selector->scope != NULL && !(selector->scope & class->scope)) {
@@ -621,13 +696,17 @@ int compare_class_struct (class_struct *selector, class_struct *class) {
 
 char *get_class_part_with_ns(char *class) {
     int i = strlen(class)-1;
+    char *toReturn;
     while (i>=0 && class[i]!='\\') {
         i--;
     }
     if (i<0) {
-        return estrdup(class);
+        toReturn = estrdup(class);
+    } else {
+        toReturn = estrdup(class+i+1);
     }
-    return estrdup(class+i+1);
+    php_strtolower (toReturn, strlen(toReturn));
+    return toReturn;
 }
 
 class_struct *make_class_struct(zval *value) {
@@ -636,17 +715,22 @@ class_struct *make_class_struct(zval *value) {
     cs->class_name = NULL;
     cs->scope = NULL;
     cs->ce = NULL;
-    cs->static_state = NULL;
+    cs->static_state = 2;
     if (Z_TYPE_P(value)==IS_STRING) {
-        cs->class_name = get_class_part(estrdup(Z_STRVAL_P(value)));
+        char *strval;
+        strval = estrdup (Z_STRVAL_P(value));
+        php_strtolower(strval, strlen(strval));
+        cs->class_name = get_class_part(strval);
+        cs->scope = get_scope_part(strval);
+        cs->static_state = is_static(strval);
         if (cs->class_name!=NULL) {
-            cs->method = get_method_part(estrdup(Z_STRVAL_P(value)));
+            cs->method = get_method_part(strval);
             cs->num_ns = get_ns(cs->class_name, &(cs->ns));
             if (cs->num_ns>0) {
                 cs->class_name = get_class_part_with_ns(cs->class_name);
             }
         } else {
-            cs->method = estrdup(Z_STRVAL_P(value));
+            cs->method = estrdup(strval);
         }
         
     } else if (Z_TYPE_P(value)==IS_ARRAY) {
@@ -691,6 +775,7 @@ class_struct *get_current_class_struct() {
     if (data) {
         curr_func = data->function_state.function;
         cs->method = estrdup (curr_func->common.function_name);
+        php_strtolower(cs->method, strlen(cs->method));
         cs->scope = curr_func->common.fn_flags;
         cs->static_state = (curr_func->common.fn_flags & ZEND_ACC_STATIC);
         if (cs->method) {
@@ -700,6 +785,9 @@ class_struct *get_current_class_struct() {
             } else if (data->object) {
                 cs->ce = Z_OBJCE(*data->object);
                 cs->class_name = estrdup (Z_OBJCE(*data->object)->name);
+            }
+            if (cs->class_name!=NULL) {
+                php_strtolower(cs->class_name, strlen(cs->class_name));
             }
             if (cs->ce!=NULL) {
                 cs->num_ns = get_ns(cs->ce->name, &(cs->ns));
@@ -735,6 +823,7 @@ int get_ns_without_class(char *class, char ***ns) {
                 (*ns) = erealloc((*ns),nb*sizeof(char *));
             }
             (*ns)[nb-1] = estrndup(class+last,i-last);
+            php_strtolower((*ns)[nb-1], strlen((*ns)[nb-1]));
             last = i+1;
         }
     }

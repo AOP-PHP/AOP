@@ -57,6 +57,8 @@ char *get_class_part_with_ns(char *class);
 int get_ns(char *class, char ***ns);
 int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
 int get_ns_without_class(char *class, char ***ns);
+int get_scope_part (char *str);
+int is_static (char *str);
 
 #ifdef ZTS
 #include "TSRM.h"
