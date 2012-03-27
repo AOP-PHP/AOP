@@ -38,16 +38,11 @@ typedef struct {
 }  AOP_object;
 
 
-
-
 static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
-static char *get_function_name(zend_op_array *ops TSRMLS_DC);
-int compare (char *str1, char *str2 TSRMLS_DC);
 zval *pointcut_execute (ipointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
 zval *exec(AOP_object *obj, zval *args TSRMLS_DC);
-int instance_of (char *str1, char *str2 TSRMLS_DC);
 char* get_class_part (char *str);
 char * get_method_part (char *str);
 int strcmp_with_joker (char *str_with_jok, char *str);
@@ -57,7 +52,7 @@ char *get_class_part_with_ns(char *class);
 int get_ns(char *class, char ***ns);
 int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
 int get_ns_without_class(char *class, char ***ns);
-int get_scope_part (char *str);
+int get_scope (char *str);
 int is_static (char *str);
 
 #ifdef ZTS

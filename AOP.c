@@ -119,12 +119,6 @@ static const zend_function_entry AOP_methods[] = {
 
 PHP_MSHUTDOWN_FUNCTION(AOP)
 {
-    /*	int i;
-    	for (i=0;i<AOP_G(count_pcs);i++) {
-            	efree(AOP_G(pcs)[i].selector);
-    	}
-    	efree(AOP_G(pcs));
-    */
     return SUCCESS;
 }
 
@@ -138,6 +132,7 @@ PHP_RINIT_FUNCTION(AOP)
 PHP_MINIT_FUNCTION(AOP)
 {
     ZEND_INIT_MODULE_GLOBALS(AOP, php_aop_init_globals,NULL);
+    //Using if with array
     REGISTER_LONG_CONSTANT("AOP_PRIVATE", ZEND_ACC_PRIVATE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_PUBLIC", ZEND_ACC_PUBLIC, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_PROTECTED", ZEND_ACC_PROTECTED, CONST_CS | CONST_PERSISTENT);
@@ -175,6 +170,7 @@ PHP_METHOD(AOP, getArgs)
     Z_ADDREF_P(return_value);
     return;
 }
+
 PHP_METHOD(AOP, getThis)
 {
     AOP_object *obj = (AOP_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -191,7 +187,6 @@ PHP_METHOD(AOP, getThis)
 PHP_METHOD(AOP, getFunctionName)
 {
     AOP_object *obj = (AOP_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-
     Z_TYPE_P(return_value)   = IS_STRING;
     Z_STRVAL_P(return_value) = estrdup(obj->funcName);
     Z_STRLEN_P(return_value) = strlen(obj->funcName);
@@ -203,7 +198,8 @@ PHP_METHOD(AOP, processWithArgs)
     AOP_object *obj = (AOP_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zval *params;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &params) == FAILURE) {
-        zend_error(E_ERROR, "Problem in processWithArgs");
+        zend_error(E_ERROR, "processWithArgs param must be an array");
+        return;
     }
 
     zval *toReturn;
@@ -221,9 +217,9 @@ ZEND_FUNCTION(AOP_add)
     zval *callback;
     zval *selector;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &selector, &callback) == FAILURE) {
+        zend_error(E_ERROR, "Bad params");
         return;
     }
-//	return;
     AOP_G(count_pcs)++;
     if (AOP_G(count_pcs)==1) {
         AOP_G(pcs) = emalloc(sizeof(pointcut));
@@ -298,39 +294,6 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     }
 }
 
-static char *get_function_name(zend_op_array *ops TSRMLS_DC) {
-    zend_execute_data *data;
-    char              *func = NULL;
-    const char        *cls = NULL;
-    char              *ret = NULL;
-    int                len;
-    zend_function      *curr_func;
-
-    data = EG(current_execute_data);
-
-    if (data) {
-        curr_func = data->function_state.function;
-
-        func = curr_func->common.function_name;
-
-        if (func) {
-            if (data->object) {
-                cls = Z_OBJCE(*data->object)->name;
-            }
-
-
-            if (cls) {
-                len = strlen(cls) + strlen(func) + 10;
-                ret = (char*)emalloc(len);
-                snprintf(ret, len, "%s::%s", cls, func);
-            } else {
-                ret = estrdup(func);
-            }
-        }
-    }
-    return ret;
-}
-
 zval *pointcut_execute (ipointcut *pc) {
     zval *args[1];
     args[0] = (zval *)&(pc->object);
@@ -348,10 +311,9 @@ zval *pointcut_execute (ipointcut *pc) {
     fci.object_ptr= NULL;
     fci.no_separation= 0;
     if (zend_call_function(&fci, &fcic TSRMLS_CC) == FAILURE) {
-        //php_printf("BUG\n");
+        zend_error(E_ERROR, "Problem in AOP Callback");
     }
     if (!EG(exception)) {
-        //php_printf("AFTER EXECUTE\n");
         return zret_ptr;
     }
 }
@@ -365,7 +327,7 @@ static zval *get_current_args (zend_op_array *ops TSRMLS_DC) {
     array_init(return_value);
     zend_execute_data *ex = EG(current_execute_data);
     if (!ex || !ex->function_state.arguments) {
-        zend_error(E_WARNING, "ooops");
+        zend_error(E_WARNING, "Problem in AOP getArgs");
         return;
     }
 
@@ -442,8 +404,6 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
         EG(current_execute_data) = prev_data;
         EG(active_symbol_table) = calling_symbol_table;
         EG(scope)=current_scope;
-// zend_throw_exception(zend_exception_get_default(TSRMLS_C), "String could not be parsed as XML", 0 TSRMLS_CC);
-//return;
         //Only if we do not have exception
         if (!EG(exception)) {
             return (zval *)*EG(return_value_ptr_ptr);
@@ -454,7 +414,6 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
 
     } else {
         zval *exec_return;
-        //php_printf("BEFORE EXE");
         if (obj->argsOverload) {
             AOP_object *objN = (AOP_object *)zend_object_store_get_object(obj->ipointcut->object TSRMLS_CC);
             objN->argsOverload=1;
@@ -462,7 +421,6 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
             zval_copy_ctor(objN->args);
         }
         exec_return = pointcut_execute(obj->ipointcut);
-        //php_printf("AFTER EXE");
 
         //Only if we do not have exception
         if (!EG(exception)) {
@@ -474,27 +432,6 @@ zval *exec(AOP_object *obj, zval *args TSRMLS_DC) {
 
 }
 
-int instance_of (char *str1, char *str2 TSRMLS_DC) {
-    zend_class_entry **ce;
-
-    if (zend_lookup_class(str1, strlen(str1), &ce TSRMLS_CC) == FAILURE) {
-        return 0;
-    }
-    zend_uint i;
-    for (i=0; i<(*ce)->num_interfaces; i++) {
-        if (strcmp_with_joker(str2, (*ce)->interfaces[i]->name)) {
-            return 1;
-        }
-    }
-    while ((*ce)) {
-         if (strcmp_with_joker(str2, (*ce)->name)) {
-             return 1;
-         }
-         ce = &((*ce)->parent);
-    }
-
-    return 0;
-}
 int is_static (char *str) {
     int i=0;
     char *partial = NULL;
@@ -516,7 +453,7 @@ int is_static (char *str) {
 
 }
 
-int get_scope_part_2 (char *partial) {
+int explode_scope_by_pipe (char *partial) {
      int i = 0;
      int last = 0;
      int toReturn = NULL;
@@ -546,7 +483,8 @@ int get_scope_part_2 (char *partial) {
         }
     return toReturn;
 }
-int get_scope_part (char *str) {
+
+int get_scope (char *str) {
     int i=0;
     int toReturn = NULL;
     char *partial = NULL;
@@ -554,9 +492,9 @@ int get_scope_part (char *str) {
     while (i<strlen(str)) {
         if (str[i]==' ') {
             partial = estrndup(str,i);
-            int temp_return = get_scope_part_2(partial);
+            int temp_return = explode_scope_by_pipe(partial);
             if (temp_return!=NULL) {
-                toReturn |= get_scope_part_2(partial);
+                toReturn |= explode_scope_by_pipe(partial);
             }
             last = i;
         }
@@ -613,34 +551,6 @@ int strcmp_with_joker (char *str_with_jok, char *str) {
         }
     }
     return !strcmp(str_with_jok,str);
-}
-
-int compare (char *str1, char *str2 TSRMLS_DC) {
-    if (!strcmp(str1,"*")) {
-        return 1;
-    }
-    char *class1 = get_class_part(str1);
-    char *class2 = get_class_part(str2);
-    // No class so simple comp
-    if (class1==NULL && class2==NULL) {
-        efree(class1);
-        efree(class2);
-        return strcmp_with_joker(str1,str2);
-    }
-    // Only one with class => false
-    if ((class1!=NULL && class2==NULL) || (class1==NULL && class2!=NULL)) {
-        return 0;
-    }
-
-    //Two different classes => false
-    if (class1!=NULL && class2!=NULL && !instance_of(class2,class1 TSRMLS_CC)) {
-        return 0;
-    }
-    //Method only joker
-    if (!strcmp (get_method_part(str1), "*")) {
-        return 1;
-    }
-    return strcmp_with_joker(get_method_part(str1),get_method_part(str2));
 }
 
 int compare_class_struct (class_struct *selector, class_struct *class) {
@@ -721,7 +631,7 @@ class_struct *make_class_struct(zval *value) {
         strval = estrdup (Z_STRVAL_P(value));
         php_strtolower(strval, strlen(strval));
         cs->class_name = get_class_part(strval);
-        cs->scope = get_scope_part(strval);
+        cs->scope = get_scope(strval);
         cs->static_state = is_static(strval);
         if (cs->class_name!=NULL) {
             cs->method = get_method_part(strval);
@@ -862,3 +772,4 @@ int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns) {
     }
     return 1;
 }
+
