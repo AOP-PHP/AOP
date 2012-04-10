@@ -14,7 +14,7 @@ class A {
 
 class B extends A {
 }
-AOP_add("A::*", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("A::*", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new B();
 echo $test->test();
 echo $test->test2();

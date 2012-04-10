@@ -9,8 +9,8 @@ class mytest {
 	}
 }
 
-AOP_add("mytest::test",function ($pObj) {echo "NOOVERLOAD\n";var_dump($pObj->getArgs());$pObj->process();});
-AOP_add("mytest::test",function ($pObj) {echo "OVERLOAD\n";var_dump($pObj->getArgs());$pObj->processWithArgs(array('overload'));});
+AOP_add_around("mytest::test",function ($pObj) {echo "NOOVERLOAD\n";var_dump($pObj->getArgs());$pObj->process();});
+AOP_add_around("mytest::test",function ($pObj) {echo "OVERLOAD\n";var_dump($pObj->getArgs());$pObj->processWithArgs(array('overload'));});
 
 $test = new mytest();
 $test->test("first");

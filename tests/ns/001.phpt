@@ -9,40 +9,40 @@ class mytest {
 	}
 }
 
-AOP_add('ns1\ns2\ns3\ns4\mytest::test', 
+AOP_add_around('ns1\ns2\ns3\ns4\mytest::test', 
 function ($pObj) {
     return '1['.$pObj->process()."]\n"; 
 });
 
 
-AOP_add('*\ns2\ns3\ns4\mytest::test', 
+AOP_add_around('*\ns2\ns3\ns4\mytest::test', 
 function ($pObj) {
     return '2['.$pObj->process()."]\n"; 
 });
 
 
-AOP_add('ns1\*\ns3\ns4\mytest::test', 
+AOP_add_around('ns1\*\ns3\ns4\mytest::test', 
 function ($pObj) {
     return '3['.$pObj->process()."]\n"; 
 });
 
-AOP_add('ns1\ns2\**\mytest::test', 
+AOP_add_around('ns1\ns2\**\mytest::test', 
 function ($pObj) {
     return '4['.$pObj->process()."]\n"; 
 });
 
-AOP_add('ns*\ns2\ns3\ns4\mytest::test', 
+AOP_add_around('ns*\ns2\ns3\ns4\mytest::test', 
 function ($pObj) {
     return '5['.$pObj->process()."]\n"; 
 });
 
-AOP_add('*1\ns2\ns3\ns4\mytest::test', 
+AOP_add_around('*1\ns2\ns3\ns4\mytest::test', 
 function ($pObj) {
     return '6['.$pObj->process()."]\n"; 
 });
 
 
-AOP_add('ns1\ns2\*\mytest::test', 
+AOP_add_around('ns1\ns2\*\mytest::test', 
 function ($pObj) {
     return '7['.$pObj->process()."]\n"; 
 });

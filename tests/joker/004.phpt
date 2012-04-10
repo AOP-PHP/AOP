@@ -17,7 +17,7 @@ class AECT {
 	}
 }
 
-AOP_add("A*::admin*", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("A*::admin*", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new AECT();
 echo $test->adminTest();
 echo $test->adminTest2();

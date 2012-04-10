@@ -2,21 +2,21 @@
 Scope
 --FILE--
 <?php 
-aop_add('public A::test*',
+AOP_add_around('public A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "1".$toReturn."\n";
     return $toReturn;
 });
 
-aop_add('private A::test*',
+AOP_add_around('private A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "2".$toReturn."\n";
     return $toReturn;
 });
 
-aop_add('protected A::test*',
+AOP_add_around('protected A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "3".$toReturn."\n";

@@ -19,7 +19,7 @@ class A {
 
 class B extends A {
 }
-AOP_add("A::admin*", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("A::admin*", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new B();
 echo $test->adminTest();
 echo $test->adminTest2();

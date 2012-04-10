@@ -7,7 +7,7 @@ public function test () {
 }
 } 
 spl_autoload_register (function ($e) { echo $e."---"; });
-AOP_add("A::test", function ($pObj) { });
+AOP_add_around("A::test", function ($pObj) { });
 function test () {
 }
 $b = new B();

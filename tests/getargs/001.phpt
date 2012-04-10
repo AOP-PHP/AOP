@@ -9,7 +9,7 @@ class mytest {
 	}
 }
 
-AOP_add("mytest::test", function ($pObj) {var_dump($pObj->getArgs());$pObj->process(); });
+AOP_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArgs());$pObj->process(); });
 $test = new mytest();
 $test->test("first");
 

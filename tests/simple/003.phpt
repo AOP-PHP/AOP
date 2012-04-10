@@ -9,7 +9,7 @@ class mytest {
 	}
 }
 
-AOP_add("mytest::test", function ($pObj) {return "nocall";});
+AOP_add_around("mytest::test", function ($pObj) {return "nocall";});
 $test = new mytest();
 echo $test->test();
 

@@ -14,10 +14,10 @@ class A  implements IB,IC {
 
 class B extends A implements IA,ID {
 }
-AOP_add("IA::test", function ($pObj) {return "[".$pObj->process()."]";});
-AOP_add("IB::test", function ($pObj) {return "[".$pObj->process()."]";});
-AOP_add("IC::test", function ($pObj) {return "[".$pObj->process()."]";});
-AOP_add("ID::test", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("IA::test", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("IB::test", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("IC::test", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("ID::test", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new B();
 echo $test->test();
 

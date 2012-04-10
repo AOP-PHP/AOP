@@ -15,7 +15,7 @@ class mytest {
  use mytrait;
 }
 
-AOP_add("mytrait::test", function ($pObj) {echo "before"; $pObj->process(); echo "after"; });
+AOP_add_around("mytrait::test", function ($pObj) {echo "before"; $pObj->process(); echo "after"; });
 $test = new mytest();
 $test->test();
 

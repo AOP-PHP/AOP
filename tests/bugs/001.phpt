@@ -10,7 +10,7 @@ class A {
 	}
 }
 
-AOP_add("A::test", function ($pObj) { 
+AOP_add_around("A::test", function ($pObj) { 
 	return $pObj->getFunctionName().'|'.$pObj->getFunctionName();
 });
 $test = new A();

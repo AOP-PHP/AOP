@@ -2,46 +2,46 @@
 Scope
 --FILE--
 <?php 
-aop_add('public|protected A::test*',
+AOP_add_around('public|protected A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "1".$toReturn."\n";
     return $toReturn;
 });
 
-aop_add('public|private A::test*',
+AOP_add_around('public|private A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "2".$toReturn."\n";
     return $toReturn;
 });
 
-aop_add('private|protected A::test*',
+AOP_add_around('private|protected A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "3".$toReturn."\n";
     return $toReturn;
 });
 
-aop_add('private|public A::test*',
+AOP_add_around('private|public A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "4".$toReturn."\n";
     return $toReturn;
 });
-aop_add('protected|private A::test*',
+AOP_add_around('protected|private A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "5".$toReturn."\n";
     return $toReturn;
 });
-aop_add('protected|public A::test*',
+AOP_add_around('protected|public A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "6".$toReturn."\n";
     return $toReturn;
 });
-aop_add('private|protected|public A::test*',
+AOP_add_around('private|protected|public A::test*',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "7".$toReturn."\n";

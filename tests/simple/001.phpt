@@ -9,7 +9,7 @@ class mytest {
 	}
 }
 
-AOP_add("mytest::test", function ($pObj) {echo "before"; $pObj->process(); echo "after"; });
+AOP_add_around("mytest::test", function ($pObj) {echo "before"; $pObj->process(); echo "after"; });
 $test = new mytest();
 $test->test();
 

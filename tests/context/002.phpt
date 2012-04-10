@@ -10,7 +10,7 @@ class mytest {
 	}
 }
 
-AOP_add("mytest::test", function ($pObj) {return "around".$pObj->process();});
+AOP_add_around("mytest::test", function ($pObj) {return "around".$pObj->process();});
 $test = new mytest();
 $test->data="prop";
 echo $test->test();

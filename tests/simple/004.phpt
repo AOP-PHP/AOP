@@ -9,8 +9,8 @@ class mytest {
 	}
 }
 
-AOP_add("mytest::test", function ($pObj) {return "[".$pObj->process()."]";});
-AOP_add("mytest::test", function ($pObj) {return "{".$pObj->process()."}";});
+AOP_add_around("mytest::test", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("mytest::test", function ($pObj) {return "{".$pObj->process()."}";});
 $test = new mytest();
 echo $test->test();
 

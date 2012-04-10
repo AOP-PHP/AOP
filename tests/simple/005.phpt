@@ -7,7 +7,7 @@ function test () {
 	return "intest";
 }
 
-AOP_add("test", function ($pObj) {return "[".$pObj->process()."]";});
+AOP_add_around("test", function ($pObj) {return "[".$pObj->process()."]";});
 echo test();
 
 ?>
