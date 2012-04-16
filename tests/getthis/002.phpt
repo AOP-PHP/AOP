@@ -1,5 +1,5 @@
 --TEST--
-In function context getThis return null
+In function context getTriggeringObject return null
 --FILE--
 <?php 
 
@@ -8,7 +8,7 @@ function test () {
 }
 
 AOP_add_around("test", function ($pObj) {
-	if ($pObj->getThis()!=null) {
+	if ($pObj->getTriggeringObject()!=null) {
 		echo "error";
 	} else {
 		echo "OK";

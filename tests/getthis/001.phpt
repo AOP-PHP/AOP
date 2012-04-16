@@ -1,5 +1,5 @@
 --TEST--
-Method getThis can overload public data
+Method getTriggeringObject can overload public data
 --FILE--
 <?php 
 
@@ -10,7 +10,7 @@ class A {
 	}
 }
 
-AOP_add_around("A::test", function ($pObj) {$pObj->getThis()->data="overload"; return "[".$pObj->process()."]";});
+AOP_add_around("A::test", function ($pObj) {$pObj->getTriggeringObject()->data="overload"; return "[".$pObj->process()."]";});
 $test = new A();
 echo $test->test();
 

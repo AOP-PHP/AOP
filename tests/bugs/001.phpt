@@ -1,5 +1,5 @@
 --TEST--
-Two call to getFunctionName doesn't segfault
+Two call to getTriggeringMethodName doesn't segfault
 --FILE--
 <?php 
 
@@ -11,7 +11,7 @@ class A {
 }
 
 AOP_add_around("A::test", function ($pObj) { 
-	return $pObj->getFunctionName().'|'.$pObj->getFunctionName();
+	return $pObj->getTriggeringMethodName().'|'.$pObj->getTriggeringMethodName();
 });
 $test = new A();
 echo $test->test();

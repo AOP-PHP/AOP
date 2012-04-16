@@ -1,5 +1,5 @@
 --TEST--
-getArgs return method caught arguments (in all arounder)
+getArguments return method caught arguments (in all arounder)
 --FILE--
 <?php 
 
@@ -9,8 +9,8 @@ class mytest {
 	}
 }
 
-AOP_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArgs());$pObj->process(); });
-AOP_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArgs());$pObj->process(); });
+AOP_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArguments());$pObj->process(); });
+AOP_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArguments());$pObj->process(); });
 $test = new mytest();
 $test->test("first");
 

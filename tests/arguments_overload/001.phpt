@@ -1,5 +1,5 @@
 --TEST--
-processWithArgs overload arguments call (try in the first around declared)
+Args overload arguments call (try in the first around declared)
 --FILE--
 <?php 
 
@@ -9,8 +9,14 @@ class mytest {
 	}
 }
 
-AOP_add_around("mytest::test",function ($pObj) {echo "OVERLOAD\n";var_dump($pObj->getArgs());$pObj->processWithArgs(array('overload'));});
-AOP_add_around("mytest::test",function ($pObj) {echo "NOOVERLOAD\n";var_dump($pObj->getArgs());$pObj->process();});
+AOP_add_around("mytest::test",function ($pObj) {
+    echo "OVERLOAD\n";
+    var_dump($pObj->getArguments());
+    $pObj->setArguments(array ('overload'));
+    $pObj->process();
+});
+
+AOP_add_around("mytest::test",function ($pObj) {echo "NOOVERLOAD\n";var_dump($pObj->getArguments());$pObj->process();});
 
 $test = new mytest();
 $test->test("first");
