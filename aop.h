@@ -35,18 +35,18 @@ typedef struct {
     char *class_name;
     char *method;
     zend_class_entry *ce;
-    jointpoint **parents;
 } joinpoint;
-
 
 typedef struct {
     zend_object std;
-    joinpoint_context context;
+    joinpoint_context *context;
+    struct instance_of_pointcut *pc;
 }  aopTriggeredJoinpoint_object;
 
 typedef struct {
     pointcut *pc;
-    
+    pointcut *previous_pc;
+    zval *object;
 } instance_of_pointcut;
 
 /*
@@ -61,12 +61,7 @@ class_struct *get_current_class_struct();
 char *get_class_part_with_ns(char *class);
 int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
 */
-int get_ns(char *class, char ***ns);
-int get_ns_without_class(char *class, char ***ns);
-int get_scope (char *str);
-int is_static (char *str);
-char* get_class_part (char *str);
-char * get_method_part (char *str);
+
 #ifdef ZTS
 #include "TSRM.h"
 #endif
@@ -98,4 +93,23 @@ extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
 
 #endif
-
+static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
+void add_pointcut (zval *callback, zval *selector,int type TSRMLS_DC);
+void parse_pointcut (pointcut *pc);
+ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
+zval *joinpoint_execute (instance_of_pointcut *pc);
+static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
+zval *exec(aopTriggeredJoinpoint_object *obj, zval *args TSRMLS_DC);
+int strcmp_with_joker (char *str_with_jok, char *str);
+int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
+int get_ns(char *class, char ***ns);
+int get_ns_without_class(char *class, char ***ns);
+int is_static (char *str);
+int explode_scope_by_pipe (char *partial);
+int get_scope (char *str);
+char* get_class_part (char *str);
+char * get_method_part (char *str);
+joinpoint *get_joinpoint_from_ce(zend_class_entry *ce);
+joinpoint *get_current_joinpoint();
+char *get_class_part_with_ns(char *class);
+int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp);
