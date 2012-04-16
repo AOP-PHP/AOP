@@ -735,7 +735,12 @@ int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp) {
     if ((pc->class_name==NULL || jp->class_name==NULL) && pc->class_name!=jp->class_name) {
         return 0;
     }
-
+    if (!compare_namespace(pc->num_ns, pc->ns, jp->num_ns, jp->ns)) {
+        return 0;
+    }
+    if (!strcmp_with_joker(pc->class_name, jp->class_name)) {
+        return 0;
+    } 
         return 1;
 
 }

@@ -13,7 +13,7 @@ class A {
 	}
 }
 
-AOP_add_around("*", function ($pObj) {echo $pObj->getThis()->test(); return "[".$pObj->process()."]";});
+AOP_add_around("*", function ($pObj) {echo $pObj->getTriggeringObject()->test(); return "[".$pObj->process()."]";});
 $test = new A();
 echo $test->test();
 echo $test->test2();
