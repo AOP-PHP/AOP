@@ -95,7 +95,7 @@ PHP_METHOD(aopTriggeredJoinpoint, setException);
 PHP_METHOD(aopTriggeredJoinpoint, getPointcut);
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject);
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethod);
+PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName);
 PHP_METHOD(aopTriggeredJoinpoint, process);
 
 
@@ -114,7 +114,7 @@ static const zend_function_entry aop_methods[] = {
     PHP_ME(aopTriggeredJoinpoint, getPointcut,arginfo_aop_noargs, 0)
     PHP_ME(aopTriggeredJoinpoint, getTriggeringObject,arginfo_aop_noargs, 0)
     PHP_ME(aopTriggeredJoinpoint, getTriggeringClassName,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringMethod,arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringMethodName,arginfo_aop_noargs, 0)
     PHP_ME(aopTriggeredJoinpoint, process,arginfo_aop_noargs, 0)
     {
         NULL, NULL, NULL
@@ -204,7 +204,16 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){}
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethod){}
+
+PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
+    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    joinpoint *jp = obj->context->jp;
+    if (jp->method != NULL) {
+        Z_TYPE_P(return_value)  = IS_STRING;
+        Z_STRVAL_P(return_value) = estrdup(jp->method);
+        Z_STRLEN_P(return_value) = strlen(jp->method);
+    }
+}
 
 PHP_METHOD(aopTriggeredJoinpoint, process){
     zval *toReturn;
