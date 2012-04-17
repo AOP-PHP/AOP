@@ -216,11 +216,10 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, process){
-    zval *toReturn;
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    toReturn = exec(obj, NULL TSRMLS_CC);
-    if (toReturn != NULL) {
-        COPY_PZVAL_TO_ZVAL(*return_value, toReturn);
+    exec(obj TSRMLS_CC);
+    if (obj->context->ret != NULL) {
+        COPY_PZVAL_TO_ZVAL(*return_value, obj->context->ret);
     }
 }
 
@@ -228,41 +227,43 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
 
 void add_pointcut (zval *callback, zval *selector,int type TSRMLS_DC) {
     aop_g(count_pcs)++;
-    if (aop_g(count_pcs)==1) {
-        aop_g(pcs) = emalloc(sizeof(pointcut));
-    } else {
-        aop_g(pcs) = erealloc(aop_g(pcs),aop_g(count_pcs)*sizeof(pointcut));
-    }
     int count=aop_g(count_pcs)-1;
-    aop_g(pcs)[count].selector = Z_STRVAL_P(selector);
+    if (aop_g(count_pcs)==1) {
+        aop_g(pcs) = emalloc(sizeof(pointcut *));
+    } else {
+        aop_g(pcs) = erealloc(aop_g(pcs),aop_g(count_pcs)*sizeof(pointcut *));
+    }
+    pointcut *pc = emalloc(sizeof(pointcut));
+    pc->selector = estrdup(Z_STRVAL_P(selector));
     Z_ADDREF_P(callback);
-    aop_g(pcs[count]).advice_callback = callback;
-    aop_g(pcs[count]).kind_of_advice = type;
-    parse_pointcut(&aop_g(pcs[count]));
+    pc->advice_callback = callback;
+    pc->kind_of_advice = type;
+    parse_pointcut(&pc);
+    aop_g(pcs)[count] = pc;
 }
 
-void parse_pointcut (pointcut *pc) {
-    pc->method = NULL;
-    pc->class_name = NULL;
-    pc->scope = NULL;
-    pc->static_state = 2;
+void parse_pointcut (pointcut **pc) {
+    (*pc)->method = NULL;
+    (*pc)->class_name = NULL;
+    (*pc)->scope = NULL;
+    (*pc)->static_state = 2;
     char *strval;
-    strval = estrdup (pc->selector);
+    strval = estrdup ((*pc)->selector);
     php_strtolower(strval, strlen(strval));
-    pc->class_name = get_class_part(strval);
-    pc->scope = get_scope(strval);
-    pc->static_state = is_static(strval);
-    if (pc->class_name!=NULL) {
-        pc->method = get_method_part(strval);
-        pc->num_ns = get_ns(pc->class_name, &(pc->ns));
-        if (pc->num_ns>0) {
-            pc->class_name = get_class_part_with_ns(pc->class_name);
+    (*pc)->class_name = get_class_part(strval);
+    (*pc)->scope = get_scope(strval);
+    (*pc)->static_state = is_static(strval);
+    if ((*pc)->class_name!=NULL) {
+        (*pc)->method = get_method_part(strval);
+        (*pc)->num_ns = get_ns((*pc)->class_name, &((*pc)->ns));
+        if ((*pc)->num_ns>0) {
+            (*pc)->class_name = get_class_part_with_ns((*pc)->class_name);
         }
     } else {
-        pc->method = estrdup(strval);
-        pc->num_ns = get_ns(pc->method, &(pc->ns));
-        if (pc->num_ns>0) {
-            pc->method = get_class_part_with_ns(pc->method);
+        (*pc)->method = estrdup(strval);
+        (*pc)->num_ns = get_ns((*pc)->method, &((*pc)->ns));
+        if ((*pc)->num_ns>0) {
+            (*pc)->method = get_class_part_with_ns((*pc)->method);
         }
     }
 }
@@ -319,7 +320,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     previous_ipc = NULL;
     zval *object;
     for (i=0;i<aop_g(count_pcs);i++) {
-        if (pointcut_match_joinpoint(&aop_g(pcs)[i],jp)) {
+        if (pointcut_match_joinpoint(aop_g(pcs)[i],jp)) {
             if (context==NULL) {
                 context = malloc(sizeof (joinpoint_context));
                 context->op = ops;
@@ -327,6 +328,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
                 context->currentThis = EG(This);
                 context->scope = EG(scope);
                 context->args = get_current_args(ops TSRMLS_CC);
+                context->jp = jp;
             }
 
             arounded=1;
@@ -338,19 +340,18 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
             obj->context = context;
             obj->pc = previous_ipc; 
             previous_ipc = emalloc(sizeof(instance_of_pointcut));
-            previous_ipc->pc = &aop_g(pcs)[i];
+            previous_ipc->pc = aop_g(pcs)[i];
             previous_ipc->previous_pc = previous_ipc->pc;
             previous_ipc->object = object;
         }
     }
     if (arounded) {
         aop_g(overloaded)=1;
-        zval *ret;
-        ret = joinpoint_execute(previous_ipc);
+        joinpoint_execute(previous_ipc);
         aop_g(overloaded)=0;
         if (!EG(exception)) {
             if (EG(return_value_ptr_ptr)) {
-                *EG(return_value_ptr_ptr)=ret;
+                *EG(return_value_ptr_ptr)=context->ret;
             }
         }
 
@@ -362,7 +363,11 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     }
 }
 
-zval *joinpoint_execute (instance_of_pointcut *pc) {
+void joinpoint_execute (instance_of_pointcut *pc) {
+    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
+    if (pc->pc->kind_of_advice==3) {
+        exec(obj TSRMLS_CC);
+    }
     zval *args[1];
     args[0] = (zval *)&(pc->object);
     zval *zret_ptr=NULL;
@@ -381,24 +386,16 @@ zval *joinpoint_execute (instance_of_pointcut *pc) {
     if (zend_call_function(&fci, &fcic TSRMLS_CC) == FAILURE) {
         zend_error(E_ERROR, "Problem in AOP Callback");
     }
-/*
-    if (pc->pc.type==2) {
-        aopTriggeredJoinpoint_object *temp = NULL;
-        temp = (aopTriggeredJoinpoint_object *)Z_OBJVAL((zval)(pc->object));
-      //  exec (temp, NULL TSRMLS_CC);
-    }
-*/
-    if (!EG(exception)) {
-        return zret_ptr;
+    if (pc->pc->kind_of_advice==2) {
+        exec(obj TSRMLS_CC);
     }
 }
 
 
-zval *exec(aopTriggeredJoinpoint_object *obj, zval *args TSRMLS_DC) {
-
+void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
+        
     if (obj->pc==NULL) {
         zend_execute_data *prev_data;
-        zval **original_return_value;
         zend_op **original_opline_ptr;
         zend_op_array *prev_op;
         HashTable *calling_symbol_table;
@@ -420,7 +417,6 @@ zval *exec(aopTriggeredJoinpoint_object *obj, zval *args TSRMLS_DC) {
         EG(This) = obj->context->currentThis;
         EG(scope) = obj->context->scope;
 
-//*
         if (Z_TYPE_P(obj->context->args)==IS_ARRAY) {
             int i,arg_count;
             zend_execute_data *ex = EG(current_execute_data);
@@ -436,7 +432,6 @@ zval *exec(aopTriggeredJoinpoint_object *obj, zval *args TSRMLS_DC) {
             }
             ex->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
             zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)i TSRMLS_CC);
-    //*/      
         }
         aop_g(overloaded)=0;
         _zend_execute(EG(active_op_array) TSRMLS_CC);
@@ -450,31 +445,18 @@ zval *exec(aopTriggeredJoinpoint_object *obj, zval *args TSRMLS_DC) {
         EG(active_symbol_table) = calling_symbol_table;
         EG(scope)=current_scope;
         //Only if we do not have exception
-        if (!EG(exception)) {
-            return (zval *)*EG(return_value_ptr_ptr);
+        if (!EG(exception) && EG(return_value_ptr_ptr)!=NULL) {
+            obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
+            
         } else {
 
 
         }
 
     } else {
-
-        zval *exec_return;
-        /*
-        if (obj->argsOverload) {
-            aopTriggeredJoinpoint_object *objN = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(obj->joinpoint->object TSRMLS_CC);
-            objN->argsOverload=1;
-            objN->args = obj->args;
-            zval_copy_ctor(objN->args);
-        }*/
-        exec_return = joinpoint_execute(obj->pc);
-
-        //Only if we do not have exception
-        if (!EG(exception)) {
-            return exec_return;
-        }
+        pointcut *pc = obj->pc;
+        joinpoint_execute(pc);        
     }
-    return NULL;
 
 }
 
@@ -750,7 +732,7 @@ int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp) {
     if (!strcmp_with_joker(pc->class_name, jp->class_name)) {
         return 0;
     } 
-        return 1;
+    return 1;
 
 }
 

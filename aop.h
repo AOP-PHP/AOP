@@ -11,8 +11,9 @@ typedef struct {
     zend_execute_data *ex;
     zend_class_entry *scope;
     zval *currentThis;
-    zval ***ret;
+    zval *ret;
     zval *args;
+    struct joinpoint *jp;
 } joinpoint_context;
 
 typedef struct {
@@ -67,7 +68,7 @@ int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
 #endif
 
 ZEND_BEGIN_MODULE_GLOBALS(aop)
-pointcut *pcs;
+pointcut **pcs;
 int count_pcs;
 int overloaded;
 ZEND_END_MODULE_GLOBALS(aop)
@@ -95,11 +96,11 @@ extern zend_module_entry aop_module_entry;
 #endif
 static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 void add_pointcut (zval *callback, zval *selector,int type TSRMLS_DC);
-void parse_pointcut (pointcut *pc);
+void parse_pointcut (pointcut **pc);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
-zval *joinpoint_execute (instance_of_pointcut *pc);
+void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
-zval *exec(aopTriggeredJoinpoint_object *obj, zval *args TSRMLS_DC);
+void exec(aopTriggeredJoinpoint_object *obj);
 int strcmp_with_joker (char *str_with_jok, char *str);
 int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
 int get_ns(char *class, char ***ns);
