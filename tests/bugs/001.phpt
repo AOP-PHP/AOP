@@ -18,4 +18,4 @@ echo $test->test();
 
 ?>
 --EXPECT--
-a::test|a::test
+test|test
