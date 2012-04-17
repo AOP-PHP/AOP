@@ -161,14 +161,10 @@ PHP_MINIT_FUNCTION(aop)
 PHP_METHOD(aopTriggeredJoinpoint, getArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->context->args!=NULL) {
-        Z_TYPE_P(return_value)   = IS_ARRAY;
-        Z_ARRVAL_P(return_value) = Z_ARRVAL_P(obj->context->args);
-        //In order not to destroy OBJVAL(obj->this)
-        //Need to verify memory leak
+        ZVAL_COPY_VALUE(return_value, obj->context->args);
+        //Z_UNSET_ISREF_P(return_value);
         Z_ADDREF_P(return_value);
-    }
-
-   
+    }   
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, setArguments){
@@ -184,12 +180,41 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments){
     
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice){}
-PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){}
+PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice){
+    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    Z_TYPE_P(return_value)   =   IS_LONG;
+    instance_of_pointcut *ipc = obj->current_pc;
+    pointcut *pc = ipc->pc;
+    Z_LVAL_P(return_value)   =   pc->kind_of_advice;
+}
+
+PHP_METHOD(aopTriggeredJoinpoint, getPointcut){
+    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    Z_TYPE_P(return_value)   =   IS_STRING;
+    instance_of_pointcut *ipc = obj->current_pc;
+    pointcut *pc = ipc->pc;
+    Z_STRVAL_P(return_value) = pc->selector;
+    Z_STRLEN_P(return_value) = strlen(pc->selector);
+
+}
+PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
+    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    instance_of_pointcut *ipc = obj->current_pc;
+    pointcut *pc = ipc->pc;
+    if (pc->kind_of_advice==2) {
+        zend_error(E_ERROR, "getReturnedValue can be call in aop_add_before");
+    }
+    if (obj->context->ret != NULL) {
+        ZVAL_COPY_VALUE(return_value, obj->context->ret);
+        Z_ADDREF_P(return_value);
+    }
+}
+
+
+
 PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){}
 PHP_METHOD(aopTriggeredJoinpoint, getException){}
 PHP_METHOD(aopTriggeredJoinpoint, setException){}
-PHP_METHOD(aopTriggeredJoinpoint, getPointcut){}
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -219,7 +244,7 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     exec(obj TSRMLS_CC);
     if (obj->context->ret != NULL) {
-        COPY_PZVAL_TO_ZVAL(*return_value, obj->context->ret);
+        //COPY_PZVAL_TO_ZVAL(*return_value, obj->context->ret);
     }
 }
 
@@ -329,6 +354,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
                 context->scope = EG(scope);
                 context->args = get_current_args(ops TSRMLS_CC);
                 context->jp = jp;
+                context->ret = NULL;
             }
 
             arounded=1;
@@ -343,6 +369,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
             previous_ipc->pc = aop_g(pcs)[i];
             previous_ipc->previous_pc = previous_ipc->pc;
             previous_ipc->object = object;
+            obj->current_pc = previous_ipc;
         }
     }
     if (arounded) {
@@ -350,16 +377,16 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         joinpoint_execute(previous_ipc);
         aop_g(overloaded)=0;
         if (!EG(exception)) {
-            if (EG(return_value_ptr_ptr)) {
+php_printf("after exec");
+            if (EG(return_value_ptr_ptr) && context->ret!=NULL) {
                 *EG(return_value_ptr_ptr)=context->ret;
+            } else {
+                Z_TYPE_PP(EG(return_value_ptr_ptr)) = IS_NULL;
             }
+php_printf("after exec");
         }
-
     } else {
         _zend_execute(ops TSRMLS_CC);
-    }
-    if (previous_ipc!=NULL) {
-        efree(previous_ipc);
     }
 }
 
@@ -367,6 +394,9 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
     if (pc->pc->kind_of_advice==3) {
         exec(obj TSRMLS_CC);
+    }
+    if (EG(exception)) {
+        return ;
     }
     zval *args[1];
     args[0] = (zval *)&(pc->object);
@@ -386,7 +416,7 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     if (zend_call_function(&fci, &fcic TSRMLS_CC) == FAILURE) {
         zend_error(E_ERROR, "Problem in AOP Callback");
     }
-    if (pc->pc->kind_of_advice==2) {
+    if (!EG(exception) && pc->pc->kind_of_advice==2) {
         exec(obj TSRMLS_CC);
     }
 }
@@ -447,14 +477,13 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
         //Only if we do not have exception
         if (!EG(exception) && EG(return_value_ptr_ptr)!=NULL) {
             obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
-            
         } else {
 
 
         }
 
     } else {
-        pointcut *pc = obj->pc;
+        instance_of_pointcut *pc = obj->pc;
         joinpoint_execute(pc);        
     }
 

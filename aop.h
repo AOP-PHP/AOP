@@ -42,6 +42,7 @@ typedef struct {
     zend_object std;
     joinpoint_context *context;
     struct instance_of_pointcut *pc;
+    struct instance_of_pointcut *current_pc;
 }  aopTriggeredJoinpoint_object;
 
 typedef struct {
