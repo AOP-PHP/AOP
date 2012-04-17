@@ -182,19 +182,16 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments){
 
 PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    Z_TYPE_P(return_value)   =   IS_LONG;
     instance_of_pointcut *ipc = obj->current_pc;
     pointcut *pc = ipc->pc;
-    Z_LVAL_P(return_value)   =   pc->kind_of_advice;
+    RETURN_LONG(pc->kind_of_advice);
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, getPointcut){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    Z_TYPE_P(return_value)   =   IS_STRING;
     instance_of_pointcut *ipc = obj->current_pc;
     pointcut *pc = ipc->pc;
-    Z_STRVAL_P(return_value) = pc->selector;
-    Z_STRLEN_P(return_value) = strlen(pc->selector);
+    RETURN_STRING(pc->selector, 1);
 
 }
 PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
@@ -205,8 +202,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
         zend_error(E_ERROR, "getReturnedValue can be call in aop_add_before");
     }
     if (obj->context->ret != NULL) {
-        ZVAL_COPY_VALUE(return_value, obj->context->ret);
-        Z_ADDREF_P(return_value);
+        RETURN_ZVAL(obj->context->ret, 1, 0);
     }
 }
 
@@ -219,11 +215,7 @@ PHP_METHOD(aopTriggeredJoinpoint, setException){}
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->context->currentThis!=NULL) {
-        Z_TYPE_P(return_value)   = IS_OBJECT;
-        Z_OBJVAL_P(return_value) = Z_OBJVAL_P(obj->context->currentThis);
-        //In order not to destroy OBJVAL(obj->this)
-        //Need to verify memory leak
-        Z_ADDREF_P(return_value);
+        RETURN_ZVAL(obj->context->currentThis, 1, 0);
     }
 
 }
@@ -234,9 +226,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     joinpoint *jp = obj->context->jp;
     if (jp->method != NULL) {
-        Z_TYPE_P(return_value)  = IS_STRING;
-        Z_STRVAL_P(return_value) = estrdup(jp->method);
-        Z_STRLEN_P(return_value) = strlen(jp->method);
+        RETURN_STRING(jp->method, 1);
     }
 }
 
