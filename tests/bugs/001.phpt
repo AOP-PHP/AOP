@@ -11,10 +11,10 @@ class A {
 }
 
 AOP_add_around("A::test", function ($pObj) { 
-	return $pObj->getTriggeringMethodName().'|'.$pObj->getTriggeringMethodName();
+	echo $pObj->getTriggeringMethodName().'|'.$pObj->getTriggeringMethodName();
 });
 $test = new A();
-echo $test->test();
+$test->test();
 
 ?>
 --EXPECT--
