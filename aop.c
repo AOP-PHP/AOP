@@ -233,8 +233,8 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
 PHP_METHOD(aopTriggeredJoinpoint, process){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     exec(obj TSRMLS_CC);
-    if (obj->context->ret != NULL) {
-        //COPY_PZVAL_TO_ZVAL(*return_value, obj->context->ret);
+    if (EG(exception)) {
+        return;
     }
 }
 
@@ -367,13 +367,15 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         joinpoint_execute(previous_ipc);
         aop_g(overloaded)=0;
         if (!EG(exception)) {
-php_printf("after exec");
-            if (EG(return_value_ptr_ptr) && context->ret!=NULL) {
-                *EG(return_value_ptr_ptr)=context->ret;
-            } else {
-                Z_TYPE_PP(EG(return_value_ptr_ptr)) = IS_NULL;
+            if (EG(return_value_ptr_ptr)) {
+	            if (context->ret!=NULL) {
+	                *EG(return_value_ptr_ptr)=context->ret;
+	            } else {
+	                zval *temp;
+	                MAKE_STD_ZVAL(temp);
+	                *EG(return_value_ptr_ptr) = temp;
+	            }
             }
-php_printf("after exec");
         }
     } else {
         _zend_execute(ops TSRMLS_CC);
@@ -465,10 +467,9 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
         EG(active_symbol_table) = calling_symbol_table;
         EG(scope)=current_scope;
         //Only if we do not have exception
-        if (!EG(exception) && EG(return_value_ptr_ptr)!=NULL) {
+        if (!EG(exception) && EG(return_value_ptr_ptr)) {
             obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
         } else {
-
 
         }
 
