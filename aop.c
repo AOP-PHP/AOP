@@ -10,8 +10,6 @@
 ZEND_DECLARE_MODULE_GLOBALS(aop)
 
 
-
-
 static void php_aop_init_globals(zend_aop_globals *aop_globals)
 {
 }
@@ -234,7 +232,7 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     exec(obj TSRMLS_CC);
     if (EG(exception)) {
-        return;
+        RETURN_NULL();
     }
 }
 
@@ -322,12 +320,13 @@ ZEND_FUNCTION(aop_add_final) {}
 ZEND_FUNCTION(aop_add_exception) {}
 
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
-
     int i,arounded;
     arounded=0;
     joinpoint *jp = get_current_joinpoint ();
     if (jp==NULL || jp->method==NULL || aop_g(overloaded)) {
+//php_printf("tover %d", aop_g(overloaded));
         _zend_execute(ops TSRMLS_CC);
+//php_printf("tover %d", aop_g(overloaded));
         return;
     }
     instance_of_pointcut *previous_ipc;
@@ -375,6 +374,11 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 	                MAKE_STD_ZVAL(temp);
 	                *EG(return_value_ptr_ptr) = temp;
 	            }
+            }
+        } else {
+            if (EG(return_value_ptr_ptr)) {
+                zval_ptr_dtor(EG(return_value_ptr_ptr));
+               *EG(return_value_ptr_ptr) = NULL;
             }
         }
     } else {
