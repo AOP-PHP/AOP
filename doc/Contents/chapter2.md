@@ -251,14 +251,14 @@ will output
         function advice (AopTriggeredJoinpoint $object)
         {
            $args = $object->getArguments();
-           echo "I'll do the worst stuff I can to {$args[0]} ! ... mouhahahahaha !"
+           echo "I'll do the worst stuff I can to {$args[0]} ! ... mouhahahahaha !";
         }
     }
 
     $evil = new Evil();
-    aop_add_around('MyServices::doStuff', array($evil, 'advice'));
+    aop_add_around('MyGoodServices::doStuff', array($evil, 'advice'));
 
-    $services = new MyServices();
+    $services = new MyGoodServices();
     $services->doStuff('you');
 
 will output
@@ -269,6 +269,9 @@ will output
 ### Around the triggered joinpoint ###
 
     [php]
+
+    class DivideByZeroException extends Exception {}
+
     class DivideServices
     {
        public function divide ($number, $divideBy)
@@ -281,12 +284,12 @@ will output
     }
 
     //the advice is a static function of a given class
-    $adivce = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopTriggeredJoinpoint $joinpoint) {
         //do stuff before
         $args = $joinpoint->getArguments();
         echo " {$args[0]} by {$args[1]} equals [";
         try {
-            $joinpoint->process();//asks for the joinpoint to be processed as normal
+            echo $joinpoint->process();//asks for the joinpoint to be processed as normal
         } catch (DivideByZeroException $e) {
            echo "Infinity";
         }
@@ -323,6 +326,7 @@ will output
           $args[0] = 'anyone';
           $object->setArguments($args);
        }
+       $object->process();
     }
 
     aop_add_around('MyServices::doStuff', 'adviceUpdatingArguments');
@@ -348,8 +352,9 @@ will output
 
     //creating the advice as a closure
     $advice = function (AopTriggeredJoinpoint $joinpoint) {
+        $joinpoint->process();
         $returnValue = $joinpoint->getReturnedValue();
-        $returnValue = str_replace($returnValue, 'best', 'very best');
+        $returnValue = str_replace('best', 'very best', $returnValue);
         $joinpoint->setReturnedValue($returnValue);
     };
 
