@@ -1,6 +1,14 @@
 #ifndef PHP_AOP_H
 #define PHP_AOP_H 1
 
+#ifndef ZVAL_COPY_VALUE
+#define ZVAL_COPY_VALUE(z, v)\
+    do {\
+        (z)->value = (v)->value;\
+        Z_TYPE_P(z) = Z_TYPE_P(v);\
+    } while (0)
+#endif
+
 #define PHP_AOP_VERSION "0.2b"
 #define PHP_AOP_EXTNAME "aop"
 
