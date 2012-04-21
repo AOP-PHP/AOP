@@ -1,6 +1,3 @@
---TEST--
-Herited class is caught (with selector on interface on parent)
---FILE--
 <?php 
 interface IA {}
 class A implements IA {
@@ -16,5 +13,3 @@ $test = new B();
 echo $test->test();
 
 ?>
---EXPECT--
-[test]

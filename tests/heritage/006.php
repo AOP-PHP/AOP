@@ -1,6 +1,3 @@
---TEST--
-Herited class is caught (with selector on interface on child)
---FILE--
 <?php 
 interface IA {}
 interface IB {}
@@ -22,5 +19,3 @@ $test = new B();
 echo $test->test();
 
 ?>
---EXPECT--
-[[[[test]]]]

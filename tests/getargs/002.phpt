@@ -9,8 +9,8 @@ class mytest {
 	}
 }
 
-AOP_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArguments());$pObj->process(); });
-AOP_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArguments());$pObj->process(); });
+aop_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArguments());$pObj->process(); });
+aop_add_around("mytest::test", function ($pObj) {var_dump($pObj->getArguments());$pObj->process(); });
 $test = new mytest();
 $test->test("first");
 

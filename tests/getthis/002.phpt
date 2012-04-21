@@ -7,7 +7,7 @@ function test () {
 	return "test";
 }
 
-AOP_add_around("test", function ($pObj) {
+aop_add_around("test", function ($pObj) {
 	if ($pObj->getTriggeringObject()!=null) {
 		echo "error";
 	} else {

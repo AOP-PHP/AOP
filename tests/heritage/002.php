@@ -1,6 +1,3 @@
---TEST--
-Not Parent class, not caucht
---FILE--
 <?php 
 
 class A {
@@ -9,15 +6,10 @@ class A {
 	}
 }
 
-class B {
-	public function test () {
-		return "test";
-	}
+class B extends A {
 }
 aop_add_around("A::test", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new B();
 echo $test->test();
 
 ?>
---EXPECT--
-test

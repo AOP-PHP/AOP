@@ -7,7 +7,7 @@ function test () {
 	return "intest";
 }
 
-AOP_add_around("te*", function ($pObj) {return "[".$pObj->process()."]";});
+aop_add_around("te*", function ($pObj) {return "[".$pObj->process()."]";});
 echo test();
 
 ?>
