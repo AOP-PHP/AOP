@@ -246,6 +246,8 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
         } else {
             RETURN_NULL();
         }
+    } else {
+        RETURN_NULL();
     }
 }
 
@@ -739,9 +741,25 @@ char * get_method_part (char *str) {
     return (php_memnstr(str, "::", 2, endp)+2);
 }
 
-joinpoint *get_joinpoint_from_ce(zend_class_entry *ce) {
 
+joinpoint *get_joinpoint_from_ce (zend_class_entry *ce) {
+    joinpoint *cs = emalloc (sizeof(joinpoint));
+    cs->static_state = NULL;
+    cs->method=NULL;
+    cs->class_name = NULL;
+    cs->ce = NULL;
+    cs->ce = ce;
+    cs->num_ns = get_ns(ce->name, &(cs->ns));
+    if (cs->num_ns>0) {
+        cs->class_name = get_class_part_with_ns(cs->class_name);
+    } else {
+        cs->class_name = estrdup(ce->name);
+    }
+    php_strtolower(cs->class_name, strlen(cs->class_name));
+    return cs;
 }
+
+
 
 joinpoint *get_current_joinpoint() {
     joinpoint *cs = emalloc (sizeof(joinpoint));
@@ -780,6 +798,35 @@ joinpoint *get_current_joinpoint() {
                 if (cs->num_ns>0) {
                     cs->class_name = get_class_part_with_ns(cs->class_name);
                 }
+                zend_class_entry *ce;
+                ce = cs->ce->parent;
+                cs->nb_heritage = 0;
+                while (ce!=NULL) {
+                    cs->nb_heritage++;
+                    if (cs->nb_heritage==1) {
+                        cs->heritage = emalloc(cs->nb_heritage*sizeof(joinpoint *));
+                    } else {
+                        cs->heritage = erealloc(cs->heritage, cs->nb_heritage*sizeof(joinpoint *));
+                    }
+                    cs->heritage[cs->nb_heritage-1] = get_joinpoint_from_ce(ce);
+                    ce = ce->parent;
+                }
+/*
+    zend_uint i;
+    for (i=0; i<(class->ce)->num_interfaces; i++) {
+        if (strcmp_with_joker(selector->class_name, (class->ce)->interfaces[i]->name)) {
+            return 1;
+        }
+    }
+    #if ZEND_MODULE_API_NO >= 20100525
+    //Traits
+    for (i=0; i<(class->ce)->num_traits; i++) {
+        if (strcmp_with_joker(selector->class_name, (class->ce)->traits[i]->name)) {
+            return 1;
+        }
+    }
+*/
+
             }
         }
     }
@@ -801,6 +848,16 @@ char *get_class_part_with_ns(char *class) {
     return toReturn;
 }
 
+int compare_ns_and_class (pointcut *pc, joinpoint *jp) {
+    if (!compare_namespace(pc->num_ns, pc->ns, jp->num_ns, jp->ns)) {
+        return 0;
+    }
+    if (!strcmp_with_joker(pc->class_name, jp->class_name)) {
+        return 0;
+    }
+    return 1;
+}
+
 int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp) {
     if (pc->static_state!=2 && pc->static_state!=jp->static_state) {
         return 0;
@@ -820,15 +877,19 @@ int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp) {
     if ((pc->class_name==NULL || jp->class_name==NULL) && pc->class_name!=jp->class_name) {
         return 0;
     }
-    if (!compare_namespace(pc->num_ns, pc->ns, jp->num_ns, jp->ns)) {
-        return 0;
+    if (compare_ns_and_class(pc, jp)) {
+        return 1;
     }
-    if (!strcmp_with_joker(pc->class_name, jp->class_name)) {
-        return 0;
-    } 
-    return 1;
+    int i;
+    for (i = 0;i<jp->nb_heritage;i++) {
+        if (compare_ns_and_class(pc,jp->heritage[i])){
+            return 1;
+        }
+    }
+    return 0;
 
 }
+
 
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC) {
     void **p;

@@ -43,6 +43,8 @@ typedef struct {
     char **ns;
     char *class_name;
     char *method;
+    int nb_heritage;
+    struct joinpoint **heritage;
     zend_class_entry *ce;
 } joinpoint;
 
