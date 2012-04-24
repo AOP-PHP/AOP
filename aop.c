@@ -532,8 +532,10 @@ if (arg_count>0) {
 
         aop_g(overloaded)=0;
         _zend_execute(EG(active_op_array) TSRMLS_CC);
+        if (arg_count) {
+            zend_vm_stack_clear_multiple(TSRMLS_C);
+        }
         aop_g(overloaded)=1;
-
         //Take previous context
         EG(This) = prev_this;
         EG(opline_ptr) = original_opline_ptr;
