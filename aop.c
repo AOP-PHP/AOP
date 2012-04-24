@@ -813,22 +813,29 @@ joinpoint *get_current_joinpoint() {
                     cs->heritage[cs->nb_heritage-1] = get_joinpoint_from_ce(ce);
                     ce = ce->parent;
                 }
-/*
-    zend_uint i;
-    for (i=0; i<(class->ce)->num_interfaces; i++) {
-        if (strcmp_with_joker(selector->class_name, (class->ce)->interfaces[i]->name)) {
-            return 1;
-        }
-    }
-    #if ZEND_MODULE_API_NO >= 20100525
-    //Traits
-    for (i=0; i<(class->ce)->num_traits; i++) {
-        if (strcmp_with_joker(selector->class_name, (class->ce)->traits[i]->name)) {
-            return 1;
-        }
-    }
-*/
 
+                zend_uint i;
+                for (i=0; i<(cs->ce)->num_interfaces; i++) {
+                    cs->nb_heritage++;
+                    if (cs->nb_heritage==1) {
+                        cs->heritage = emalloc(cs->nb_heritage*sizeof(joinpoint *));
+                    } else {
+                        cs->heritage = erealloc(cs->heritage, cs->nb_heritage*sizeof(joinpoint *));
+                    }
+                    cs->heritage[cs->nb_heritage-1] = get_joinpoint_from_ce(cs->ce->interfaces[i]);
+                }
+                #if ZEND_MODULE_API_NO >= 20100525
+                //Traits
+                for (i=0; i<(cs->ce)->num_traits; i++) {
+                    cs->nb_heritage++;
+                    if (cs->nb_heritage==1) {
+                        cs->heritage = emalloc(cs->nb_heritage*sizeof(joinpoint *));
+                    } else {
+                        cs->heritage = erealloc(cs->heritage, cs->nb_heritage*sizeof(joinpoint *));
+                    }
+                    cs->heritage[cs->nb_heritage-1] = get_joinpoint_from_ce(cs->ce->traits[i]);
+                }
+                #endif
             }
         }
     }
