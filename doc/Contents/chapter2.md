@@ -182,7 +182,7 @@ if you're using an old PHP library that is not using exceptions as a mean to rai
     aop_add_after('file_get_contents', $advice);
 
     try {
-       file_get_contents('foo file that does not exists');
+       @file_get_contents('foo file that does not exists');
     } catch (Exception $e) {
        echo $e->getMessage();
     }
@@ -431,7 +431,7 @@ the triggering method expected values, and references where the triggering metho
 will output
 
     [screen]
-    NEW name and UPDATED reference. After the method execution, value of name is name and value of reference is UPDATED reference
+    name and UPDATED $reference. After the method execution, value of name is name and value of reference is UPDATED $reference
 
 ### setArguments ###
 
@@ -473,7 +473,7 @@ references, you will have to explicitely pass them back to setArguments.
 will output
 
     [screen]
-    NEW name, NEW reference and NEW reference2. After the method execution, value of name is name,  reference is M - NEW reference and reference2 is NEW reference2
+    NEW name, NEW reference and NEW reference2. After the method execution, value of name is name, reference is M - NEW reference and reference2 is NEW reference2
 
 As a rule of thumb, if you don't want to mind about references, keep the arguments in the resulting array to update
 their values and give the array back back to setArguments.
@@ -493,7 +493,7 @@ their values and give the array back back to setArguments.
        $args[1] = "NEW {$args[1]}";
        $args[2] = "NEW {$args[2]}";
        $joinpoint->setArguments($args);
-    }
+    };
 
     aop_add_before('callMe', $advice);
 
@@ -506,7 +506,7 @@ their values and give the array back back to setArguments.
 will output
 
     [screen]
-    NEW name, NEW reference and NEW reference2. After the method execution, value of name is name,  reference is M - NEW reference and reference2 is M - NEW reference2
+    NEW name, NEW reference and NEW reference2. After the method execution, value of name is name, reference is M - NEW reference and reference2 is M - NEW reference2
 
 
 NOTE : you should only use setArguments while proceeding to advice of kind *before* and *around*, else, it might be
@@ -539,7 +539,7 @@ asks for the reference while calling getReturnedValue.
 
     $advice = function (AopTriggeredJoinpoint $joinpoint) {
        //You're asking explicitely for the reference
-       $result = & joinpoint->getReturnedValue();
+       $result = & $joinpoint->getReturnedValue();
        //Updating the value of the reference
        $result = "This is the new text";
     };
@@ -548,7 +548,7 @@ asks for the reference while calling getReturnedValue.
 
     $writer = new Writer();
     $text = $writer->getText();
-    $this->echoText();
+    $writer->echoText();
 
 will output
 
@@ -576,7 +576,7 @@ If you do the same without the use of reference the value of "Writer->foo" won't
 
     $advice = function (AopTriggeredJoinpoint $joinpoint) {
        //You're NOT asking explicitely for the reference
-       $result = joinpoint->getReturnedValue();
+       $result = $joinpoint->getReturnedValue();
        //The returned value of the trigerring method won't be updated
        $result = "This is the new text";
     };
@@ -585,12 +585,12 @@ If you do the same without the use of reference the value of "Writer->foo" won't
 
     $writer = new Writer();
     $text = $writer->getText();
-    $this->echoText();
+    $writer->echoText();
 
 will output
 
     [screen]
-    "some text"
+    some text
 
 NOTE : Of course if the triggering method doesn't return a reference, asking or not for the reference won't make
 any difference.
