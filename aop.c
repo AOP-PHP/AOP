@@ -153,6 +153,8 @@ PHP_MINIT_FUNCTION(aop)
 
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
+    _zend_execute_internal = zend_execute_internal;
+    zend_execute_internal  = aop_execute_internal;
     return SUCCESS;
 }
 
@@ -335,13 +337,31 @@ ZEND_FUNCTION(aop_add_final) {}
 ZEND_FUNCTION(aop_add_exception) {}
 
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
-    int i,arounded;
-    arounded=0;
     joinpoint *jp = get_current_joinpoint ();
     if (jp==NULL || jp->method==NULL || aop_g(overloaded) || EG(exception)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
+    aop_execute_global(0, jp, ops, NULL, NULL TSRMLS_CC);
+}
+
+void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
+    joinpoint *jp = get_current_joinpoint ();
+    if (jp==NULL || jp->method==NULL || aop_g(overloaded) || EG(exception)) {
+        if (_zend_execute_internal) {
+            _zend_execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+        } else {
+            execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+        }
+        return;
+    }
+    aop_execute_global(1, jp, NULL, current_execute_data,return_value_used TSRMLS_CC);
+
+}
+
+void aop_execute_global (int internal, joinpoint *jp, zend_op_array *ops, zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
+    int i,arounded;
+    arounded=0;
     instance_of_pointcut *previous_ipc;
     joinpoint_context *context = NULL;
     previous_ipc = NULL;
@@ -357,6 +377,9 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
                 context->args = get_current_args(ops TSRMLS_CC);
                 context->jp = jp;
                 context->ret = NULL;
+                context->current_execute_data = current_execute_data;
+                context->return_value_used = return_value_used;
+                context->internal = internal;
             }
 
             arounded=1;
@@ -391,7 +414,15 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         } else {
         }
     } else {
-        _zend_execute(ops TSRMLS_CC);
+        if (internal) {
+            if (_zend_execute_internal) {
+                _zend_execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+            } else {
+                execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+            }
+        } else {
+            _zend_execute(ops TSRMLS_CC);
+        }
     }
 }
 
@@ -455,7 +486,11 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
 
         EG(active_op_array) = (zend_op_array *) obj->context->op;
         EG(current_execute_data) = obj->context->ex;
-        execute_data = *EG(current_execute_data);
+        if (obj->context->internal) {
+            execute_data = *obj->context->current_execute_data;
+        } else {
+            execute_data = *EG(current_execute_data);
+        }
         EG(This) = obj->context->currentThis;
         EG(scope) = obj->context->scope;
         int arg_count;
@@ -531,7 +566,22 @@ if (arg_count>0) {
     }    
 
         aop_g(overloaded)=0;
-        _zend_execute(EG(active_op_array) TSRMLS_CC);
+        
+        if (obj->context->internal) {
+            if (_zend_execute_internal) {
+                _zend_execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
+            } else {
+                execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
+            }
+            zval **return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.var)).var.ptr;
+            if (!EG(exception)) {
+                if (return_value_ptr && *return_value_ptr) {
+                    obj->context->ret = *return_value_ptr;
+                }
+            } 
+        } else {
+            _zend_execute(EG(active_op_array) TSRMLS_CC);
+        }
         if (arg_count) {
             zend_vm_stack_clear_multiple(TSRMLS_C);
         }
@@ -544,11 +594,19 @@ if (arg_count>0) {
         EG(active_symbol_table) = calling_symbol_table;
         EG(scope)=current_scope;
         //Only if we do not have exception
-        if (!EG(exception) && EG(return_value_ptr_ptr)) {
-            obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
-        } else {
-            obj->context->ret = NULL;
-            return NULL;
+        if (!EG(exception)) {
+            if (!obj->context->internal) {
+                if (EG(return_value_ptr_ptr)) {
+                    obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
+                } else {
+//            obj->context->ret = NULL;
+//        php_printf("val %s\n",Z_STRVAL_P(obj->context->ret));
+//        Z_ADDREF_P(obj->context->ret);
+            //return NULL;
+                }
+            } else {
+
+            }
         }
 
     } else {

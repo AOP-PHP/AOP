@@ -21,7 +21,10 @@ typedef struct {
     zval *currentThis;
     zval *ret;
     zval *args;
+    zend_execute_data *current_execute_data;
+    int return_value_used;
     struct joinpoint *jp;
+    int internal;
 } joinpoint_context;
 
 typedef struct {
@@ -106,9 +109,11 @@ extern zend_module_entry aop_module_entry;
 
 #endif
 static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
+static ZEND_DLEXPORT void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void add_pointcut (zval *callback, zval *selector,int type TSRMLS_DC);
 void parse_pointcut (pointcut **pc);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
+ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
 void exec(aopTriggeredJoinpoint_object *obj);
@@ -125,3 +130,4 @@ joinpoint *get_joinpoint_from_ce(zend_class_entry *ce);
 joinpoint *get_current_joinpoint();
 char *get_class_part_with_ns(char *class);
 int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp);
+void aop_execute_global (int internal, joinpoint *jp, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
