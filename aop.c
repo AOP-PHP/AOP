@@ -141,10 +141,6 @@ PHP_RINIT_FUNCTION(aop)
 PHP_MINIT_FUNCTION(aop)
 {
     ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals,NULL);
-    //Using if with array
-    REGISTER_LONG_CONSTANT("AOP_PRIVATE", ZEND_ACC_PRIVATE, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("AOP_PUBLIC", ZEND_ACC_PUBLIC, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("AOP_PROTECTED", ZEND_ACC_PROTECTED, CONST_CS | CONST_PERSISTENT);
 
     zend_class_entry ce;
 
@@ -156,7 +152,7 @@ PHP_MINIT_FUNCTION(aop)
     aopTriggeredJoinpoint_object_handlers.clone_obj = NULL;
 
 
-
+//Class entry for AOP const
     zend_class_entry aop_ce;
     INIT_CLASS_ENTRY(aop_ce, "AOP", aop_const_methods);
     aop_const_class_entry = zend_register_internal_class(&aop_ce TSRMLS_CC);
@@ -178,10 +174,9 @@ PHP_MINIT_FUNCTION(aop)
 PHP_METHOD(aopTriggeredJoinpoint, getArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->context->args!=NULL) {
-        ZVAL_COPY_VALUE(return_value, obj->context->args);
-        //Z_UNSET_ISREF_P(return_value);
-        Z_ADDREF_P(return_value);
+        RETURN_ZVAL(obj->context->args, 1, 0);
     }   
+    RETURN_NULL();
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, setArguments){
@@ -192,7 +187,8 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments){
         return;
     }
     obj->context->args = params;
-    Z_ADDREF_P(obj->context->args);
+    Z_ADDREF_P(params);
+    RETURN_NULL();
     
     
 }
@@ -221,6 +217,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
     if (obj->context->ret != NULL) {
         RETURN_ZVAL(obj->context->ret, 1, 0);
     }
+    RETURN_NULL();
 }
 
 
@@ -234,6 +231,7 @@ PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
     }
     obj->context->ret = ret;
     Z_ADDREF_P(ret);
+    RETURN_NULL();
 }
 PHP_METHOD(aopTriggeredJoinpoint, getException){}
 PHP_METHOD(aopTriggeredJoinpoint, setException){}
@@ -243,6 +241,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
     if (obj->context->currentThis!=NULL) {
         RETURN_ZVAL(obj->context->currentThis, 1, 0);
     }
+    RETURN_NULL();
 
 }
 
@@ -254,6 +253,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
     if (jp->method != NULL) {
         RETURN_STRING(jp->method, 1);
     }
+    RETURN_NULL();
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, process){
@@ -473,6 +473,7 @@ void joinpoint_execute (instance_of_pointcut *pc) {
         exec(obj TSRMLS_CC);
     }
     if (!EG(exception) && pc->pc->kind_of_advice!=2 && zret_ptr!=NULL) {
+        //See if we can return or not
         if (Z_TYPE_P(zret_ptr)!=IS_NULL) {
             obj->context->ret = zret_ptr;
         }
@@ -528,59 +529,60 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
                 zend_hash_move_forward_ex(Z_ARRVAL_P(obj->context->args), &pos);
             }
         }
-if (arg_count>0) {
-	ZEND_VM_STACK_GROW_IF_NEEDED(arg_count + 1);
-    int i;
-	for (i=0; i<arg_count; i++) {
-		zval *param;
-		if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-			if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
-				zval *new_zval;
-
-				if (
-				    !ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-					if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
-						zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
-						zend_vm_stack_clear_multiple(TSRMLS_C);
+		if (arg_count>0) {
+            //Copy from zend_call_function
+			ZEND_VM_STACK_GROW_IF_NEEDED(arg_count + 1);
+		    int i;
+			for (i=0; i<arg_count; i++) {
+				zval *param;
+				if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+					if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
+						zval *new_zval;
+		
+						if (
+						    !ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+							if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
+								zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
+								zend_vm_stack_clear_multiple(TSRMLS_C);
+							}
+		
+							zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
+								i+1,
+								EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
+								EX(function_state).function->common.scope ? "::" : "",
+								EX(function_state).function->common.function_name);
+							return FAILURE;
+						}
+		
+						ALLOC_ZVAL(new_zval);
+						*new_zval = **params[i];
+						zval_copy_ctor(new_zval);
+						Z_SET_REFCOUNT_P(new_zval, 1);
+						Z_DELREF_PP(params[i]);
+						*params[i] = new_zval;
 					}
-
-					zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
-						i+1,
-						EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
-						EX(function_state).function->common.scope ? "::" : "",
-						EX(function_state).function->common.function_name);
-					return FAILURE;
+					Z_ADDREF_PP(params[i]);
+					Z_SET_ISREF_PP(params[i]);
+					param = *params[i];
+				} else if (PZVAL_IS_REF(*params[i]) &&
+				           (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
+					ALLOC_ZVAL(param);
+					*param = **(params[i]);
+					INIT_PZVAL(param);
+					zval_copy_ctor(param);
+				} else if (*params[i] != &EG(uninitialized_zval)) {
+					Z_ADDREF_PP(params[i]);
+					param = *params[i];
+				} else {
+					ALLOC_ZVAL(param);
+					*param = **(params[i]);
+					INIT_PZVAL(param);
 				}
-
-				ALLOC_ZVAL(new_zval);
-				*new_zval = **params[i];
-				zval_copy_ctor(new_zval);
-				Z_SET_REFCOUNT_P(new_zval, 1);
-				Z_DELREF_PP(params[i]);
-				*params[i] = new_zval;
+				zend_vm_stack_push_nocheck(param TSRMLS_CC);
 			}
-			Z_ADDREF_PP(params[i]);
-			Z_SET_ISREF_PP(params[i]);
-			param = *params[i];
-		} else if (PZVAL_IS_REF(*params[i]) &&
-		           (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
-			ALLOC_ZVAL(param);
-			*param = **(params[i]);
-			INIT_PZVAL(param);
-			zval_copy_ctor(param);
-		} else if (*params[i] != &EG(uninitialized_zval)) {
-			Z_ADDREF_PP(params[i]);
-			param = *params[i];
-		} else {
-			ALLOC_ZVAL(param);
-			*param = **(params[i]);
-			INIT_PZVAL(param);
-		}
-		zend_vm_stack_push_nocheck(param TSRMLS_CC);
-	}
-	EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
-	zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
-    }    
+			EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+			zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
+		}    
 
         aop_g(overloaded)=0;
         
@@ -590,6 +592,7 @@ if (arg_count>0) {
             } else {
                 execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
             }
+            //Copy from execute_internal
             zval **return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.var)).var.ptr;
             if (!EG(exception)) {
                 if (return_value_ptr && *return_value_ptr) {
@@ -615,14 +618,7 @@ if (arg_count>0) {
             if (!obj->context->internal) {
                 if (EG(return_value_ptr_ptr)) {
                     obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
-                } else {
-//            obj->context->ret = NULL;
-//        php_printf("val %s\n",Z_STRVAL_P(obj->context->ret));
-//        Z_ADDREF_P(obj->context->ret);
-            //return NULL;
                 }
-            } else {
-
             }
         }
 
@@ -993,11 +989,7 @@ static zval *get_current_args (zend_op_array *ops TSRMLS_DC) {
 
     for (i=0; i<arg_count; i++) {
         zval *element;
-
-//        ALLOC_ZVAL(element);
         element = *((zval **) (p-(arg_count-i)));
-//        zval_copy_ctor(element);
-//        INIT_PZVAL(element);
         zend_hash_next_index_insert(return_value->value.ht, &element, sizeof(zval *), NULL);
     }
     return return_value;
