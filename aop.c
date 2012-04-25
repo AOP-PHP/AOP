@@ -824,11 +824,17 @@ joinpoint *get_joinpoint_from_ce (zend_class_entry *ce) {
     cs->ce = ce;
     cs->num_ns = get_ns(ce->name, &(cs->ns));
     if (cs->num_ns>0) {
-        cs->class_name = get_class_part_with_ns(cs->class_name);
+        if (cs->class_name!=NULL) {
+            cs->class_name = estrdup(get_class_part_with_ns(cs->class_name));
+        }
     } else {
-        cs->class_name = estrdup(ce->name);
+        if (ce->name!=NULL) {
+            cs->class_name = estrdup(ce->name);
+        }
     }
-    php_strtolower(cs->class_name, strlen(cs->class_name));
+    if (cs->class_name!=NULL) {
+        php_strtolower(cs->class_name, strlen(cs->class_name));
+    }
     return cs;
 }
 
@@ -858,7 +864,9 @@ joinpoint *get_current_joinpoint() {
         if (cs->method) {
             if (cs->static_state) {
                 cs->ce = curr_func->common.scope;
-                cs->class_name = cs->ce->name;
+                if (cs->ce) {
+                    cs->class_name = estrdup(cs->ce->name);
+                }
             } else if (data->object) {
                 cs->ce = Z_OBJCE(*data->object);
                 cs->class_name = estrdup (Z_OBJCE(*data->object)->name);
