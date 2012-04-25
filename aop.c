@@ -50,6 +50,7 @@ ZEND_GET_MODULE(aop)
 #endif
 
 static zend_class_entry* aop_class_entry;
+static zend_class_entry* aop_const_class_entry;
 
 zend_object_handlers aopTriggeredJoinpoint_object_handlers;
 
@@ -60,7 +61,6 @@ void aop_free_storage(void *object TSRMLS_DC)
     FREE_HASHTABLE(obj->std.properties);
     efree(obj);
 }
-
 
 
 
@@ -119,6 +119,11 @@ static const zend_function_entry aop_methods[] = {
     }
 };
 
+static const zend_function_entry aop_const_methods[] = {
+    {
+        NULL, NULL, NULL
+    }
+};
 
 
 PHP_MSHUTDOWN_FUNCTION(aop)
@@ -149,6 +154,18 @@ PHP_MINIT_FUNCTION(aop)
     aop_class_entry->create_object = aop_create_handler;
     memcpy(&aopTriggeredJoinpoint_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
     aopTriggeredJoinpoint_object_handlers.clone_obj = NULL;
+
+
+
+    zend_class_entry aop_ce;
+    INIT_CLASS_ENTRY(aop_ce, "AOP", aop_const_methods);
+    aop_const_class_entry = zend_register_internal_class(&aop_ce TSRMLS_CC);
+
+    zend_declare_class_constant_long (aop_const_class_entry,"AROUND",sizeof("AROUND")-1,(long)1 TSRMLS_CC);
+    zend_declare_class_constant_long (aop_const_class_entry,"BEFORE",sizeof("BEFORE")-1,(long)2 TSRMLS_CC);
+    zend_declare_class_constant_long (aop_const_class_entry,"AFTER",sizeof("AFTER")-1,(long)3 TSRMLS_CC);
+
+
 
 
     _zend_execute = zend_execute;
