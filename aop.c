@@ -603,7 +603,11 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
                 execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
             }
             //Copy from execute_internal
+            #if ZEND_MODULE_API_NO >= 20100525
             zval **return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.var)).var.ptr;
+            #else
+            zval **return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.u.var)).var.ptr;
+            #endif
             if (!EG(exception)) {
                 if (return_value_ptr && *return_value_ptr) {
                     obj->context->ret = *return_value_ptr;
