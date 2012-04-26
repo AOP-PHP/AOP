@@ -354,16 +354,23 @@ ZEND_FUNCTION(aop_add_final) {}
 ZEND_FUNCTION(aop_add_exception) {}
 
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
-    joinpoint *jp = get_current_joinpoint ();
+    joinpoint *jp = NULL;
+    if (aop_g(count_pcs)>0) {
+        jp = get_current_joinpoint ();
+    }
     if (jp==NULL || jp->method==NULL || aop_g(overloaded) || EG(exception)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
     aop_execute_global(0, jp, ops, NULL, NULL TSRMLS_CC);
+    efree(jp);
 }
 
 void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
-    joinpoint *jp = get_current_joinpoint ();
+    joinpoint *jp = NULL;
+    if (aop_g(count_pcs)>0) {
+        jp = get_current_joinpoint ();
+    }
     if (jp==NULL || jp->method==NULL || aop_g(overloaded) || EG(exception)) {
         if (_zend_execute_internal) {
             _zend_execute_internal(current_execute_data,return_value_used TSRMLS_CC);
@@ -373,6 +380,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         return;
     }
     aop_execute_global(1, jp, NULL, current_execute_data,return_value_used TSRMLS_CC);
+    efree(jp);
 
 }
 
