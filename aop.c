@@ -134,6 +134,8 @@ PHP_MSHUTDOWN_FUNCTION(aop)
 PHP_RINIT_FUNCTION(aop)
 {
     aop_g(count_pcs)=0;
+    aop_g(count_cij)=0;
+    aop_g(count_cj)=0;
     aop_g(overloaded)=0;
     return SUCCESS;
 }
@@ -356,20 +358,20 @@ ZEND_FUNCTION(aop_add_exception) {}
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     joinpoint *jp = NULL;
     if (aop_g(count_pcs)>0) {
-        jp = get_current_joinpoint ();
+        jp = get_current_cache_joinpoint ();
     }
     if (jp==NULL || jp->method==NULL || aop_g(overloaded) || EG(exception)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
     aop_execute_global(0, jp, ops, NULL, NULL TSRMLS_CC);
-    efree(jp);
+    //efree(jp);
 }
 
 void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
     joinpoint *jp = NULL;
     if (aop_g(count_pcs)>0) {
-        jp = get_current_joinpoint ();
+        jp = get_current_cache_internal_joinpoint ();
     }
     if (jp==NULL || jp->method==NULL || aop_g(overloaded) || EG(exception)) {
         if (_zend_execute_internal) {
@@ -380,7 +382,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         return;
     }
     aop_execute_global(1, jp, NULL, current_execute_data,return_value_used TSRMLS_CC);
-    efree(jp);
+    //efree(jp);
 
 }
 
@@ -847,6 +849,63 @@ joinpoint *get_joinpoint_from_ce (zend_class_entry *ce) {
 }
 
 
+
+joinpoint *get_current_cache_joinpoint() {
+    zend_execute_data *data;
+    zend_function      *curr_func;
+
+    data = EG(current_execute_data);
+    curr_func = data->function_state.function;
+    if (curr_func->common.function_name==NULL) {
+        return NULL;
+    }
+    int i;
+    for (i=0;i<aop_g(count_cj);i++) {
+        if (((joinpoint *)aop_g(cache_joinpoint)[i]->jp)->method!=NULL && aop_g(cache_joinpoint)[i]->func==curr_func) {
+            return aop_g(cache_joinpoint)[i]->jp;
+        }
+    }
+    aop_g(count_cj)++;
+    if (aop_g(count_cj)==1) {
+        aop_g(cache_joinpoint) = emalloc(sizeof(zend_function *));
+    } else {
+        aop_g(cache_joinpoint) = erealloc(aop_g(cache_joinpoint),aop_g(count_cj)*sizeof(zend_function *));
+    }
+    aop_g(cache_joinpoint)[i] = emalloc(sizeof(cache_joinpoint));
+    aop_g(cache_joinpoint)[i]->jp = get_current_joinpoint ();
+    aop_g(cache_joinpoint)[i]->func = curr_func;
+
+    return aop_g(cache_joinpoint)[i]->jp;
+
+}
+
+joinpoint *get_current_cache_internal_joinpoint() {
+    zend_execute_data *data;
+    zend_function      *curr_func;
+
+    data = EG(current_execute_data);
+    curr_func = data->function_state.function;
+    if (curr_func->common.function_name==NULL) {
+        return NULL;
+    }
+    int i;
+    for (i=0;i<aop_g(count_cij);i++) {
+        if (aop_g(cache_internal_joinpoint)[i]->func==curr_func) {
+            return aop_g(cache_internal_joinpoint)[i]->jp;
+        }
+    }
+    aop_g(count_cij)++;
+    if (aop_g(count_cij)==1) {
+        aop_g(cache_internal_joinpoint) = emalloc(sizeof(zend_function *));
+    } else {
+        aop_g(cache_internal_joinpoint) = erealloc(aop_g(cache_internal_joinpoint),aop_g(count_cij)*sizeof(zend_function *));
+    }
+    aop_g(cache_internal_joinpoint)[i] = emalloc(sizeof(cache_joinpoint));
+    aop_g(cache_internal_joinpoint)[i]->jp = get_current_joinpoint ();
+    aop_g(cache_internal_joinpoint)[i]->func = curr_func;
+
+    return aop_g(cache_internal_joinpoint)[i]->jp;
+}
 
 joinpoint *get_current_joinpoint() {
     joinpoint *cs = emalloc (sizeof(joinpoint));

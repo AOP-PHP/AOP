@@ -64,6 +64,11 @@ typedef struct {
     zval *object;
 } instance_of_pointcut;
 
+typedef struct {
+    zend_function *func;
+    joinpoint **jp;
+} cache_joinpoint;
+
 #ifdef ZTS
 #include "TSRM.h"
 #endif
@@ -72,6 +77,13 @@ ZEND_BEGIN_MODULE_GLOBALS(aop)
 pointcut **pcs;
 int count_pcs;
 int overloaded;
+
+int count_cij;
+cache_joinpoint **cache_internal_joinpoint;
+
+int count_cj;
+cache_joinpoint **cache_joinpoint;
+
 ZEND_END_MODULE_GLOBALS(aop)
 
 #ifdef ZTS
@@ -115,6 +127,8 @@ char* get_class_part (char *str);
 char * get_method_part (char *str);
 joinpoint *get_joinpoint_from_ce(zend_class_entry *ce);
 joinpoint *get_current_joinpoint();
+joinpoint *get_current_cache_joinpoint();
+joinpoint *get_current_cache_internal_joinpoint();
 char *get_class_part_with_ns(char *class);
 int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp);
 void aop_execute_global (int internal, joinpoint *jp, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
