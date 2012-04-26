@@ -64,19 +64,6 @@ typedef struct {
     zval *object;
 } instance_of_pointcut;
 
-/*
-static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
-ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
-zval *joinpoint_execute (joinpoint *pc);
-static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
-zval *exec(aopTrigerredJoinpoint_object *obj, zval *args TSRMLS_DC);
-int strcmp_with_joker (char *str_with_jok, char *str);
-class_struct *make_class_struct(zval *value);
-class_struct *get_current_class_struct();
-char *get_class_part_with_ns(char *class);
-int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
-*/
-
 #ifdef ZTS
 #include "TSRM.h"
 #endif
