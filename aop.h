@@ -33,7 +33,9 @@ typedef struct {
     int num_ns;
     char **ns;
     char *class_name;
+    int class_jok;
     char *method;
+    int method_jok;
     char *selector;
     int kind_of_advice;
     zval *advice_callback;
