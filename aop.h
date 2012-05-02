@@ -23,15 +23,12 @@ typedef struct {
     zval *args;
     zend_execute_data *current_execute_data;
     int return_value_used;
-    struct joinpoint *jp;
     int internal;
 } joinpoint_context;
 
 typedef struct {
     int scope;
     int static_state;
-    int num_ns;
-    char **ns;
     char *class_name;
     int class_jok;
     char *method;
@@ -41,17 +38,6 @@ typedef struct {
     zval *advice_callback;
 } pointcut;
 
-typedef struct {
-    zend_uint scope;
-    int static_state;
-    int num_ns;
-    char **ns;
-    char *class_name;
-    char *method;
-    int nb_heritage;
-    struct joinpoint **heritage;
-    zend_class_entry *ce;
-} joinpoint;
 
 typedef struct {
     zend_object std;
@@ -66,11 +52,6 @@ typedef struct {
     zval *object;
 } instance_of_pointcut;
 
-typedef struct {
-    zend_function *func;
-    joinpoint **jp;
-} cache_joinpoint;
-
 #ifdef ZTS
 #include "TSRM.h"
 #endif
@@ -80,11 +61,6 @@ pointcut **pcs;
 int count_pcs;
 int overloaded;
 
-int count_cij;
-cache_joinpoint **cache_internal_joinpoint;
-
-int count_cj;
-cache_joinpoint **cache_joinpoint;
 
 ZEND_END_MODULE_GLOBALS(aop)
 
@@ -111,26 +87,20 @@ extern zend_module_entry aop_module_entry;
 #endif
 static ZEND_DLEXPORT void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 static ZEND_DLEXPORT void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
-void add_pointcut (zval *callback, zval *selector,int type TSRMLS_DC);
-void parse_pointcut (pointcut **pc);
+static void add_pointcut (zval *callback, zval *selector,int type TSRMLS_DC);
+static void parse_pointcut (pointcut **pc);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
 void exec(aopTriggeredJoinpoint_object *obj);
-int strcmp_with_joker (char *str_with_jok, char *str);
-int compare_namespace (int numns1, char **ns_with_jok, int numns2,  char **ns);
-int get_ns(char *class, char ***ns);
-int get_ns_without_class(char *class, char ***ns);
-int is_static (char *str);
-int explode_scope_by_pipe (char *partial);
-int get_scope (char *str);
-char* get_class_part (char *str);
-char * get_method_part (char *str);
-joinpoint *get_joinpoint_from_ce(zend_class_entry *ce);
-joinpoint *get_current_joinpoint();
-joinpoint *get_current_cache_joinpoint();
-joinpoint *get_current_cache_internal_joinpoint();
-char *get_class_part_with_ns(char *class);
-int pointcut_match_joinpoint (pointcut *pc, joinpoint *jp);
-void aop_execute_global (int internal, joinpoint *jp, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
+static int strcmp_with_joker (char *str_with_jok, char *str);
+static int is_static (char *str);
+static int explode_scope_by_pipe (char *partial);
+static int get_scope (char *str);
+static char* get_class_part (char *str);
+static char * get_method_part (char *str);
+void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
+static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce);
+static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func);
+
