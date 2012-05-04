@@ -710,20 +710,21 @@ static int strcmp_with_joker(char *str_with_jok, char *str) {
 
 static int is_static (char *str) {
     int i=0;
-    char *partial = NULL;
     int last = 0;
-    while (i<strlen(str)) {
-        if (str[i]==' ') {
-            partial = estrndup(str+last,i-last);
-            if (!strcmp(partial, "static")) {
-                return 1;
-            }
-            if (!strcmp(partial, "!static")) {
-                return 0;
-            }
-            last = i+1;
+    char *space;
+    char *p_space;
+    space = strchr(str, ' ');
+    p_space = str;
+    while (space!=NULL) {
+        if (!strncmp(p_space, "static", space-p_space)) {
+           return 1;
         }
-        i++;
+        if (!strncmp(p_space, "!static", space-p_space)) {
+           return 0;
+        }
+        char *temp = space+1;
+        space = strchr(p_space, ' ');
+        p_space = temp;
     }
     return 2;
 
