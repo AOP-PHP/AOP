@@ -391,7 +391,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (curr_func==NULL || aop_g(overloaded) || EG(exception)) {
+    if (curr_func==NULL || curr_func->common.function_name==NULL || aop_g(overloaded) || EG(exception)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
@@ -408,7 +408,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         curr_func = data->function_state.function;
     }
 
-    if (curr_func==NULL || aop_g(overloaded) || EG(exception)) {
+    if (curr_func==NULL || curr_func->common.function_name==NULL || aop_g(overloaded) || EG(exception)) {
         if (_zend_execute_internal) {
             _zend_execute_internal(current_execute_data,return_value_used TSRMLS_CC);
         } else {
