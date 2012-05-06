@@ -9,6 +9,7 @@ class mytest {
 	}
 }
 
+aop_add_around("mytest::test",function ($pObj) {echo "NOOVERLOAD\n";var_dump($pObj->getArguments());$pObj->process();});
 aop_add_around("mytest::test",function ($pObj) {
     echo "OVERLOAD\n";
     var_dump($pObj->getArguments());
@@ -16,7 +17,6 @@ aop_add_around("mytest::test",function ($pObj) {
     $pObj->process();
 });
 
-aop_add_around("mytest::test",function ($pObj) {echo "NOOVERLOAD\n";var_dump($pObj->getArguments());$pObj->process();});
 
 $test = new mytest();
 $test->test("first");

@@ -432,7 +432,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
         curr_func = data->function_state.function;
     }
 
-    for (i=0;i<aop_g(count_pcs);i++) {
+    for (i=aop_g(count_pcs)-1;i>=0;i--) {
         if (pointcut_match_zend_function(aop_g(pcs)[i],curr_func)) {
             if (context==NULL) {
                 context = malloc(sizeof (joinpoint_context));

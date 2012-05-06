@@ -54,7 +54,7 @@ A::testst();
 
 ?>
 --EXPECT--
-2public
 3public
-1staticpublic
+2public
 3staticpublic
+1staticpublic
