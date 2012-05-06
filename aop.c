@@ -905,6 +905,10 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
     if (pc->class_name==NULL && pc->method[0]=='*') {
         return 1;
     }
+
+    if (pc->class_name==NULL && curr_func->common.scope!=NULL) {    
+        return 0;
+    }
     if (pc->method_jok) {
         if (!strcmp_with_joker(pc->method, curr_func->common.function_name)) {
             return 0;
