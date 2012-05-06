@@ -259,11 +259,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
         RETURN_NULL();
     }
     zend_function *curr_func = data->function_state.function;
-    if (curr_func->common.fn_flags & ZEND_ACC_STATIC) {
-        ce = curr_func->common.scope;
-    } else if (Z_OBJCE(*data->object)!=NULL) {
-        ce = Z_OBJCE(*data->object);
-    }
+    ce = curr_func->common.scope;
     if (ce!=NULL) {
         RETURN_STRING(ce->name, 1);
     }
