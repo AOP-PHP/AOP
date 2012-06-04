@@ -8,3 +8,6 @@ PHPEXE=`php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||" | sed -e "
 echo $PHPEXE;
 echo $TEST_PHP_EXECUTABLE;
 echo "extension=AOP.so" >> $PHPINI
+
+INI=`php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"` | sed -e "s|php.ini/conf.d/xdebug.ini"
+rm -f $INI
