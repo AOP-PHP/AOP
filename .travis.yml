@@ -1,0 +1,24 @@
+language: php
+
+php:
+    # We only specify one version so we only get one worker
+    - 5.3
+    - 5.4
+
+notifications:
+    email:
+        recipients:
+            - julien.salleyron@gmail.com
+        on_success: change # [always|never|change] default: change
+        on_failure: always # [always|never|change] default: always
+
+env:
+    - NO_INTERACTION=1 REPORT_EXIT_STATUS=1 
+
+before_script:
+    - ./travis/compile.sh
+    
+
+# Run PHPs run-tests.php 
+script: TEST_PHP_EXECUTABLE=`php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||" | sed -e "s|etc/php.ini|bin/php|"`; export TEST_PHP_EXECUTABLE ; php run-tests.php -g "FAIL,XFAIL,BORK,WARN,LEAK,SKIP" --show-out
+
