@@ -449,7 +449,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
                 context->currentThis = EG(This);
                 context->scope = EG(scope);
                 context->args = get_current_args(ops TSRMLS_CC);
-                context->ret = NULL;
+                MAKE_STD_ZVAL(context->ret);
                 context->current_execute_data = current_execute_data;
                 context->return_value_used = return_value_used;
                 context->internal = internal;
