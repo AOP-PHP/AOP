@@ -643,9 +643,76 @@ If the class is declared in a namespace, getTriggeringClassName indicates the fu
 
 ## Pointcuts syntax ##
 
-### Single selectors ###
+### Basics ###
 
-the syntax to describe syntax is quite easy.
+Selectors will enables you to describe with a very simple syntax functions and methods that should be considered for
+raising the execution of a given advice.
+
+At their simpliest form, selectors will be given the name of the function itself, including its namespace.
+
+eg :
+*    functionName will raise advices for every call of the function functionName
+*    namespaceOne\namespaceTwo\functionName will raise advices for every call of the function functionName in
+the namespace namespaceOne\namespaceTwo, but won't be triggered if you're calling only a method named functionName in an
+another namespace.
+
+Of course you can specify a method of an object of a given class name, by separating the class name and the method name
+by two colons (::).
+
+eg :
+*    MyClass::myMethod will be triggered while calling the method myMethod of any instance of the class MyClass
+*    \namespaceOne\namespaceTwo\MyClass::myMethod will be triggered while calling the method myMethod of any instance of
+the class MyClass in the namespace \namespaceOne\namespaceTwo.
+
+### public / protected / private ###
+
+There is a specitic keyword you can use to tell AOP to consider only methods that are public, protected or private.
+
+eg :
+*    public MyClass::myMethod will be triggered while calling public methods named myMethod.
+*    public | protected MyClass::myMethod will be triggered while calling public or protected methods named myMethod.
+
+For thoose keywords, you can use a negation with the exclamation mark (!)
+
+eg :
+*    !public MyClass::* will accept every non public method call of objects of type MyClass in the root namespace
+
+
+### Wildcards ###
+
+Of course you may not want to list for the AOP extension every functions of every class you're interested in having
+ pointcuts for. There are case where you would prefer to tell AOP the format of thoose elements, and that's why there
+  are wildcards.
+
+*    *  will accept any function call in the root namespace
+*    admin* will accept any function call in the root namespace wich name starts with admin
+*    *admin will accept any function call in the root namespace wich name ends with admin
+*    namespaceOne/* will accept any function call in the namespace namespaceOne, but not in subnamespaces of namespaceOne
+*    namespaceOne/namespaceTwo/* will accept any function call in the namespace namespaceOne/namespaceTwo only
+*    */* will accept any function call in any single level namespace (eg namespaceOne/functionName or namespaceTwo/otherFunctionName
+but not namespaceOne/namespaceTwo/functionName)
+*    admin*/*/cache* will accept functions called with names names that starts with cache in a namespace called admin something
+ with a second level namespace of any name (eg adminStuff/anything/cacheStuff)
+
+Wildcards can also be used to specify class names.
+
+*    *::methodName will accept all methods call named methodName in any object (eg Object1::methodName, Object2::methodName
+in the root namespace)
+*    *Foo*::admin* will accept methods call that start with admin in classes that contains Foo in their names, in the root
+namespace
+
+### Specific keywords ###
+
+
+### Wildcards ###
+
+
+*    * match anything inside a name but stops when it encounters a /
+*    ** match anything, the scope includes the paths (/)
+
+### Simple selectors examples ###
+
+the syntax to describe selectors is quite easy.
 
 *    'functionName' represent any call of a function called 'functionName' in the root namespace
 *    'namespaceName\\functionName' represent any call of a function called 'functionName' in the namespaceName namespace
@@ -653,7 +720,7 @@ the syntax to describe syntax is quite easy.
 *    'namespaceName\\ClassName::methodName' represent any call of a method called methodName from an instance (or not) of a class
 ClassName located in the namespace namespaceName
 
-### Wildcards ###
+### Selectors using wildcards examples ###
 
 *    'startingFunctionName*' represent any call of a function who's name starts with startingFunctionName in the root namespace
 *    '*endingFunctionName' represent any call of a function who's name ends with endingFunctionName in the root namespace
@@ -664,5 +731,29 @@ class who's name start with StartingClassName in the root namespace
 *    '*EndingClassName::methodName' represent any call of a method called methodName from an instance (or not) of a
 class who's name end with EndingClassName in the root namespace
 
-### Super Wildcard ###
-*    '**\\'
+### Selectors using super wildcards examples ###
+*    '**\\' 
+*    **/*::admin* represents every call of a method starting by admin of any class in any namespace
+*    **\\* represents every call of any method in any namespace 
+
+## aop_selector_test ##
+
+If you want to check if you wrote your selectors right, you can use the aop_test_selector function to see if your selector match what you want it to match.
+
+aop_selector_test accepts three parameters
+*    the selector you want to test
+*    the method name you want to test (you cannot specify wether your method is private / protected / public)
+*    if you want the method to ouput wether the selector matched or not (false by default)
+
+    [php]
+    aop_selector_test('**', 'MyNamespace\\MyClass::myMethod', true);
+    //Wil output
+    ** matches MyNamespace\MyClass::myMethod
+
+    aop_selector_test('*/MyClass*', 'MyNamespace\\MyClass::myMethod', true);
+    //Will output
+    */MyClass* does not match MyNamespace\\MyClass::myMethod
+
+    aop_selector_test('*/MyClass::*', 'MyNamespace\\MyClass::myMethod', true);
+    //Will output
+    */MyClass::* match MyNamespace\\MyClass::myMethod
