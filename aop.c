@@ -21,6 +21,7 @@
 
 #include "php.h"
 #include "aop.h"
+#include "ext/standard/php_string.h"
 #include "Zend/zend_operators.h"
 
 
@@ -84,7 +85,6 @@ void aop_free_storage(void *object TSRMLS_DC)
 
 zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
 {
-    zval *tmp;
     zend_object_value retval;
 
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)emalloc(sizeof(aopTriggeredJoinpoint_object));
@@ -336,7 +336,7 @@ static void parse_pointcut (pointcut **pc) {
     char *temp;
     (*pc)->method = NULL;
     (*pc)->class_name = NULL;
-    (*pc)->scope = NULL;
+    (*pc)->scope = 0;
     (*pc)->static_state = 2;
     (*pc)->method_jok = 0;
     (*pc)->class_jok = 0;
@@ -414,7 +414,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
-    aop_execute_global(0, ops, NULL, NULL TSRMLS_CC);
+    aop_execute_global(0, ops, NULL, 0 TSRMLS_CC);
 }
 
 void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
@@ -564,7 +564,7 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
         HashTable *calling_symbol_table;
         zval *prev_this;
         zend_class_entry *current_scope;
-        int arg_count, i;
+        unsigned int arg_count, i;
         zval ***params;
         zval **return_value_ptr;
 
@@ -605,7 +605,7 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
         }
 		if (arg_count>0) {
             //Copy from zend_call_function
-			ZEND_VM_STACK_GROW_IF_NEEDED(arg_count + 1);
+			ZEND_VM_STACK_GROW_IF_NEEDED((int) arg_count + 1);
 			for (i=0; i<arg_count; i++) {
 				zval *param;
 				if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
@@ -624,7 +624,7 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
 								EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
 								EX(function_state).function->common.scope ? "::" : "",
 								EX(function_state).function->common.function_name);
-							return FAILURE;
+							return;
 						}
 		
 						ALLOC_ZVAL(new_zval);
@@ -755,8 +755,8 @@ static int is_static (char *str) {
 static int explode_scope_by_pipe (char *partial) {
      int i = 0;
      int last = 0;
-     int toReturn = NULL;
-        while (i<strlen(partial)) {
+     int toReturn = 0;
+        while (i< (int) strlen(partial)) {
             if (partial[i]=='|') {
                 if (!strcmp(estrndup(partial+last,i-last), "public")) {
                     toReturn = toReturn | ZEND_ACC_PUBLIC;
@@ -785,15 +785,15 @@ static int explode_scope_by_pipe (char *partial) {
 
 static int get_scope (char *str) {
     int i=0;
-    int toReturn = NULL;
+    int toReturn = 0;
     char *partial = NULL;
     int last = 0;
     int temp_return;
-    while (i<strlen(str)) {
+    while (i<(int) strlen(str)) {
         if (str[i]==' ') {
             partial = estrndup(str,i);
             temp_return = explode_scope_by_pipe(partial);
-            if (temp_return!=NULL) {
+            if (temp_return!=0) {
                 toReturn |= explode_scope_by_pipe(partial);
             }
             last = i;
@@ -886,24 +886,24 @@ static int pointcut_match_class_name (pointcut *pc, char * class_name) {
 
 static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce) {
     int i;
-    if (pointcut_match_class_name(pc, ce->name)) {
+    if (pointcut_match_class_name(pc, (char*) ce->name)) {
         return 1;
     }
-    for (i=0;i<ce->num_interfaces;i++) {
-        if (pointcut_match_class_name(pc, ce->interfaces[i]->name)) {
+    for (i=0;i<(int) ce->num_interfaces;i++) {
+        if (pointcut_match_class_name(pc, (char*) ce->interfaces[i]->name)) {
             return 1;
         }
     }
     #if ZEND_MODULE_API_NO >= 20100525
-    for (i=0;i<ce->num_traits;i++) {
-        if (pointcut_match_class_name(pc, ce->traits[i]->name)) {
+    for (i=0;i<(int)ce->num_traits;i++) {
+        if (pointcut_match_class_name(pc, (char*) ce->traits[i]->name)) {
             return 1;
         }
     }
     #endif
     ce = ce->parent;
     while (ce!=NULL) {
-        if (pointcut_match_class_name(pc, ce->name)) {
+        if (pointcut_match_class_name(pc, (char*) ce->name)) {
             return 1;
         }
         ce = ce->parent;
@@ -926,7 +926,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
            }
         }
     }
-    if (pc->scope != NULL && !(pc->scope & (curr_func->common.fn_flags & ZEND_ACC_PPP_MASK))) {
+    if (pc->scope != 0 && !(pc->scope & (curr_func->common.fn_flags & ZEND_ACC_PPP_MASK))) {
         return 0;
     }
 
@@ -938,7 +938,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
         return 0;
     }
     if (pc->method_jok) {
-        if (!strcmp_with_joker(pc->method, curr_func->common.function_name)) {
+        if (!strcmp_with_joker(pc->method, (char*) curr_func->common.function_name)) {
             return 0;
         }
     } else {
