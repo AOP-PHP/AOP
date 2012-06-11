@@ -1,5 +1,5 @@
-ARG_ENABLE("AOP", "Enable AOP support" , "no");
+ARG_ENABLE("aop", "Enable AOP support" , "no");
 
 if (PHP_AOP != "no") {
-    EXTENSION("AOP", "aop.c");
+    EXTENSION("aop", "aop.c");
 }
