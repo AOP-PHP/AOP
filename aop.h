@@ -56,19 +56,19 @@ typedef struct {
     zval *advice_callback;
 } pointcut;
 
-
-typedef struct {
-    zend_object std;
-    joinpoint_context *context;
-    struct instance_of_pointcut *pc;
-    struct instance_of_pointcut *current_pc;
-}  aopTriggeredJoinpoint_object;
-
 typedef struct {
     pointcut *pc;
     pointcut *previous_pc;
     zval *object;
 } instance_of_pointcut;
+
+
+typedef struct {
+    zend_object std;
+    joinpoint_context *context;
+    instance_of_pointcut *pc;
+    instance_of_pointcut *current_pc;
+}  aopTriggeredJoinpoint_object;
 
 #ifdef ZTS
 #include "TSRM.h"
@@ -111,7 +111,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
-void exec(aopTriggeredJoinpoint_object *obj);
+void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
 static int is_static (char *str);
 static int explode_scope_by_pipe (char *partial);
