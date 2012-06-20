@@ -33,11 +33,17 @@ static void php_aop_init_globals(zend_aop_globals *aop_globals)
 {
 }
 
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add, 0,0,2) 
+    ZEND_ARG_INFO(0,pointcut)
+    ZEND_ARG_INFO(0,callback)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry aop_functions[] =
 {
-    ZEND_FE(aop_add_around, NULL)
-    ZEND_FE(aop_add_before, NULL)
-    ZEND_FE(aop_add_after, NULL)
+    ZEND_FE(aop_add_around, arginfo_aop_add)
+    ZEND_FE(aop_add_before,  arginfo_aop_add)
+    ZEND_FE(aop_add_after, arginfo_aop_add)
     ZEND_FE(aop_add_final, NULL)
     ZEND_FE(aop_add_exception, NULL)
     {NULL, NULL, NULL}
