@@ -180,4 +180,4 @@ a given user, a given context, a given procedure. A world where you can hunt wei
 
 We are sure that this extension will soon be part of your future developpement workflow !
 
-[Latest version of the documentation](www.croes.org/gerald/projects/aop/documentation_aop_extension_php.pdf)
+[Latest version of the documentation](http://www.croes.org/gerald/projects/aop/documentation_aop_extension_php.pdf)
