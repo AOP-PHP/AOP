@@ -729,7 +729,7 @@ static int strcmp_with_joker(char *str_with_jok, char *str) {
         }
     }
     if (str_with_jok[strlen(str_with_jok)-1]=='*') {
-        return !strncasecmp(str_with_jok,str,strlen(str_with_jok)-2);
+        return !strncasecmp(str_with_jok,str,strlen(str_with_jok)-1);
     }
     return !strcasecmp(str_with_jok,str);
 }
