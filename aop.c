@@ -239,7 +239,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
     instance_of_pointcut *ipc = obj->current_pc;
     pointcut *pc = ipc->pc;
     if (pc->kind_of_advice==AOP_KIND_BEFORE) {
-        zend_error(E_ERROR, "getReturnedValue can be call in aop_add_before");
+        zend_error(E_ERROR, "getReturnedValue is not available while using aop_add_before");
     }
     if (obj->context->ret != NULL) {
         zval_ptr_dtor (return_value_ptr);
