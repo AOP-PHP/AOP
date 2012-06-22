@@ -30,7 +30,9 @@
 #define PHP_AOP_VERSION "0.2b"
 #define PHP_AOP_EXTNAME "aop"
 
-
+#define AOP_KIND_AROUND 1
+#define AOP_KIND_BEFORE 2
+#define AOP_KIND_AFTER  3
 
 typedef struct {
     zend_op_array *op;

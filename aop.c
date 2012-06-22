@@ -238,7 +238,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     instance_of_pointcut *ipc = obj->current_pc;
     pointcut *pc = ipc->pc;
-    if (pc->kind_of_advice==2) {
+    if (pc->kind_of_advice==AOP_KIND_BEFORE) {
         zend_error(E_ERROR, "getReturnedValue can be call in aop_add_before");
     }
     if (obj->context->ret != NULL) {
@@ -378,7 +378,7 @@ ZEND_FUNCTION(aop_add_around)
         zend_error(E_ERROR, "Bad params");
         return;
     }
-    add_pointcut(callback, selector,1 TSRMLS_CC);
+    add_pointcut(callback, selector,AOP_KIND_AROUND TSRMLS_CC);
 }
 
 ZEND_FUNCTION(aop_add_before)
@@ -389,7 +389,7 @@ ZEND_FUNCTION(aop_add_before)
         zend_error(E_ERROR, "Bad params");
         return;
     }
-    add_pointcut(callback, selector,2 TSRMLS_CC);
+    add_pointcut(callback, selector,AOP_KIND_BEFORE TSRMLS_CC);
 }
 
 
@@ -401,7 +401,7 @@ ZEND_FUNCTION(aop_add_after)
         zend_error(E_ERROR, "Bad params");
         return;
     }
-    add_pointcut(callback, selector,3 TSRMLS_CC);
+    add_pointcut(callback, selector,AOP_KIND_AFTER TSRMLS_CC);
 }
 
 ZEND_FUNCTION(aop_add_final) {}
@@ -528,7 +528,7 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
     TSRMLS_FETCH();
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
-    if (pc->pc->kind_of_advice==3) {
+    if (pc->pc->kind_of_advice==AOP_KIND_AFTER) {
         exec(obj TSRMLS_CC);
     }
     if (EG(exception)) {
@@ -548,10 +548,10 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     if (zend_call_function(&fci, &fcic TSRMLS_CC) == FAILURE) {
         zend_error(E_ERROR, "Problem in AOP Callback");
     }
-    if (!EG(exception) && pc->pc->kind_of_advice==2) {
+    if (!EG(exception) && pc->pc->kind_of_advice==AOP_KIND_BEFORE) {
         exec(obj TSRMLS_CC);
     }
-    if (!EG(exception) && pc->pc->kind_of_advice!=2 && zret_ptr!=NULL) {
+    if (!EG(exception) && pc->pc->kind_of_advice!=AOP_KIND_BEFORE && zret_ptr!=NULL) {
         //See if we can return or not
         if (Z_TYPE_P(zret_ptr)!=IS_NULL) {
             obj->context->ret = zret_ptr;
