@@ -664,7 +664,7 @@ eg :
 *    public MyClass::myMethod will be triggered while calling public methods named myMethod.
 *    public | protected MyClass::myMethod will be triggered while calling public or protected methods named myMethod.
 
-For thoose keywords, you can use a negation with the exclamation mark (!)
+For those keywords, you can use a negation with the exclamation mark (!)
 
 eg :
 *    !public MyClass::* will accept every non public method call of objects of type MyClass in the root namespace
@@ -673,7 +673,7 @@ eg :
 ### Wildcards ###
 
 Of course you may not want to list for the AOP extension every functions of every class you're interested in having
- pointcuts for. There are case where you would prefer to tell AOP the format of thoose elements, and that's why there
+ pointcuts for. There are case where you would prefer to tell AOP the format of those elements, and that's why there
   are wildcards.
 
 *    *  will accept any function call in the root namespace
@@ -734,8 +734,8 @@ If you want to check if you wrote your selectors right, you can use the aop_test
 
 aop_selector_test accepts three parameters
 *    the selector you want to test
-*    the method name you want to test (you cannot specify wether your method is private / protected / public)
-*    if you want the method to ouput wether the selector matched or not (false by default)
+*    the method name you want to test (you cannot specify whether your method is private / protected / public)
+*    if you want the method to ouput whether the selector matched or not (false by default)
 
     [php]
     aop_selector_test('**', 'MyNamespace\\MyClass::myMethod', true);

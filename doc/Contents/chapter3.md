@@ -37,6 +37,6 @@ TODO
     {
         aop_joinpoint('id', $params, $params);
 
-        //could enables the developpers to create join points from nowhere, for log purposes
+        //could enables the developers to create join points from nowhere, for log purposes
         or events
     }
