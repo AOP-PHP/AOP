@@ -10,10 +10,10 @@ AOP aims to allow separation of cross-cutting concerns (cache, log, security, tr
 ## PHP's AOP extension history ##
 
 The AOP extension is a project which started a while ago even if its development is quite very new (early 2012). It was
-first expected to be a fully PHP developped library, as part of a dependency injection framework. The Aspect Oriented
+first expected to be a fully PHP developed library, as part of a dependency injection framework. The Aspect Oriented
 Programming implementation would have taken the form of auto generated proxies.
 
-That was before Julien Salleyron, the lead developper of the project, wanted to take it to the next level while writing
+That was before Julien Salleyron, the lead developer of the project, wanted to take it to the next level while writing
 the AOP core features as a PHP's extension.
 
 Gérald Croës also belongs to the initial team, mainly in charge of the documentation and discussions around
@@ -27,7 +27,7 @@ Download the AOP from github, compile and add the extension to your php.ini
     #Clone the repository on your computer
     git clone https://github/juliens/AOP
     cd AOP
-    #prepare the package, you will need to have developpment tools for php
+    #prepare the package, you will need to have development tools for php
     phpize
     #compile the package
     ./configure
@@ -68,16 +68,16 @@ Let's assume the following class
 
 Now you want your code to be safe, you don't want non admin users to be able to call doAdminMethods.
 
-What are your sollutions ?
+What are your solutions ?
 
-*    Add some code to check the credentials "IN" you MyServices class. The drawback is that it will polluate your
+*    Add some code to check the credentials "IN" you MyServices class. The drawback is that it will pollute your
 code, and your core service will be less readable.
-*    Let the clients have the responsability to check the credentials when required. The drawbacks are that you will
+*    Let the clients have the responsibility to check the credentials when required. The drawbacks are that you will
 duplicate lots of code client side if you have to call the service from multiple places
 *    Add some kind of credential proxy that will check the credentials before calling the actual service. The drawbacks
 are that you will have to write some extra code, adding another class on the top of your services.
 
-Moreover, thoose solutions tends to increase in complexity while you are adding more cross-cutting concerns like
+Moreover, those solutions tends to increase in complexity while you are adding more cross-cutting concerns like
 caching or logging.
 
 That's where AOP comes into action as you will be able to tell PHP to do some extra actions while calling your
@@ -149,7 +149,7 @@ a method of a given object or a closure.
 
 Join points are places where we can attach advices.
 
-In PHP's AOP extension, a join point can be
+In PHP's AOP extension, a join point can be:
 
 *    before any method / function call
 *    after any method / function call
@@ -157,27 +157,27 @@ In PHP's AOP extension, a join point can be
 *    During the arousing of an exception of any method / function
 *    after any method / function call, should the method terminate normally or not (triggers an exception or not)
 
-In our first example, we used a "before" join point
+In our first example, we used a "before" join point.
 
 ### Pointcut ###
 
-Pointcuts are a way to describe wether or not a given join point will trigger the execution of an advice.
+Pointcuts are a way to describe whether or not a given join point will trigger the execution of an advice.
 
-In PHP's AOP extension, pointcuts can be configured with a quite simple and straitforward syntax.
+In PHP's AOP extension, pointcuts can be configured with a quite simple and straightforward syntax.
 
 In our first example the pointcut was "MyServices::doAdmin*" and was configured to launch the advice "before" the
 execution of the matching methods join points.
 
-## Why or should I use AOP ? ##
+## Why or should I use AOP? ##
 
-AOP is a whole different way of thinking for developping application. It is as different as object oriented programming
+AOP is a whole different way of thinking for developing application. It is as different as object oriented programming
  can be opposed to procedural programming.
 
-Event if you don't want to base your future developpment on this approach, you may find it very usefull for debugging
-purposes. Imagin a world where you can debug or get informations on your code based on information only collected for
+Event if you don't want to base your future development on this approach, you may find it very useful for debugging
+purposes. Imagine a world where you can debug or get informations on your code based on information only collected for
 a given user, a given context, a given procedure. A world where you can hunt weird and old code execution without even
  trying to update multiple and sparse PHP files, but just by adding advices on given conditions.
 
-We are sure that this extension will soon be part of your future developpement workflow !
+We are sure that this extension will soon be part of your future development workflow!
 
 [Latest version of the documentation](http://www.croes.org/gerald/projects/aop/documentation_aop_extension_php.pdf)
