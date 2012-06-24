@@ -210,7 +210,7 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zval *params; 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &params) == FAILURE) {
-        zend_error(E_ERROR, "setArguments param must be an array");
+        zend_error(E_ERROR, "setArguments expects an array as its first argument");
         return;
     }
     obj->context->args = params;
