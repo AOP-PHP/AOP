@@ -107,7 +107,7 @@ extern zend_module_entry aop_module_entry;
 #endif
 static void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
-static void add_pointcut (zval *callback, zval *selector,int type TSRMLS_DC);
+static void add_pointcut (zval *callback, char *selector, int selector_len, int type TSRMLS_DC);
 static void parse_pointcut (pointcut **pc);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
