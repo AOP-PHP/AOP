@@ -163,13 +163,9 @@ PHP_MINIT_FUNCTION(aop)
     memcpy(&aopTriggeredJoinpoint_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
     aopTriggeredJoinpoint_object_handlers.clone_obj = NULL;
 
-    //Class entry for AOP const
-    INIT_CLASS_ENTRY(aop_ce, "AOP", aop_const_methods);
-    aop_const_class_entry = zend_register_internal_class(&aop_ce TSRMLS_CC);
-
-    zend_declare_class_constant_long (aop_const_class_entry, "AROUND", sizeof("AROUND")-1, (long)AOP_KIND_AROUND TSRMLS_CC);
-    zend_declare_class_constant_long (aop_const_class_entry, "BEFORE", sizeof("BEFORE")-1, (long)AOP_KIND_BEFORE TSRMLS_CC);
-    zend_declare_class_constant_long (aop_const_class_entry, "AFTER", sizeof("AFTER")-1, (long)AOP_KIND_AFTER TSRMLS_CC);
+    REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE", AOP_KIND_BEFORE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AFTER", AOP_KIND_AFTER, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AROUND", AOP_KIND_AROUND, CONST_CS | CONST_PERSISTENT);
 
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
