@@ -171,9 +171,9 @@ PHP_MINIT_FUNCTION(aop)
     INIT_CLASS_ENTRY(aop_ce, "AOP", aop_const_methods);
     aop_const_class_entry = zend_register_internal_class(&aop_ce TSRMLS_CC);
 
-    zend_declare_class_constant_long (aop_const_class_entry, "AROUND", sizeof("AROUND")-1, (long)1 TSRMLS_CC);
-    zend_declare_class_constant_long (aop_const_class_entry, "BEFORE", sizeof("BEFORE")-1, (long)2 TSRMLS_CC);
-    zend_declare_class_constant_long (aop_const_class_entry, "AFTER", sizeof("AFTER")-1, (long)3 TSRMLS_CC);
+    zend_declare_class_constant_long (aop_const_class_entry, "AROUND", sizeof("AROUND")-1, (long)AOP_KIND_AROUND TSRMLS_CC);
+    zend_declare_class_constant_long (aop_const_class_entry, "BEFORE", sizeof("BEFORE")-1, (long)AOP_KIND_BEFORE TSRMLS_CC);
+    zend_declare_class_constant_long (aop_const_class_entry, "AFTER", sizeof("AFTER")-1, (long)AOP_KIND_AFTER TSRMLS_CC);
 
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
