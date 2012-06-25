@@ -103,8 +103,6 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments);
 PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice);
 PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue);
 PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue);
-PHP_METHOD(aopTriggeredJoinpoint, getException);
-PHP_METHOD(aopTriggeredJoinpoint, setException);
 PHP_METHOD(aopTriggeredJoinpoint, getPointcut);
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject);
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName);
@@ -123,8 +121,6 @@ static const zend_function_entry aop_methods[] = {
     PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice, arginfo_aop_noargs, 0)
     PHP_ME(aopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
     PHP_ME(aopTriggeredJoinpoint, setReturnedValue, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getException, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, setException, arginfo_aop_noargs, 0)
     PHP_ME(aopTriggeredJoinpoint, getPointcut, arginfo_aop_noargs, 0)
     PHP_ME(aopTriggeredJoinpoint, getTriggeringObject, arginfo_aop_noargs, 0)
     PHP_ME(aopTriggeredJoinpoint, getTriggeringClassName, arginfo_aop_noargs, 0)
@@ -242,8 +238,6 @@ PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
     Z_ADDREF_P(ret);
     RETURN_NULL();
 }
-PHP_METHOD(aopTriggeredJoinpoint, getException){}
-PHP_METHOD(aopTriggeredJoinpoint, setException){}
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
