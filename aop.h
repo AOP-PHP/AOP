@@ -15,7 +15,6 @@
  | Author: Julien Salleyron <julien.salleyron@gmail.com>                |
  +----------------------------------------------------------------------+
 */
-
 #ifndef PHP_AOP_H
 #define PHP_AOP_H 1
 
@@ -64,7 +63,6 @@ typedef struct {
     zval *object;
 } instance_of_pointcut;
 
-
 typedef struct {
     zend_object std;
     joinpoint_context *context;
@@ -80,7 +78,6 @@ ZEND_BEGIN_MODULE_GLOBALS(aop)
 pointcut **pcs;
 int count_pcs;
 int overloaded;
-
 
 ZEND_END_MODULE_GLOBALS(aop)
 
@@ -99,7 +96,6 @@ ZEND_FUNCTION(aop_add_before);
 ZEND_FUNCTION(aop_add_after);
 ZEND_FUNCTION(aop_add_final);
 ZEND_FUNCTION(aop_add_exception);
-
 
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry

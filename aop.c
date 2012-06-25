@@ -24,15 +24,11 @@
 #include "ext/standard/php_string.h"
 #include "Zend/zend_operators.h"
 
-
 ZEND_DECLARE_MODULE_GLOBALS(aop)
-
-
 
 static void php_aop_init_globals(zend_aop_globals *aop_globals)
 {
 }
-
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add, 0,0,2) 
     ZEND_ARG_INFO(0,pointcut)
@@ -48,9 +44,6 @@ static zend_function_entry aop_functions[] =
     ZEND_FE(aop_add_exception, NULL)
     {NULL, NULL, NULL}
 };
-
-
-
 
 zend_module_entry aop_module_entry =
 {
@@ -87,8 +80,6 @@ void aop_free_storage(void *object TSRMLS_DC)
     efree(obj);
 }
 
-
-
 zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
 {
     zend_object_value retval;
@@ -120,27 +111,25 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName);
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName);
 PHP_METHOD(aopTriggeredJoinpoint, process);
 
-
 ZEND_BEGIN_ARG_INFO(arginfo_aop_noargs, 0)
 ZEND_END_ARG_INFO()
-
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_args_returnbyref, 0, ZEND_RETURN_REFERENCE, -1)
 ZEND_END_ARG_INFO()
 
 static const zend_function_entry aop_methods[] = {
-    PHP_ME(aopTriggeredJoinpoint, getArguments,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, setArguments,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getReturnedValue,arginfo_aop_args_returnbyref, 0)
-    PHP_ME(aopTriggeredJoinpoint, setReturnedValue,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getException,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, setException,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getPointcut,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringObject,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringClassName,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringMethodName,arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, process,arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getArguments, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, setArguments, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
+    PHP_ME(aopTriggeredJoinpoint, setReturnedValue, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getException, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, setException, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getPointcut, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringObject, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringClassName, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringMethodName, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, process, arginfo_aop_noargs, 0)
     {
         NULL, NULL, NULL
     }
@@ -151,7 +140,6 @@ static const zend_function_entry aop_const_methods[] = {
         NULL, NULL, NULL
     }
 };
-
 
 PHP_MSHUTDOWN_FUNCTION(aop)
 {
@@ -170,7 +158,7 @@ PHP_MINIT_FUNCTION(aop)
     zend_class_entry ce;
     zend_class_entry aop_ce;
 
-    ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals,NULL);
+    ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals, NULL);
 
     INIT_CLASS_ENTRY(ce, "aopTriggeredJoinpoint", aop_methods);
     aop_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
@@ -179,17 +167,13 @@ PHP_MINIT_FUNCTION(aop)
     memcpy(&aopTriggeredJoinpoint_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
     aopTriggeredJoinpoint_object_handlers.clone_obj = NULL;
 
-
-//Class entry for AOP const
+    //Class entry for AOP const
     INIT_CLASS_ENTRY(aop_ce, "AOP", aop_const_methods);
     aop_const_class_entry = zend_register_internal_class(&aop_ce TSRMLS_CC);
 
-    zend_declare_class_constant_long (aop_const_class_entry,"AROUND",sizeof("AROUND")-1,(long)1 TSRMLS_CC);
-    zend_declare_class_constant_long (aop_const_class_entry,"BEFORE",sizeof("BEFORE")-1,(long)2 TSRMLS_CC);
-    zend_declare_class_constant_long (aop_const_class_entry,"AFTER",sizeof("AFTER")-1,(long)3 TSRMLS_CC);
-
-
-
+    zend_declare_class_constant_long (aop_const_class_entry, "AROUND", sizeof("AROUND")-1, (long)1 TSRMLS_CC);
+    zend_declare_class_constant_long (aop_const_class_entry, "BEFORE", sizeof("BEFORE")-1, (long)2 TSRMLS_CC);
+    zend_declare_class_constant_long (aop_const_class_entry, "AFTER", sizeof("AFTER")-1, (long)3 TSRMLS_CC);
 
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
@@ -216,8 +200,6 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments){
     obj->context->args = params;
     Z_ADDREF_P(params);
     RETURN_NULL();
-    
-    
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice){
@@ -249,8 +231,6 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
     RETURN_NULL();
 }
 
-
-
 PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
     zval *ret;
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -271,7 +251,6 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
         RETURN_ZVAL(obj->context->currentThis, 1, 0);
     }
     RETURN_NULL();
-
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
@@ -314,8 +293,6 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
         RETURN_NULL();
     }
 }
-
-
 
 static void add_pointcut (zval *callback, char *selector, int selector_len, int type TSRMLS_DC) {
     pointcut *pc;
@@ -369,7 +346,6 @@ static void parse_pointcut (pointcut **pc) {
     }
 }
 
-
 ZEND_FUNCTION(aop_add_around)
 {
     zval *callback;
@@ -393,7 +369,6 @@ ZEND_FUNCTION(aop_add_before)
     }
     add_pointcut(callback, selector, selector_len, AOP_KIND_BEFORE TSRMLS_CC);
 }
-
 
 ZEND_FUNCTION(aop_add_after)
 {
@@ -438,14 +413,13 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
     if (curr_func==NULL || curr_func->common.function_name==NULL || aop_g(overloaded) || EG(exception)) {
         if (_zend_execute_internal) {
-            _zend_execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+            _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
         } else {
-            execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+            execute_internal(current_execute_data, return_value_used TSRMLS_CC);
         }
         return;
     }
-    aop_execute_global(1, NULL, current_execute_data,return_value_used TSRMLS_CC);
-
+    aop_execute_global(1, NULL, current_execute_data, return_value_used TSRMLS_CC);
 }
 
 void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
@@ -467,7 +441,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
     }
 
     for (i=aop_g(count_pcs)-1;i>=0;i--) {
-        if (pointcut_match_zend_function(aop_g(pcs)[i],curr_func)) {
+        if (pointcut_match_zend_function(aop_g(pcs)[i], curr_func)) {
             if (context==NULL) {
                 context = malloc(sizeof (joinpoint_context));
                 context->op = ops;
@@ -481,8 +455,8 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
                 context->internal = internal;
             }
 
-            arounded=1;
-            rtr=NULL;
+            arounded = 1;
+            rtr = NULL;
             MAKE_STD_ZVAL(object);
             Z_TYPE_P(object) = IS_OBJECT;
             (object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
@@ -497,13 +471,13 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
         }
     }
     if (arounded) {
-        aop_g(overloaded)=1;
+        aop_g(overloaded) = 1;
         joinpoint_execute(previous_ipc);
-        aop_g(overloaded)=0;
+        aop_g(overloaded) = 0;
         if (!EG(exception)) {
             if (EG(return_value_ptr_ptr)) {
 	            if (context->ret!=NULL) {
-	                *EG(return_value_ptr_ptr)=context->ret;
+	                *EG(return_value_ptr_ptr) = context->ret;
 	            } else {
 	                zval *temp;
 	                MAKE_STD_ZVAL(temp);
@@ -515,9 +489,9 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
     } else {
         if (internal) {
             if (_zend_execute_internal) {
-                _zend_execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+                _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
             } else {
-                execute_internal(current_execute_data,return_value_used TSRMLS_CC);
+                execute_internal(current_execute_data, return_value_used TSRMLS_CC);
             }
         } else {
             _zend_execute(ops TSRMLS_CC);
@@ -528,33 +502,33 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
 void joinpoint_execute (instance_of_pointcut *pc) {
     zval *args[1], *zret_ptr;
     zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
+    zend_fcall_info_cache fcic = { 0, NULL, NULL, NULL, NULL };
     TSRMLS_FETCH();
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
-    if (pc->pc->kind_of_advice==AOP_KIND_AFTER) {
+    if (pc->pc->kind_of_advice == AOP_KIND_AFTER) {
         exec(obj TSRMLS_CC);
     }
     if (EG(exception)) {
         return ;
     }
     args[0] = (zval *)&(pc->object);
-    zret_ptr=NULL;
-    fci.param_count= 1;
-    fci.size= sizeof(fci);
-    fci.function_table= EG(function_table);
-    fci.function_name= pc->pc->advice_callback;
-    fci.symbol_table= NULL;
-    fci.retval_ptr_ptr= &zret_ptr;
+    zret_ptr = NULL;
+    fci.param_count = 1;
+    fci.size = sizeof(fci);
+    fci.function_table = EG(function_table);
+    fci.function_name = pc->pc->advice_callback;
+    fci.symbol_table = NULL;
+    fci.retval_ptr_ptr = &zret_ptr;
     fci.params = (zval ***)args;
     fci.object_ptr= NULL;
     fci.no_separation= 0;
     if (zend_call_function(&fci, &fcic TSRMLS_CC) == FAILURE) {
         zend_error(E_ERROR, "Problem in AOP Callback");
     }
-    if (!EG(exception) && pc->pc->kind_of_advice==AOP_KIND_BEFORE) {
+    if (!EG(exception) && pc->pc->kind_of_advice == AOP_KIND_BEFORE) {
         exec(obj TSRMLS_CC);
     }
-    if (!EG(exception) && pc->pc->kind_of_advice!=AOP_KIND_BEFORE && zret_ptr!=NULL) {
+    if (!EG(exception) && pc->pc->kind_of_advice != AOP_KIND_BEFORE && zret_ptr != NULL) {
         //See if we can return or not
         if (Z_TYPE_P(zret_ptr)!=IS_NULL) {
             obj->context->ret = zret_ptr;
@@ -562,10 +536,8 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     }
 }
 
-
 void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
-        
-    if (obj->pc==NULL) {
+    if (obj->pc == NULL) {
         zend_execute_data *prev_data;
         zend_execute_data execute_data;
         zend_op **original_opline_ptr;
@@ -576,7 +548,6 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
         unsigned int arg_count, i;
         zval ***params;
         zval **return_value_ptr;
-
 
         //Save previous context
         prev_op = EG(active_op_array);
@@ -597,13 +568,13 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
         EG(This) = obj->context->currentThis;
         EG(scope) = obj->context->scope;
         arg_count=0;
-        if (Z_TYPE_P(obj->context->args)==IS_ARRAY) {
+        if (Z_TYPE_P(obj->context->args) == IS_ARRAY) {
             HashPosition pos;
             zval ** temp=NULL;
             zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(obj->context->args), &pos);
-            while (zend_hash_get_current_data_ex(Z_ARRVAL_P(obj->context->args), (void **)&temp, &pos)==SUCCESS) {
+            while (zend_hash_get_current_data_ex(Z_ARRVAL_P(obj->context->args), (void **)&temp, &pos) == SUCCESS) {
                 arg_count++;
-                if (arg_count==1) {
+                if (arg_count == 1) {
                     params = emalloc(sizeof(zval **));
                 } else {
                     params = erealloc(params, arg_count*sizeof(zval **));
@@ -707,39 +678,34 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
                 }
             }
         }
-
     } else {
         instance_of_pointcut *pc = obj->pc;
         joinpoint_execute(pc);        
     }
-
 }
 
-
-
 static int strcmp_with_joker(char *str_with_jok, char *str) {
-    int joker=0;
-    if (str_with_jok[0]=='*') {
-        if (str_with_jok[1]=='\0') {
+    int joker = 0;
+    if (str_with_jok[0] == '*') {
+        if (str_with_jok[1] == '\0') {
             return 1;
         }
     }
-    if (str_with_jok[0]=='*') {
+    if (str_with_jok[0] == '*') {
         if (strlen(str)>strlen(str_with_jok)-1) {
-            return !strcasecmp(str_with_jok+1,str+(strlen(str)-(strlen(str_with_jok)-1)));
+            return !strcasecmp(str_with_jok+1, str+(strlen(str)-(strlen(str_with_jok)-1)));
         } else {
             return 0;
         }
     }
-    if (str_with_jok[strlen(str_with_jok)-1]=='*') {
-        return !strncasecmp(str_with_jok,str,strlen(str_with_jok)-1);
+    if (str_with_jok[strlen(str_with_jok)-1] == '*') {
+        return !strncasecmp(str_with_jok, str, strlen(str_with_jok)-1);
     }
-    return !strcasecmp(str_with_jok,str);
+    return !strcasecmp(str_with_jok, str);
 }
 
-
 static int is_static (char *str) {
-    int i=0;
+    int i = 0;
     int last = 0;
     char *space;
     char *p_space;
@@ -758,7 +724,6 @@ static int is_static (char *str) {
         p_space = temp;
     }
     return 2;
-
 }
 
 static int explode_scope_by_pipe (char *partial) {
@@ -767,13 +732,13 @@ static int explode_scope_by_pipe (char *partial) {
      int toReturn = 0;
         while (i< (int) strlen(partial)) {
             if (partial[i]=='|') {
-                if (!strcmp(estrndup(partial+last,i-last), "public")) {
+                if (!strcmp(estrndup(partial+last, i-last), "public")) {
                     toReturn = toReturn | ZEND_ACC_PUBLIC;
                 }
-                if (!strcmp(estrndup(partial+last,i-last), "private")) {
+                if (!strcmp(estrndup(partial+last, i-last), "private")) {
                     toReturn = toReturn | ZEND_ACC_PRIVATE;
                 }
-                if (!strcmp(estrndup(partial+last,i-last), "protected")) {
+                if (!strcmp(estrndup(partial+last, i-last), "protected")) {
                     toReturn = toReturn | ZEND_ACC_PROTECTED;
                 }
                last = i+1; 
@@ -793,7 +758,7 @@ static int explode_scope_by_pipe (char *partial) {
 }
 
 static int get_scope (char *str) {
-    int i=0;
+    int i = 0;
     int toReturn = 0;
     char *partial = NULL;
     int last = 0;
@@ -802,7 +767,7 @@ static int get_scope (char *str) {
         if (str[i]==' ') {
             partial = estrndup(str,i);
             temp_return = explode_scope_by_pipe(partial);
-            if (temp_return!=0) {
+            if (temp_return != 0) {
                 toReturn |= explode_scope_by_pipe(partial);
             }
             last = i;
@@ -822,18 +787,18 @@ static int pointcut_match_class_name (pointcut *pc, char * class_name) {
         char *started;
         char *started_class;
         int size;
-        if (pos==NULL) {
+        if (pos == NULL) {
           return strcmp_with_joker(pc->class_name, class_name);
         }
         pos_class = strrchr(class_name, '\\');
-        if (pos_class==NULL) {
+        if (pos_class == NULL) {
             return 0;
         }
-        if (!strcmp_with_joker(pos+1,pos_class+1)) {
+        if (!strcmp_with_joker(pos+1, pos_class+1)) {
             return 0;
         }
         started=temp_pc_class_name;
-        started_class=temp_class_name;
+        started_class = temp_class_name;
         while (temp_pc_class_name<pos && temp_class_name<pos_class) {
             if (temp_pc_class_name[0]=='*' && start) {
                 //Case **
@@ -847,48 +812,47 @@ static int pointcut_match_class_name (pointcut *pc, char * class_name) {
                 }
                 */
                 //Case * for en entire ns
-                if (temp_pc_class_name[1]=='\\') {
+                if (temp_pc_class_name[1] == '\\') {
                     temp_pc_class_name++;
                     temp_pc_class_name++;
-                    temp_class_name = strchr(temp_class_name,'\\')+1;
+                    temp_class_name = strchr(temp_class_name, '\\')+1;
                     start=1;
                     continue;
                 } 
                 size = strlen(temp_pc_class_name+1)-strlen(strchr(temp_pc_class_name, '\\'));
-                if (strncasecmp(temp_pc_class_name+1,strchr(temp_class_name,'\\')-size,size)) {
+                if (strncasecmp(temp_pc_class_name+1, strchr(temp_class_name, '\\')-size, size)) {
                     return 0;
                 }
-                temp_pc_class_name=strchr(temp_pc_class_name, '\\')+1;
-                temp_class_name=strchr(temp_class_name, '\\')+1;
-                start=1;
+                temp_pc_class_name = strchr(temp_pc_class_name, '\\')+1;
+                temp_class_name = strchr(temp_class_name, '\\')+1;
+                start = 1;
                 continue;
             }
-            if (temp_pc_class_name[0]=='*' && !start) {
-                if (strncasecmp(started, started_class,temp_pc_class_name-started)) {
+            if (temp_pc_class_name[0] == '*' && !start) {
+                if (strncasecmp(started, started_class, temp_pc_class_name-started)) {
                     return 0;
                 }
-                temp_pc_class_name=strchr(temp_pc_class_name,'\\')+1;
-                temp_class_name=strchr(temp_class_name,'\\')+1;
+                temp_pc_class_name = strchr(temp_pc_class_name, '\\')+1;
+                temp_class_name = strchr(temp_class_name, '\\')+1;
                 continue;
             }
-            if (temp_pc_class_name[0]!=temp_class_name[0]) {
+            if (temp_pc_class_name[0] != temp_class_name[0]) {
                 return 0;
             } 
             start = 0;
-            if (temp_pc_class_name[0]=='\\') {
-                started=temp_pc_class_name+1;
+            if (temp_pc_class_name[0] == '\\') {
+                started = temp_pc_class_name+1;
                 started_class=temp_class_name+1;
                 start = 1;
             }
             temp_pc_class_name++;
             temp_class_name++;
         }
-        if (temp_pc_class_name>=pos && temp_class_name>=pos_class) {
+        if (temp_pc_class_name >= pos && temp_class_name >= pos_class) {
             return 1;
         }
         return 0;
     } else {
-        
         return !strcasecmp(pc->class_name, class_name);
     }
 }
@@ -898,20 +862,20 @@ static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce) 
     if (pointcut_match_class_name(pc, (char*) ce->name)) {
         return 1;
     }
-    for (i=0;i<(int) ce->num_interfaces;i++) {
+    for (i=0; i<(int) ce->num_interfaces; i++) {
         if (pointcut_match_class_name(pc, (char*) ce->interfaces[i]->name)) {
             return 1;
         }
     }
     #if ZEND_MODULE_API_NO >= 20100525
-    for (i=0;i<(int)ce->num_traits;i++) {
+    for (i=0; i<(int) ce->num_traits; i++) {
         if (pointcut_match_class_name(pc, (char*) ce->traits[i]->name)) {
             return 1;
         }
     }
     #endif
     ce = ce->parent;
-    while (ce!=NULL) {
+    while (ce != NULL) {
         if (pointcut_match_class_name(pc, (char*) ce->name)) {
             return 1;
         }
@@ -924,7 +888,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
     TSRMLS_FETCH();
     zend_class_entry *ce = NULL;
     zend_execute_data *data = EG(current_execute_data);
-    if (pc->static_state!=2) {
+    if (pc->static_state != 2) {
         if (pc->static_state) {
            if (!(curr_func->common.fn_flags & ZEND_ACC_STATIC)) {
                 return 0;
@@ -939,11 +903,11 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
         return 0;
     }
 
-    if (pc->class_name==NULL && pc->method[0]=='*') {
+    if (pc->class_name == NULL && pc->method[0] == '*') {
         return 1;
     }
 
-    if (pc->class_name==NULL && curr_func->common.scope!=NULL) {    
+    if (pc->class_name == NULL && curr_func->common.scope != NULL) {    
         return 0;
     }
     if (pc->method_jok) {
@@ -955,17 +919,17 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
             return 0;
         }
     }
-    if (data!=NULL) {
+    if (data != NULL) {
         if (curr_func->common.fn_flags & ZEND_ACC_STATIC) {
             ce = curr_func->common.scope;
-        } else if (data->object!=NULL && Z_OBJCE(*data->object)!=NULL) {
+        } else if (data->object != NULL && Z_OBJCE(*data->object) != NULL) {
             ce = Z_OBJCE(*data->object);
         }
     }
-    if (ce!=NULL) {
+    if (ce != NULL) {
         return pointcut_match_zend_class_entry(pc, ce);
     }
-    if (pc->class_name==NULL) {
+    if (pc->class_name == NULL) {
         return 1;
     }
     return 0;
@@ -994,5 +958,4 @@ static zval *get_current_args (zend_op_array *ops TSRMLS_DC) {
         zend_hash_next_index_insert(return_value->value.ht, &element, sizeof(zval *), NULL);
     }
     return return_value;
-
 }
