@@ -109,6 +109,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
                     <file role="test" name="3.phpt" />
                     <file role="test" name="2.phpt" />
                     <file role="test" name="1.phpt" />
+                    <file role="test" name="0.phpt" />
                     <file role="test" name="15.phpt" />
                     <file role="test" name="14.phpt" />
                     <file role="test" name="13.phpt" />
