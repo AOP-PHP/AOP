@@ -7,6 +7,8 @@ The AOP extension is designed to be the easiest way you can think of for integra
 
 AOP aims to allow separation of cross-cutting concerns (cache, log, security, transactions, business rules, ...)
 
+[![Build Status](https://secure.travis-ci.org/Juliens/AOP.png?branch=master)](http://travis-ci.org/Juliens/AOP)
+
 ## PHP's AOP extension history ##
 
 The AOP extension is a project which started a while ago even if its development is quite very new (early 2012). It was
