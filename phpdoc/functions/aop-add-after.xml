@@ -11,7 +11,8 @@
   &reftitle.description;
   <methodsynopsis>
    <type>ReturnType</type><methodname>aop_add_after</methodname>
-   <void />
+   <methodparam><type>string</type><parameter>pointcut</parameter></methodparam>
+   <methodparam><type>string</type><parameter>callback</parameter></methodparam>
   </methodsynopsis>
   <para>
 
@@ -23,7 +24,24 @@
 
  <refsect1 role="parameters">
   &reftitle.parameters;
-  &no.function.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>pointcut</parameter></term>
+    <listitem>
+     <para>
+      
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>callback</parameter></term>
+    <listitem>
+     <para>
+      
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 role="returnvalues">
