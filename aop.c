@@ -40,8 +40,6 @@ static zend_function_entry aop_functions[] =
     ZEND_FE(aop_add_around, arginfo_aop_add)
     ZEND_FE(aop_add_before,  arginfo_aop_add)
     ZEND_FE(aop_add_after, arginfo_aop_add)
-    ZEND_FE(aop_add_final, NULL)
-    ZEND_FE(aop_add_exception, NULL)
     {NULL, NULL, NULL}
 };
 
