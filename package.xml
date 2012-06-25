@@ -81,7 +81,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
                     <file role="test" name="002.phpt" />
                     <file role="test" name="001.phpt" />
                 </dir>
-                <dir name="heritage" >
+                <dir name="inheritance" >
 		    <file role="test" name="007.phpt" />
                     <file role="test" name="006.phpt" />
                     <file role="test" name="005.phpt" />
