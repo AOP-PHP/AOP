@@ -321,7 +321,10 @@ static void parse_pointcut (pointcut **pc) {
     if (space != NULL) {
         strval = space+1;
     }
-    temp = strstr(strval,"::");
+    temp = strstr(strval, "::");
+    if (temp == NULL) {
+        temp = strstr(strval, "->");
+    }
     if (temp == NULL) {
         (*pc)->method = strval;
     } else {

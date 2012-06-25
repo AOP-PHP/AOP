@@ -55,6 +55,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
                     <file role="test" name="001.phpt" />
                 </dir>
                 <dir name="simple" >
+		    <file role="test" name="006.phpt" />
                     <file role="test" name="005.phpt" />
                     <file role="test" name="004.phpt" />
                     <file role="test" name="003.phpt" />
