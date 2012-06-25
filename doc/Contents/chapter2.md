@@ -712,6 +712,9 @@ the syntax to describe selectors is quite easy.
 *    'namespaceName\\ClassName::methodName' represent any call of a method called methodName from an instance (or not) of a class
 ClassName located in the namespace namespaceName
 
+You can use both :: and -> as a seperator for classes/method (e.g. Class->method equals Class::method).
+
+
 ### Selectors using wildcards examples ###
 
 *    'startingFunctionName*' represent any call of a function who's name starts with startingFunctionName in the root namespace
