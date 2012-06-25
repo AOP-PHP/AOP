@@ -17,6 +17,12 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>juliens@php.net</email>
   <active>yes</active>
  </lead>
+ <lead>
+  <name>Gérald Croës</name>
+  <user>gerald</user>
+  <email>gerald@php.net</email>
+  <active>yes</active>
+ </lead>
 
    <date>2012-07-02</date>
    <version>
