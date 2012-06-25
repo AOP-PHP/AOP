@@ -4,7 +4,7 @@ http://pear.php.net/dtd/tasks-1.0.xsd
 http://pear.php.net/dtd/package-2.0
 http://pear.php.net/dtd/package-2.0.xsd">
  <name>AOP</name>
- <uri>https://github.com/Juliens/AOP</uri>
+ <channel>pecl.php.net</channel>
  <summary>
        AOP In PHP
 </summary>
