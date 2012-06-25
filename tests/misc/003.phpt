@@ -13,8 +13,8 @@ $test = new mytest();
 $test->test();
 
 ?>
---EXPECT--
-Warning: aop_add_around() expects parameter 1 to be string, array given in /home/geraldc/PhpstormProjects/AOP/tests/misc/003.php on line 8
+--EXPECTF--
+Warning: aop_add_around() expects parameter 1 to be string, array given in %s/003.php on line 8
 
-Fatal error: Bad params in /home/geraldc/PhpstormProjects/AOP/tests/misc/003.php on line 8
+Fatal error: Bad params in %s/003.php on line 8
 
