@@ -17,8 +17,6 @@
  <function name='aoptriggeredjoinpoint::getkindofadvice' from='PECL aop &gt;= Unknown'/>
  <function name='aoptriggeredjoinpoint::getreturnedvalue' from='PECL aop &gt;= Unknown'/>
  <function name='aoptriggeredjoinpoint::setreturnedvalue' from='PECL aop &gt;= Unknown'/>
- <function name='aoptriggeredjoinpoint::getexception' from='PECL aop &gt;= Unknown'/>
- <function name='aoptriggeredjoinpoint::setexception' from='PECL aop &gt;= Unknown'/>
  <function name='aoptriggeredjoinpoint::getpointcut' from='PECL aop &gt;= Unknown'/>
  <function name='aoptriggeredjoinpoint::gettriggeringobject' from='PECL aop &gt;= Unknown'/>
  <function name='aoptriggeredjoinpoint::gettriggeringclassname' from='PECL aop &gt;= Unknown'/>

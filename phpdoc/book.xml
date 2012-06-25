@@ -2,8 +2,8 @@
 <!-- $Revision$ -->
 
 <book xml:id="book.aop" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Aop</title>
- <titleabbrev>Aop</titleabbrev>
+ <title>AOP</title>
+ <titleabbrev>AOP</titleabbrev>
 
  <preface xml:id="intro.aop">
   &reftitle.intro;

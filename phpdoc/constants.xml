@@ -3,7 +3,41 @@
 
 <appendix xml:id="aop.constants" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.constants;
- &no.constants;
+ &extension.constants;
+ <para>
+  <variablelist>
+   <varlistentry xml:id="constant.aop-kind-before">
+    <term>
+     <constant>AOP_KIND_BEFORE</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-after">
+    <term>
+     <constant>AOP_KIND_AFTER</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-around">
+    <term>
+     <constant>AOP_KIND_AROUND</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+     </simpara>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </para>
 </appendix>
 
 <!-- Keep this comment at the end of the file

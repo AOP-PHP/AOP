@@ -2,7 +2,7 @@
 <!-- $Revision$ -->
 
 <reference xml:id="ref.aop" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Aop &Functions;</title>
+ <title>AOP &Functions;</title>
 
  &reference.aop.entities.functions;
 
