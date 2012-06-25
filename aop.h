@@ -54,7 +54,8 @@ typedef struct {
     int method_jok;
     char *selector;
     int kind_of_advice;
-    zval *advice_callback;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic;
 } pointcut;
 
 typedef struct {

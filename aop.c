@@ -297,7 +297,17 @@ static void add_pointcut (zval *callback, char *selector, int selector_len, int 
     pc = emalloc(sizeof(pointcut));
     pc->selector = selector;
     Z_ADDREF_P(callback);
-    pc->advice_callback = callback;
+
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
+
+    fci.function_table = EG(function_table);
+    fci.function_name = callback;
+    fci.symbol_table = NULL;
+    fci.object_ptr= NULL;
+    fci.no_separation= 0;
+    pc->fci = fci;
+    pc->fcic = fcic; 
     pc->kind_of_advice = type;
     parse_pointcut(&pc);
     aop_g(pcs)[count] = pc;
@@ -494,8 +504,6 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
 
 void joinpoint_execute (instance_of_pointcut *pc) {
     zval *args[1], *zret_ptr;
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic = { 0, NULL, NULL, NULL, NULL };
     TSRMLS_FETCH();
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
     if (pc->pc->kind_of_advice == AOP_KIND_AFTER) {
@@ -504,18 +512,14 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     if (EG(exception)) {
         return ;
     }
+
     args[0] = (zval *)&(pc->object);
     zret_ptr = NULL;
-    fci.param_count = 1;
-    fci.size = sizeof(fci);
-    fci.function_table = EG(function_table);
-    fci.function_name = pc->pc->advice_callback;
-    fci.symbol_table = NULL;
-    fci.retval_ptr_ptr = &zret_ptr;
-    fci.params = (zval ***)args;
-    fci.object_ptr= NULL;
-    fci.no_separation= 0;
-    if (zend_call_function(&fci, &fcic TSRMLS_CC) == FAILURE) {
+    pc->pc->fci.param_count = 1;
+    pc->pc->fci.size = sizeof(pc->pc->fci);
+    pc->pc->fci.retval_ptr_ptr = &zret_ptr;
+    pc->pc->fci.params = (zval ***)args;
+    if (zend_call_function(&(pc->pc->fci), &(pc->pc->fcic) TSRMLS_CC) == FAILURE) {
         zend_error(E_ERROR, "Problem in AOP Callback");
     }
     if (!EG(exception) && pc->pc->kind_of_advice == AOP_KIND_BEFORE) {
