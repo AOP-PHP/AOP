@@ -137,6 +137,12 @@ http://pear.php.net/dtd/package-2.0.xsd">
 		    <file role="test" name="002.phpt" />
 		    <file role="test" name="003.phpt" /> 
 		</dir>
+		<dir name="consts">
+		    <file role="test" name="001.phpt" />
+		    <file role="test" name="002.phpt" />
+		    <file role="test" name="003.phpt" />
+		    <file role="test" name="004.phpt" />
+		</dir>
         </dir>
         </dir>
  </contents>
