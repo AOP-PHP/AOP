@@ -9,8 +9,8 @@
  <function name='aop_add_around' from='PECL aop &gt;= Unknown'/>
  <function name='aop_add_before' from='PECL aop &gt;= Unknown'/>
  <function name='aop_add_after' from='PECL aop &gt;= Unknown'/>
- <function name='aop_add_final' from='PECL aop &gt;= Unknown'/>
- <function name='aop_add_exception' from='PECL aop &gt;= Unknown'/>
+ <function name='aop_add_before_write' from='PECL aop &gt;= Unknown'/>
+ <function name='aop_add_before_read' from='PECL aop &gt;= Unknown'/>
  <!-- Methods -->
  <function name='aoptriggeredjoinpoint::getarguments' from='PECL aop &gt;= Unknown'/>
  <function name='aoptriggeredjoinpoint::setarguments' from='PECL aop &gt;= Unknown'/>
