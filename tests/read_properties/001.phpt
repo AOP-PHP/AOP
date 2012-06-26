@@ -1,5 +1,5 @@
 --TEST--
-Write Property Test
+Read Property Test
 --FILE--
 <?php 
 
