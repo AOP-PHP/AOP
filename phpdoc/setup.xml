@@ -6,9 +6,7 @@
 
  <section xml:id="aop.requirements">
   &reftitle.required;
-  <para>
-
-  </para>
+  &reftitle.norequirement;
  </section>
 
  <section xml:id="aop.installation">

@@ -2,13 +2,14 @@
 <!-- $Revision$ -->
 
 <book xml:id="book.aop" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>AOP</title>
+ <title>Aspect Oriented PHP</title>
  <titleabbrev>AOP</titleabbrev>
 
  <preface xml:id="intro.aop">
   &reftitle.intro;
   <para>
-
+  The Aspect Oriented PHP is a free and open aspect weaver for PHP. i
+  Its goal is to provide an easy way to integrate Aspect Oriented Programming techniques into PHP.
   </para>
  </preface>
 
