@@ -35,11 +35,18 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add, 0, 0, 2)
     ZEND_ARG_INFO(0,callback)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add_property, 0,0,3) 
+    ZEND_ARG_INFO(0,class_name)
+    ZEND_ARG_INFO(0,property_name)
+    ZEND_ARG_INFO(0,callback)
+ZEND_END_ARG_INFO()
 static zend_function_entry aop_functions[] =
 {
     PHP_FE(aop_add_around, arginfo_aop_add)
     PHP_FE(aop_add_before,  arginfo_aop_add)
     PHP_FE(aop_add_after, arginfo_aop_add)
+    PHP_FE(aop_add_write_property, arginfo_aop_add_property)
+    PHP_FE(aop_add_read_property, arginfo_aop_add_property)
     {NULL, NULL, NULL}
 };
 
@@ -122,7 +129,120 @@ PHP_RINIT_FUNCTION(aop)
 {
     aop_g(count_pcs)=0;
     aop_g(overloaded)=0;
+
+    aop_g(count_write_property)=0;
+    aop_g(lock_write_property)=0;
+
+    aop_g(count_read_property)=0;
+    aop_g(lock_read_property)=0;
+
     return SUCCESS;
+}
+
+
+
+
+#if ZEND_MODULE_API_NO >= 20100525
+ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC) {
+#else
+ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type TSRMLS_DC) {
+#endif
+
+    if (aop_g(count_read_property)>0 && !aop_g(lock_read_property)) {
+        zend_class_entry *ce = NULL;
+        int i;
+        for (i=0;i<aop_g(count_read_property);i++) {
+            property_pointcut *current_pc = aop_g(property_pointcuts_read)[i];
+            if (current_pc->property_name[0]!='*') {
+                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                    continue;
+                }
+            }
+            if (ce==NULL) {
+                ce = Z_OBJCE_P(object);
+            }
+            char *current_class_name;
+            current_class_name = (char *)ce->name;
+
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
+                continue;
+            }
+
+            
+            zval **args[2], *zret_ptr;
+            args[0] = &object;
+            args[1] = &member; 
+            current_pc->fci.retval_ptr_ptr= &zret_ptr;
+            current_pc->fci.params = (zval ***)args;
+            zret_ptr=NULL;
+            current_pc->fci.param_count= 2;
+            current_pc->fci.size= sizeof(current_pc->fci);
+            aop_g(lock_read_property) = 1;
+            if (zend_call_function(&(current_pc->fci), &(current_pc->fcic) TSRMLS_CC) == FAILURE) {
+                zend_error(E_ERROR, "Problem in AOP Callback");
+            }
+            aop_g(lock_read_property) = 0;
+
+        }
+    }
+
+
+
+#if ZEND_MODULE_API_NO >= 20100525
+    return zend_std_read_property(object, member, type, key TSRMLS_CC);
+#else
+    return zend_std_read_property(object, member, type TSRMLS_CC);
+#endif
+}
+
+#if ZEND_MODULE_API_NO >= 20100525
+ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC) {
+#else
+ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value TSRMLS_DC) {
+#endif
+    if (aop_g(count_write_property)>0 && !aop_g(lock_write_property)) {
+        zend_class_entry *ce = NULL;
+        int i;
+        for (i=0;i<aop_g(count_write_property);i++) {
+            property_pointcut *current_pc = aop_g(property_pointcuts_write)[i];
+            if (current_pc->property_name[0]!='*') {
+                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                    continue;
+                }
+            }
+            if (ce==NULL) {
+                ce = Z_OBJCE_P(object);
+            }
+            char *current_class_name;
+            current_class_name = (char *)ce->name;
+
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
+                continue;
+            }
+
+            
+            zval **args[3], *zret_ptr;
+            args[0] = &object;
+            args[1] = &member; 
+            args[2] = &value;
+            current_pc->fci.retval_ptr_ptr= &zret_ptr;
+            current_pc->fci.params = (zval ***)args;
+            zret_ptr=NULL;
+            current_pc->fci.param_count= 3;
+            current_pc->fci.size= sizeof(current_pc->fci);
+            aop_g(lock_write_property) = 1;
+            if (zend_call_function(&(current_pc->fci), &(current_pc->fcic) TSRMLS_CC) == FAILURE) {
+                zend_error(E_ERROR, "Problem in AOP Callback");
+            }
+            aop_g(lock_write_property) = 0;
+
+        }
+    }
+    #if ZEND_MODULE_API_NO >= 20100525
+    zend_std_write_property(object,member,value,key TSRMLS_CC);
+    #else
+    zend_std_write_property(object,member,value TSRMLS_CC);
+    #endif
 }
 
 PHP_MINIT_FUNCTION(aop)
@@ -141,6 +261,14 @@ PHP_MINIT_FUNCTION(aop)
     REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE", AOP_KIND_BEFORE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER", AOP_KIND_AFTER, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND", AOP_KIND_AROUND, CONST_CS | CONST_PERSISTENT);
+
+
+#if ZEND_MODULE_API_NO < 20100525
+    zend_std_write_property = std_object_handlers.write_property;
+#endif
+    std_object_handlers.write_property = zend_std_write_property_overload;
+    zend_std_read_property = std_object_handlers.read_property;
+    std_object_handlers.read_property = zend_std_read_property_overload;
 
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
@@ -321,6 +449,91 @@ static void parse_pointcut (pointcut **pc) {
     if ((*pc)->class_name != NULL) {
         (*pc)->class_jok = (strchr((*pc)->class_name, '*') != NULL);
     }
+}
+ZEND_FUNCTION(aop_add_read_property)
+{
+    zval *callback;
+    zval *class_name;
+    zval *property_name;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz", &class_name ,&property_name, &callback) == FAILURE) {
+        zend_error(E_ERROR, "Bad params");
+        return;
+    }
+    property_pointcut *pc;
+    int count;
+    aop_g(count_read_property)++;
+    count=aop_g(count_read_property)-1;
+    if (aop_g(count_read_property)==1) {
+        aop_g(property_pointcuts_read) = emalloc(sizeof(property_pointcut *));
+    } else {
+        aop_g(property_pointcuts_read) = erealloc(aop_g(property_pointcuts_read),aop_g(count_write_property)*sizeof(property_pointcut *));
+    }
+    pc = emalloc(sizeof(property_pointcut));
+    pc->class_name_length = Z_STRLEN_P(class_name);
+    pc->class_name = estrndup(Z_STRVAL_P(class_name), pc->class_name_length);
+    pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
+    pc->property_name_length = Z_STRLEN_P(property_name);
+    pc->property_name = estrndup(Z_STRVAL_P(property_name), pc->property_name_length);
+    Z_ADDREF_P(callback);
+    pc->callback = callback;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
+
+    fci.function_table= EG(function_table);
+    fci.function_name= pc->callback;
+    fci.symbol_table= NULL;
+    fci.object_ptr= NULL;
+    fci.no_separation= 0;
+
+    pc->fci = fci;
+    pc->fcic = fcic;
+
+    aop_g(property_pointcuts_read)[count]=pc;
+
+}
+
+
+
+ZEND_FUNCTION(aop_add_write_property)
+{
+    zval *callback;
+    zval *class_name;
+    zval *property_name;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz", &class_name ,&property_name, &callback) == FAILURE) {
+        zend_error(E_ERROR, "Bad params");
+        return;
+    }
+    property_pointcut *pc;
+    int count;
+    aop_g(count_write_property)++;
+    count=aop_g(count_write_property)-1;
+    if (aop_g(count_write_property)==1) {
+        aop_g(property_pointcuts_write) = emalloc(sizeof(property_pointcut *));
+    } else {
+        aop_g(property_pointcuts_write) = erealloc(aop_g(property_pointcuts_write),aop_g(count_write_property)*sizeof(property_pointcut *));
+    }
+    pc = emalloc(sizeof(property_pointcut));
+    pc->class_name_length = Z_STRLEN_P(class_name);
+    pc->class_name = estrndup(Z_STRVAL_P(class_name), pc->class_name_length);
+    pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
+    pc->property_name_length = Z_STRLEN_P(property_name);
+    pc->property_name = estrndup(Z_STRVAL_P(property_name), pc->property_name_length);
+    Z_ADDREF_P(callback);
+    pc->callback = callback;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
+
+    fci.function_table= EG(function_table);
+    fci.function_name= pc->callback;
+    fci.symbol_table= NULL;
+    fci.object_ptr= NULL;
+    fci.no_separation= 0;
+
+    pc->fci = fci;
+    pc->fcic = fcic;
+
+    aop_g(property_pointcuts_write)[count]=pc;
+
 }
 
 PHP_FUNCTION(aop_add_around)
@@ -745,18 +958,19 @@ static int get_scope (char *str) {
     return toReturn;
 }
 
-static int pointcut_match_class_name (pointcut *pc, char * class_name) {
-    if (pc->class_jok) {
-        char *temp_pc_class_name = pc->class_name;
+//static int pointcut_match_class_name (pointcut *pc, char * class_name) {
+static int pointcut_match_class_name (char *select_class_name, int with_jok, char * class_name) {
+    if (with_jok) {
+        char *temp_pc_class_name = select_class_name;
         char *temp_class_name = class_name;
-        char *pos = strrchr(pc->class_name, '\\');
+        char *pos = strrchr(select_class_name, '\\');
         char *pos_class;
         int start = 1;
         char *started;
         char *started_class;
         int size;
-        if (pos == NULL) {
-          return strcmp_with_joker(pc->class_name, class_name);
+        if (pos==NULL) {
+          return strcmp_with_joker(select_class_name, class_name);
         }
         pos_class = strrchr(class_name, '\\');
         if (pos_class == NULL) {
@@ -821,30 +1035,30 @@ static int pointcut_match_class_name (pointcut *pc, char * class_name) {
         }
         return 0;
     } else {
-        return !strcasecmp(pc->class_name, class_name);
+        return !strcasecmp(select_class_name, class_name);
     }
 }
 
-static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce) {
+static int pointcut_match_zend_class_entry (char *pc_class_name, int pc_class_jok, zend_class_entry *ce) {
     int i;
-    if (pointcut_match_class_name(pc, (char*) ce->name)) {
+    if (pointcut_match_class_name(pc_class_name,pc_class_jok, (char*) ce->name)) {
         return 1;
     }
-    for (i=0; i<(int) ce->num_interfaces; i++) {
-        if (pointcut_match_class_name(pc, (char*) ce->interfaces[i]->name)) {
+    for (i=0;i<(int) ce->num_interfaces;i++) {
+        if (pointcut_match_class_name(pc_class_name, pc_class_jok, (char*) ce->interfaces[i]->name)) {
             return 1;
         }
     }
     #if ZEND_MODULE_API_NO >= 20100525
-    for (i=0; i<(int) ce->num_traits; i++) {
-        if (pointcut_match_class_name(pc, (char*) ce->traits[i]->name)) {
+    for (i=0;i<(int)ce->num_traits;i++) {
+        if (pointcut_match_class_name(pc_class_name, pc_class_jok, (char*) ce->traits[i]->name)) {
             return 1;
         }
     }
     #endif
     ce = ce->parent;
-    while (ce != NULL) {
-        if (pointcut_match_class_name(pc, (char*) ce->name)) {
+    while (ce!=NULL) {
+        if (pointcut_match_class_name(pc_class_name, pc_class_jok, (char*) ce->name)) {
             return 1;
         }
         ce = ce->parent;
@@ -894,8 +1108,8 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
             ce = Z_OBJCE(*data->object);
         }
     }
-    if (ce != NULL) {
-        return pointcut_match_zend_class_entry(pc, ce);
+    if (ce!=NULL) {
+        return pointcut_match_zend_class_entry(pc->class_name, pc->class_jok, ce);
     }
     if (pc->class_name == NULL) {
         return 1;

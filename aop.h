@@ -71,6 +71,19 @@ typedef struct {
     instance_of_pointcut *current_pc;
 }  aopTriggeredJoinpoint_object;
 
+typedef struct {
+    char *class_name;
+    int class_name_length;
+    int class_joker;
+    char *property_name;
+    int property_name_length;
+    int property_joker;
+    zval *callback;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic;
+
+} property_pointcut;
+
 #ifdef ZTS
 #include "TSRM.h"
 #endif
@@ -79,6 +92,15 @@ ZEND_BEGIN_MODULE_GLOBALS(aop)
 pointcut **pcs;
 int count_pcs;
 int overloaded;
+
+int count_write_property;
+int lock_write_property;
+property_pointcut **property_pointcuts_write;
+
+int count_read_property;
+int lock_read_property;
+property_pointcut **property_pointcuts_read;
+
 
 ZEND_END_MODULE_GLOBALS(aop)
 
@@ -97,6 +119,8 @@ PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
 PHP_FUNCTION(aop_add_final);
 PHP_FUNCTION(aop_add_exception);
+PHP_FUNCTION(aop_add_write_property);
+PHP_FUNCTION(aop_add_read_property);
 
 PHP_METHOD(aopTriggeredJoinpoint, getArguments);
 PHP_METHOD(aopTriggeredJoinpoint, setArguments);
@@ -129,5 +153,11 @@ static int get_scope (char *str);
 static char* get_class_part (char *str);
 static char * get_method_part (char *str);
 void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
-static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce);
+static int pointcut_match_zend_class_entry (char *pc_class_name, int pc_class_jok, zend_class_entry *ce);
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func);
+#if ZEND_MODULE_API_NO >= 20100525
+static zval * (*zend_std_read_property)(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
+#else
+static zval * (*zend_std_read_property)(zval *object, zval *member, int type TSRMLS_DC);
+static void (*zend_std_write_property)(zval *object, zval *member, zval *value TSRMLS_DC);
+#endif
