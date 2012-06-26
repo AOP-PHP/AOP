@@ -92,11 +92,22 @@ PHP_MINIT_FUNCTION(aop);
 PHP_MSHUTDOWN_FUNCTION(aop);
 PHP_RINIT_FUNCTION(aop);
 
-ZEND_FUNCTION(aop_add_around);
-ZEND_FUNCTION(aop_add_before);
-ZEND_FUNCTION(aop_add_after);
-ZEND_FUNCTION(aop_add_final);
-ZEND_FUNCTION(aop_add_exception);
+PHP_FUNCTION(aop_add_around);
+PHP_FUNCTION(aop_add_before);
+PHP_FUNCTION(aop_add_after);
+PHP_FUNCTION(aop_add_final);
+PHP_FUNCTION(aop_add_exception);
+
+PHP_METHOD(aopTriggeredJoinpoint, getArguments);
+PHP_METHOD(aopTriggeredJoinpoint, setArguments);
+PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice);
+PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue);
+PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue);
+PHP_METHOD(aopTriggeredJoinpoint, getPointcut);
+PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject);
+PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName);
+PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName);
+PHP_METHOD(aopTriggeredJoinpoint, process);
 
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
@@ -120,4 +131,3 @@ static char * get_method_part (char *str);
 void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce);
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func);
-

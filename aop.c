@@ -37,9 +37,9 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry aop_functions[] =
 {
-    ZEND_FE(aop_add_around, arginfo_aop_add)
-    ZEND_FE(aop_add_before,  arginfo_aop_add)
-    ZEND_FE(aop_add_after, arginfo_aop_add)
+    PHP_FE(aop_add_around, arginfo_aop_add)
+    PHP_FE(aop_add_before,  arginfo_aop_add)
+    PHP_FE(aop_add_after, arginfo_aop_add)
     {NULL, NULL, NULL}
 };
 
@@ -96,43 +96,21 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
     return retval;
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getArguments);
-PHP_METHOD(aopTriggeredJoinpoint, setArguments);
-PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice);
-PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue);
-PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue);
-PHP_METHOD(aopTriggeredJoinpoint, getPointcut);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName);
-PHP_METHOD(aopTriggeredJoinpoint, process);
-
-ZEND_BEGIN_ARG_INFO(arginfo_aop_noargs, 0)
-ZEND_END_ARG_INFO()
-
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_args_returnbyref, 0, ZEND_RETURN_REFERENCE, -1)
 ZEND_END_ARG_INFO()
 
 static const zend_function_entry aop_methods[] = {
-    PHP_ME(aopTriggeredJoinpoint, getArguments, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, setArguments, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice, arginfo_aop_noargs, 0)
+    PHP_ME(aopTriggeredJoinpoint, getArguments, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, setArguments, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
-    PHP_ME(aopTriggeredJoinpoint, setReturnedValue, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getPointcut, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringObject, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringClassName, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringMethodName, arginfo_aop_noargs, 0)
-    PHP_ME(aopTriggeredJoinpoint, process, arginfo_aop_noargs, 0)
-    {
-        NULL, NULL, NULL
-    }
-};
-
-static const zend_function_entry aop_const_methods[] = {
-    {
-        NULL, NULL, NULL
-    }
+    PHP_ME(aopTriggeredJoinpoint, setReturnedValue, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, getPointcut, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringObject, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringClassName, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringMethodName, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, process, NULL, 0)
+    {NULL, NULL, NULL}
 };
 
 PHP_MSHUTDOWN_FUNCTION(aop)
@@ -150,7 +128,6 @@ PHP_RINIT_FUNCTION(aop)
 PHP_MINIT_FUNCTION(aop)
 {
     zend_class_entry ce;
-    zend_class_entry aop_ce;
 
     ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals, NULL);
 
@@ -285,6 +262,8 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
 static void add_pointcut (zval *callback, char *selector, int selector_len, int type TSRMLS_DC) {
     pointcut *pc;
     int count;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
     aop_g(count_pcs)++;
     count=aop_g(count_pcs)-1;
     if (aop_g(count_pcs)==1) {
@@ -295,9 +274,6 @@ static void add_pointcut (zval *callback, char *selector, int selector_len, int 
     pc = emalloc(sizeof(pointcut));
     pc->selector = selector;
     Z_ADDREF_P(callback);
-
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
 
     fci.function_table = EG(function_table);
     fci.function_name = callback;
@@ -347,7 +323,7 @@ static void parse_pointcut (pointcut **pc) {
     }
 }
 
-ZEND_FUNCTION(aop_add_around)
+PHP_FUNCTION(aop_add_around)
 {
     zval *callback;
     char *selector;
@@ -359,7 +335,7 @@ ZEND_FUNCTION(aop_add_around)
     add_pointcut(callback, selector, selector_len, AOP_KIND_AROUND TSRMLS_CC);
 }
 
-ZEND_FUNCTION(aop_add_before)
+PHP_FUNCTION(aop_add_before)
 {
     zval *callback;
     char *selector;
@@ -371,7 +347,7 @@ ZEND_FUNCTION(aop_add_before)
     add_pointcut(callback, selector, selector_len, AOP_KIND_BEFORE TSRMLS_CC);
 }
 
-ZEND_FUNCTION(aop_add_after)
+PHP_FUNCTION(aop_add_after)
 {
     zval *callback;
     char *selector;
@@ -382,9 +358,6 @@ ZEND_FUNCTION(aop_add_after)
     }
     add_pointcut(callback, selector, selector_len, AOP_KIND_AFTER TSRMLS_CC);
 }
-
-ZEND_FUNCTION(aop_add_final) {}
-ZEND_FUNCTION(aop_add_exception) {}
 
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     zend_execute_data *data;
