@@ -119,8 +119,8 @@ PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
 PHP_FUNCTION(aop_add_final);
 PHP_FUNCTION(aop_add_exception);
-PHP_FUNCTION(aop_add_write_property);
-PHP_FUNCTION(aop_add_read_property);
+PHP_FUNCTION(aop_add_before_write);
+PHP_FUNCTION(aop_add_before_read);
 
 PHP_METHOD(aopTriggeredJoinpoint, getArguments);
 PHP_METHOD(aopTriggeredJoinpoint, setArguments);

@@ -45,8 +45,8 @@ static zend_function_entry aop_functions[] =
     PHP_FE(aop_add_around, arginfo_aop_add)
     PHP_FE(aop_add_before,  arginfo_aop_add)
     PHP_FE(aop_add_after, arginfo_aop_add)
-    PHP_FE(aop_add_write_property, arginfo_aop_add_property)
-    PHP_FE(aop_add_read_property, arginfo_aop_add_property)
+    PHP_FE(aop_add_before_write, arginfo_aop_add_property)
+    PHP_FE(aop_add_before_read, arginfo_aop_add_property)
     {NULL, NULL, NULL}
 };
 
@@ -450,7 +450,7 @@ static void parse_pointcut (pointcut **pc) {
         (*pc)->class_jok = (strchr((*pc)->class_name, '*') != NULL);
     }
 }
-ZEND_FUNCTION(aop_add_read_property)
+ZEND_FUNCTION(aop_add_before_read)
 {
     zval *callback;
     zval *class_name;
@@ -494,7 +494,7 @@ ZEND_FUNCTION(aop_add_read_property)
 
 
 
-ZEND_FUNCTION(aop_add_write_property)
+ZEND_FUNCTION(aop_add_before_write)
 {
     zval *callback;
     zval *class_name;
