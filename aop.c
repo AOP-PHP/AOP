@@ -35,18 +35,13 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add, 0, 0, 2)
     ZEND_ARG_INFO(0,callback)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add_property, 0,0,3) 
-    ZEND_ARG_INFO(0,class_name)
-    ZEND_ARG_INFO(0,property_name)
-    ZEND_ARG_INFO(0,callback)
-ZEND_END_ARG_INFO()
 static zend_function_entry aop_functions[] =
 {
     PHP_FE(aop_add_around, arginfo_aop_add)
     PHP_FE(aop_add_before,  arginfo_aop_add)
     PHP_FE(aop_add_after, arginfo_aop_add)
-    PHP_FE(aop_add_before_write, arginfo_aop_add_property)
-    PHP_FE(aop_add_before_read, arginfo_aop_add_property)
+    PHP_FE(aop_add_before_write, arginfo_aop_add)
+    PHP_FE(aop_add_before_read, arginfo_aop_add)
     {NULL, NULL, NULL}
 };
 
@@ -450,30 +445,54 @@ static void parse_pointcut (pointcut **pc) {
         (*pc)->class_jok = (strchr((*pc)->class_name, '*') != NULL);
     }
 }
+
 ZEND_FUNCTION(aop_add_before_read)
 {
     zval *callback;
-    zval *class_name;
-    zval *property_name;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz", &class_name ,&property_name, &callback) == FAILURE) {
+    int nb_char;
+    int count;
+    char * temp;
+    char *selector;
+    int selector_len;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &selector ,&selector_len, &callback) == FAILURE) {
         zend_error(E_ERROR, "Bad params");
         return;
     }
+
     property_pointcut *pc;
-    int count;
     aop_g(count_read_property)++;
     count=aop_g(count_read_property)-1;
     if (aop_g(count_read_property)==1) {
         aop_g(property_pointcuts_read) = emalloc(sizeof(property_pointcut *));
     } else {
-        aop_g(property_pointcuts_read) = erealloc(aop_g(property_pointcuts_read),aop_g(count_write_property)*sizeof(property_pointcut *));
+        aop_g(property_pointcuts_read) = erealloc(aop_g(property_pointcuts_read),aop_g(count_read_property)*sizeof(property_pointcut *));
     }
     pc = emalloc(sizeof(property_pointcut));
-    pc->class_name_length = Z_STRLEN_P(class_name);
-    pc->class_name = estrndup(Z_STRVAL_P(class_name), pc->class_name_length);
+
+
+    nb_char=3;
+    temp = strstr(selector, "::$");
+    if (temp==NULL) {
+        temp = strstr(selector, "->$");
+    }
+    if (temp==NULL) {
+        temp = strstr(selector, "::");
+        nb_char = 2;
+    }
+    if (temp==NULL) {
+        temp = strstr(selector, "->");
+    }
+    if (temp == NULL) {
+        zend_error(E_ERROR, "You must specify a class and a property");
+    }
+
+    pc->property_name = estrdup(temp+nb_char);
+    temp[0] = '\0';
+    pc->class_name = selector;
+
     pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
-    pc->property_name_length = Z_STRLEN_P(property_name);
-    pc->property_name = estrndup(Z_STRVAL_P(property_name), pc->property_name_length);
+
     Z_ADDREF_P(callback);
     pc->callback = callback;
     zend_fcall_info fci;
@@ -492,19 +511,21 @@ ZEND_FUNCTION(aop_add_before_read)
 
 }
 
-
-
 ZEND_FUNCTION(aop_add_before_write)
 {
     zval *callback;
-    zval *class_name;
-    zval *property_name;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz", &class_name ,&property_name, &callback) == FAILURE) {
+    int nb_char;
+    int count;
+    char * temp;
+    char *selector;
+    int selector_len;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &selector ,&selector_len, &callback) == FAILURE) {
         zend_error(E_ERROR, "Bad params");
         return;
     }
+
     property_pointcut *pc;
-    int count;
     aop_g(count_write_property)++;
     count=aop_g(count_write_property)-1;
     if (aop_g(count_write_property)==1) {
@@ -513,11 +534,28 @@ ZEND_FUNCTION(aop_add_before_write)
         aop_g(property_pointcuts_write) = erealloc(aop_g(property_pointcuts_write),aop_g(count_write_property)*sizeof(property_pointcut *));
     }
     pc = emalloc(sizeof(property_pointcut));
-    pc->class_name_length = Z_STRLEN_P(class_name);
-    pc->class_name = estrndup(Z_STRVAL_P(class_name), pc->class_name_length);
+    nb_char=3;
+    temp = strstr(selector, "::$");
+    if (temp==NULL) {
+        temp = strstr(selector, "->$");
+    }
+    if (temp==NULL) {
+        temp = strstr(selector, "::");
+        nb_char = 2;
+    }
+    if (temp==NULL) {
+        temp = strstr(selector, "->");
+    }
+    if (temp == NULL) {
+        zend_error(E_ERROR, "You must specify a class and a property");
+    }
+
+    pc->property_name = estrdup(temp+nb_char);
+    temp[0] = '\0';
+    pc->class_name = selector;
+
     pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
-    pc->property_name_length = Z_STRLEN_P(property_name);
-    pc->property_name = estrndup(Z_STRVAL_P(property_name), pc->property_name_length);
+
     Z_ADDREF_P(callback);
     pc->callback = callback;
     zend_fcall_info fci;

@@ -36,7 +36,7 @@ $test = new A();
 $test->var1 = 'test';
 $test->var2 = 'test2';
 
-aop_add_write_property("A", "*", array ($tracer, 'touch'));
+aop_add_before_write("A::*", array ($tracer, 'touch'));
 
 $test->var1 = 'test_modified';
 $test->var2 = 'test_modified';

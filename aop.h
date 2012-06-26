@@ -73,10 +73,8 @@ typedef struct {
 
 typedef struct {
     char *class_name;
-    int class_name_length;
     int class_joker;
     char *property_name;
-    int property_name_length;
     int property_joker;
     zval *callback;
     zend_fcall_info fci;

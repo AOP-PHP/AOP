@@ -22,7 +22,7 @@ class A {
 
 $tracer = new Tracer ();
 
-aop_add_write_property("A", "*", array ($tracer, 'touch'));
+aop_add_before_write("A::*", array ($tracer, 'touch'));
 
 $test = new A();
 $test->var1 = 'test';
