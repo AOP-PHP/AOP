@@ -488,8 +488,7 @@ ZEND_FUNCTION(aop_add_before_read)
     }
 
     pc->property_name = estrdup(temp+nb_char);
-    temp[0] = '\0';
-    pc->class_name = selector;
+    pc->class_name = estrndup(selector, temp-selector);
 
     pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
 
@@ -551,8 +550,7 @@ ZEND_FUNCTION(aop_add_before_write)
     }
 
     pc->property_name = estrdup(temp+nb_char);
-    temp[0] = '\0';
-    pc->class_name = selector;
+    pc->class_name = estrndup(selector, temp-selector);
 
     pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
 
