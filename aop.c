@@ -382,11 +382,9 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
     }
 }
 
-static void add_pointcut (zval *callback, char *selector, int selector_len, int type TSRMLS_DC) {
+static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
     pointcut *pc;
     int count;
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
     aop_g(count_pcs)++;
     count=aop_g(count_pcs)-1;
     if (aop_g(count_pcs)==1) {
@@ -396,13 +394,7 @@ static void add_pointcut (zval *callback, char *selector, int selector_len, int 
     }
     pc = emalloc(sizeof(pointcut));
     pc->selector = selector;
-    Z_ADDREF_P(callback);
 
-    fci.function_table = EG(function_table);
-    fci.function_name = callback;
-    fci.symbol_table = NULL;
-    fci.object_ptr= NULL;
-    fci.no_separation= 0;
     pc->fci = fci;
     pc->fcic = fcic; 
     pc->kind_of_advice = type;
@@ -448,14 +440,15 @@ static void parse_pointcut (pointcut **pc) {
 
 ZEND_FUNCTION(aop_add_before_read)
 {
-    zval *callback;
     int nb_char;
     int count;
     char * temp;
     char *selector;
     int selector_len;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &selector ,&selector_len, &callback) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector ,&selector_len, &fci, &fcic) == FAILURE) {
         zend_error(E_ERROR, "Bad params");
         return;
     }
@@ -492,17 +485,6 @@ ZEND_FUNCTION(aop_add_before_read)
 
     pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
 
-    Z_ADDREF_P(callback);
-    pc->callback = callback;
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
-
-    fci.function_table= EG(function_table);
-    fci.function_name= pc->callback;
-    fci.symbol_table= NULL;
-    fci.object_ptr= NULL;
-    fci.no_separation= 0;
-
     pc->fci = fci;
     pc->fcic = fcic;
 
@@ -512,14 +494,15 @@ ZEND_FUNCTION(aop_add_before_read)
 
 ZEND_FUNCTION(aop_add_before_write)
 {
-    zval *callback;
     int nb_char;
     int count;
     char * temp;
     char *selector;
     int selector_len;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &selector ,&selector_len, &callback) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector ,&selector_len, &fci, &fcic) == FAILURE) {
         zend_error(E_ERROR, "Bad params");
         return;
     }
@@ -554,17 +537,6 @@ ZEND_FUNCTION(aop_add_before_write)
 
     pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
 
-    Z_ADDREF_P(callback);
-    pc->callback = callback;
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
-
-    fci.function_table= EG(function_table);
-    fci.function_name= pc->callback;
-    fci.symbol_table= NULL;
-    fci.object_ptr= NULL;
-    fci.no_separation= 0;
-
     pc->fci = fci;
     pc->fcic = fcic;
 
@@ -575,13 +547,15 @@ ZEND_FUNCTION(aop_add_before_write)
 PHP_FUNCTION(aop_add_around)
 {
     zval *callback;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
     char *selector;
     int selector_len;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &selector, &selector_len, &callback) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
         zend_error(E_ERROR, "Bad params");
         return;
     }
-    add_pointcut(callback, selector, selector_len, AOP_KIND_AROUND TSRMLS_CC);
+    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AROUND TSRMLS_CC);
 }
 
 PHP_FUNCTION(aop_add_before)
@@ -593,7 +567,7 @@ PHP_FUNCTION(aop_add_before)
         zend_error(E_ERROR, "Bad params");
         return;
     }
-    add_pointcut(callback, selector, selector_len, AOP_KIND_BEFORE TSRMLS_CC);
+//    add_pointcut(callback, selector, selector_len, AOP_KIND_BEFORE TSRMLS_CC);
 }
 
 PHP_FUNCTION(aop_add_after)
@@ -605,7 +579,7 @@ PHP_FUNCTION(aop_add_after)
         zend_error(E_ERROR, "Bad params");
         return;
     }
-    add_pointcut(callback, selector, selector_len, AOP_KIND_AFTER TSRMLS_CC);
+  //  add_pointcut(callback, selector, selector_len, AOP_KIND_AFTER TSRMLS_CC);
 }
 
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
