@@ -155,7 +155,10 @@ static int pointcut_match_zend_class_entry (char *pc_class_name, int pc_class_jo
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func);
 #if ZEND_MODULE_API_NO >= 20100525
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
+static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member, const zend_literal *key TSRMLS_DC);
 #else
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type TSRMLS_DC);
 static void (*zend_std_write_property)(zval *object, zval *member, zval *value TSRMLS_DC);
+static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member TSRMLS_DC);
 #endif
+

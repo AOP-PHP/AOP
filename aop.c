@@ -135,7 +135,67 @@ PHP_RINIT_FUNCTION(aop)
 }
 
 
+#if ZEND_MODULE_API_NO >= 20100525
+ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, const zend_literal *key TSRMLS_DC) {
+#else
+ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member TSRMLS_DC) {
+#endif
 
+    if (aop_g(count_read_property)>0) {
+        zend_class_entry *ce = NULL;
+        int i;
+        for (i=0;i<aop_g(count_read_property);i++) {
+            property_pointcut *current_pc = aop_g(property_pointcuts_read)[i];
+            if (current_pc->property_name[0]!='*') {
+                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                    continue;
+                }
+            }
+            if (ce==NULL) {
+                ce = Z_OBJCE_P(object);
+            }
+            char *current_class_name;
+            current_class_name = (char *)ce->name;
+
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
+                continue;
+            }
+
+            return NULL;
+
+        }
+    }
+    if (aop_g(count_write_property)>0) {
+        zend_class_entry *ce = NULL;
+        int i;
+        for (i=0;i<aop_g(count_write_property);i++) {
+            property_pointcut *current_pc = aop_g(property_pointcuts_write)[i];
+            if (current_pc->property_name[0]!='*') {
+                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                    continue;
+                }
+            }
+            if (ce==NULL) {
+                ce = Z_OBJCE_P(object);
+            }
+            char *current_class_name;
+            current_class_name = (char *)ce->name;
+
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
+                continue;
+            }
+            return NULL;
+        }
+    }
+
+
+    #if ZEND_MODULE_API_NO >= 20100525
+    return zend_std_get_property_ptr_ptr(object, member, key TSRMLS_CC);
+    #else
+    return zend_std_get_property_ptr_ptr(object, member TSRMLS_CC);
+    #endif
+
+}
 
 #if ZEND_MODULE_API_NO >= 20100525
 ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC) {
@@ -165,11 +225,11 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 
             
             zval **args[2], *zret_ptr;
+            zret_ptr=NULL;
             args[0] = &object;
             args[1] = &member; 
             current_pc->fci.retval_ptr_ptr= &zret_ptr;
             current_pc->fci.params = (zval ***)args;
-            zret_ptr=NULL;
             current_pc->fci.param_count= 2;
             current_pc->fci.size= sizeof(current_pc->fci);
             aop_g(lock_read_property) = 1;
@@ -264,6 +324,9 @@ PHP_MINIT_FUNCTION(aop)
     std_object_handlers.write_property = zend_std_write_property_overload;
     zend_std_read_property = std_object_handlers.read_property;
     std_object_handlers.read_property = zend_std_read_property_overload;
+    
+    zend_std_get_property_ptr_ptr = std_object_handlers.get_property_ptr_ptr;
+    std_object_handlers.get_property_ptr_ptr = zend_std_get_property_ptr_ptr_overload;
 
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
