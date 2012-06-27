@@ -18,10 +18,22 @@ $test->var1++;
 $test->var1--;
 --$test->var1;
 
+$test->var2++;
+++$test->var2;
+$test->var2--;
+--$test->var2;
 
 
 ?>
 --EXPECT--
+READ
+WRITE
+READ
+WRITE
+READ
+WRITE
+READ
+WRITE
 READ
 WRITE
 READ

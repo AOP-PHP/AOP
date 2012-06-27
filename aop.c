@@ -140,8 +140,15 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
 #else
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member TSRMLS_DC) {
 #endif
+    zval **to_return;
 
-    if (aop_g(count_read_property)>0) {
+    #if ZEND_MODULE_API_NO >= 20100525
+    to_return = zend_std_get_property_ptr_ptr(object, member, key TSRMLS_CC);
+    #else
+    to_return = zend_std_get_property_ptr_ptr(object, member TSRMLS_CC);
+    #endif
+
+    if (to_return != NULL && aop_g(count_read_property)>0) {
         zend_class_entry *ce = NULL;
         int i;
         for (i=0;i<aop_g(count_read_property);i++) {
@@ -165,7 +172,7 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
 
         }
     }
-    if (aop_g(count_write_property)>0) {
+    if (to_return != NULL && aop_g(count_write_property)>0) {
         zend_class_entry *ce = NULL;
         int i;
         for (i=0;i<aop_g(count_write_property);i++) {
@@ -189,12 +196,7 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
     }
 
 
-    #if ZEND_MODULE_API_NO >= 20100525
-    return zend_std_get_property_ptr_ptr(object, member, key TSRMLS_CC);
-    #else
-    return zend_std_get_property_ptr_ptr(object, member TSRMLS_CC);
-    #endif
-
+    return to_return;
 }
 
 #if ZEND_MODULE_API_NO >= 20100525
