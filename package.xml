@@ -145,6 +145,9 @@ http://pear.php.net/dtd/package-2.0.xsd">
 					<file role="test" name="004.phpt" />
 					<file role="test" name="005.phpt" />
 					<file role="test" name="006.phpt" />
+					<file role="test" name="007.phpt" />
+					<file role="test" name="008.phpt" />
+					<file role="test" name="009.phpt" />
 				</dir>
 				<dir name="traits" >
 					<file role="test" name="001.phpt" />
