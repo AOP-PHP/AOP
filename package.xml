@@ -132,6 +132,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
 				</dir>
 				<dir name="read_properties" >
 					<file role="test" name="001.phpt" />
+					<file role="test" name="003.phpt" />
 				</dir>
 				<dir name="scope" >
 					<file role="test" name="001.phpt" />
