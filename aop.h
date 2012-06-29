@@ -145,6 +145,7 @@ void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
 void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
+static int strcmp_with_joker_case (char *str_with_jok, char *str, int case_sensitive);
 static int is_static (char *str);
 static int explode_scope_by_pipe (char *partial);
 static int get_scope (char *str);

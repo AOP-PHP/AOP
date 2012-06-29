@@ -32,7 +32,7 @@ var_dump($tracer->getModified());
 
 ?>
 --EXPECT--
-array(2) {
+array(1) {
   [0]=>
   string(4) "Var2"
 }

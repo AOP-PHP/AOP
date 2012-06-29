@@ -45,7 +45,7 @@ var_dump($tracer->getReaded());
 
 ?>
 --EXPECT--
-array(2) {
+array(0) {
 }
 array(2) {
   [0]=>

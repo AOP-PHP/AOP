@@ -154,7 +154,7 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
         for (i=0;i<aop_g(count_read_property);i++) {
             property_pointcut *current_pc = aop_g(property_pointcuts_read)[i];
             if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
                     continue;
                 }
             }
@@ -178,7 +178,7 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
         for (i=0;i<aop_g(count_write_property);i++) {
             property_pointcut *current_pc = aop_g(property_pointcuts_write)[i];
             if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
                     continue;
                 }
             }
@@ -211,7 +211,7 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
         for (i=0;i<aop_g(count_read_property);i++) {
             property_pointcut *current_pc = aop_g(property_pointcuts_read)[i];
             if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
                     continue;
                 }
             }
@@ -263,7 +263,7 @@ ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, 
         for (i=0;i<aop_g(count_write_property);i++) {
             property_pointcut *current_pc = aop_g(property_pointcuts_write)[i];
             if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker(current_pc->property_name,Z_STRVAL_P(member))) {
+                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
                     continue;
                 }
             }
@@ -969,7 +969,8 @@ void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
     }
 }
 
-static int strcmp_with_joker(char *str_with_jok, char *str) {
+
+static int strcmp_with_joker_case(char *str_with_jok, char *str, int case_sensitive) {
     int joker = 0;
     if (str_with_jok[0] == '*') {
         if (str_with_jok[1] == '\0') {
@@ -978,15 +979,31 @@ static int strcmp_with_joker(char *str_with_jok, char *str) {
     }
     if (str_with_jok[0] == '*') {
         if (strlen(str)>strlen(str_with_jok)-1) {
-            return !strcasecmp(str_with_jok+1, str+(strlen(str)-(strlen(str_with_jok)-1)));
+            if (case_sensitive) {
+                return !strcmp(str_with_jok+1, str+(strlen(str)-(strlen(str_with_jok)-1)));
+            } else {
+                return !strcasecmp(str_with_jok+1, str+(strlen(str)-(strlen(str_with_jok)-1)));
+            }
         } else {
             return 0;
         }
     }
     if (str_with_jok[strlen(str_with_jok)-1] == '*') {
-        return !strncasecmp(str_with_jok, str, strlen(str_with_jok)-1);
+        if (case_sensitive) {
+            return !strncmp(str_with_jok, str, strlen(str_with_jok)-1);
+        } else {
+            return !strncasecmp(str_with_jok, str, strlen(str_with_jok)-1);
+        }
     }
-    return !strcasecmp(str_with_jok, str);
+    if (case_sensitive) {
+        return !strcmp(str_with_jok, str);
+    } else {
+        return !strcasecmp(str_with_jok, str);
+    }
+}
+
+static int strcmp_with_joker(char *str_with_jok, char *str) {
+    return strcmp_with_joker_case (str_with_jok, str, 0);
 }
 
 static int is_static (char *str) {
