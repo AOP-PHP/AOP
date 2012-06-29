@@ -20,7 +20,7 @@ Docs Test 7
     }
 
     $evil = new Evil();
-    aop_add_around('MyGoodServices::doStuff', array($evil, 'advice'));
+    aop_add_around('MyGoodServices::doStuff()', array($evil, 'advice'));
 
     $services = new MyGoodServices();
     $services->doStuff('you');

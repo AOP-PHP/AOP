@@ -12,7 +12,7 @@ Docs Test 11
        $args[1] = 'UPDATED $reference';//WILL update the original $reference parameter as it is a reference
     };
 
-    aop_add_before('callMe', $advice);
+    aop_add_before('callMe()', $advice);
 
     $name = "name";
     $reference = "reference";

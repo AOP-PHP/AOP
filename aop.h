@@ -31,7 +31,30 @@
 
 #define AOP_KIND_AROUND 1
 #define AOP_KIND_BEFORE 2
-#define AOP_KIND_AFTER  3
+#define AOP_KIND_AFTER  4
+#define AOP_KIND_READ_PROPERTY 8
+#define AOP_KIND_WRITE_PROPERTY 16
+#define AOP_KIND_PROPERTY 32
+// 8+1+32
+#define AOP_KIND_AROUND_READ_PROPERTY 41
+// 16+1+32
+#define AOP_KIND_AROUND_WRITE_PROPERTY 49
+// 8+2+32
+#define AOP_KIND_BEFORE_READ_PROPERTY 42
+// 16+2+32
+#define AOP_KIND_BEFORE_WRITE_PROPERTY 50
+// 8+4+32
+#define AOP_KIND_AFTER_READ_PROPERTY 44
+// 16+4+32
+#define AOP_KIND_AFTER_WRITE_PROPERTY 52
+
+#if ZEND_MODULE_API_NO >= 20100525
+#define AOP_KEY_D    , const zend_literal *key
+#define AOP_KEY_C    , key
+#else
+#define AOP_KEY_D    
+#define AOP_KEY_C    
+#endif
 
 typedef struct {
     zend_op_array *op;
@@ -43,6 +66,11 @@ typedef struct {
     zend_execute_data *current_execute_data;
     int return_value_used;
     int internal;
+    zval *property;
+    zval *value;
+#if ZEND_MODULE_API_NO >= 20100525
+    const zend_literal *key;
+#endif
 } joinpoint_context;
 
 typedef struct {
@@ -64,23 +92,21 @@ typedef struct {
     zval *object;
 } instance_of_pointcut;
 
+
 typedef struct {
     zend_object std;
     joinpoint_context *context;
     instance_of_pointcut *pc;
     instance_of_pointcut *current_pc;
+    pointcut *current_pointcut;
+    int current_pointcut_index;
+    zval *object;
+    zval *member;
+    zval *value;
+#if ZEND_MODULE_API_NO >= 20100525
+    const zend_literal *key;
+#endif
 }  aopTriggeredJoinpoint_object;
-
-typedef struct {
-    char *class_name;
-    int class_joker;
-    char *property_name;
-    int property_joker;
-    zval *callback;
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic;
-
-} property_pointcut;
 
 #ifdef ZTS
 #include "TSRM.h"
@@ -93,11 +119,11 @@ int overloaded;
 
 int count_write_property;
 int lock_write_property;
-property_pointcut **property_pointcuts_write;
+pointcut **property_pointcuts_write;
 
 int count_read_property;
 int lock_read_property;
-property_pointcut **property_pointcuts_read;
+pointcut **property_pointcuts_read;
 
 
 ZEND_END_MODULE_GLOBALS(aop)
@@ -115,15 +141,13 @@ PHP_RINIT_FUNCTION(aop);
 PHP_FUNCTION(aop_add_around);
 PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
-PHP_FUNCTION(aop_add_final);
-PHP_FUNCTION(aop_add_exception);
-PHP_FUNCTION(aop_add_before_write);
-PHP_FUNCTION(aop_add_before_read);
 
 PHP_METHOD(aopTriggeredJoinpoint, getArguments);
+PHP_METHOD(aopTriggeredJoinpoint, getPropertyName);
 PHP_METHOD(aopTriggeredJoinpoint, setArguments);
 PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice);
 PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue);
+PHP_METHOD(aopTriggeredJoinpoint, getAssignedValue);
 PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue);
 PHP_METHOD(aopTriggeredJoinpoint, getPointcut);
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject);
@@ -154,12 +178,13 @@ static char * get_method_part (char *str);
 void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 static int pointcut_match_zend_class_entry (char *pc_class_name, int pc_class_jok, zend_class_entry *ce);
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func);
-#if ZEND_MODULE_API_NO >= 20100525
-static zval * (*zend_std_read_property)(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
-static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member, const zend_literal *key TSRMLS_DC);
-#else
-static zval * (*zend_std_read_property)(zval *object, zval *member, int type TSRMLS_DC);
+#if ZEND_MODULE_API_NO < 20100525
 static void (*zend_std_write_property)(zval *object, zval *member, zval *value TSRMLS_DC);
-static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member TSRMLS_DC);
 #endif
+static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
+static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
+static void test_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D);
+static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
+static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
+static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 

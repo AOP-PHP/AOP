@@ -24,7 +24,7 @@ Docs Test 12
        $joinpoint->setArguments($newArgs);
     };
 
-    aop_add_before('callMe', $advice);
+    aop_add_before('callMe()', $advice);
 
     $name = "name";
     $reference = "reference";

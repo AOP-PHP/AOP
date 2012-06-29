@@ -28,7 +28,7 @@ Docs Test 8
         echo "]";//do stuff after
     };
 
-    aop_add_around('DivideServices::divide', $advice);
+    aop_add_around('DivideServices::divide()', $advice);
 
     $services = new DivideServices();
     $services->divide(4, 2);

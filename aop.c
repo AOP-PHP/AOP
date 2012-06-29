@@ -40,8 +40,6 @@ static zend_function_entry aop_functions[] =
     PHP_FE(aop_add_around, arginfo_aop_add)
     PHP_FE(aop_add_before,  arginfo_aop_add)
     PHP_FE(aop_add_after, arginfo_aop_add)
-    PHP_FE(aop_add_before_write, arginfo_aop_add)
-    PHP_FE(aop_add_before_read, arginfo_aop_add)
     {NULL, NULL, NULL}
 };
 
@@ -75,8 +73,8 @@ zend_object_handlers aopTriggeredJoinpoint_object_handlers;
 void aop_free_storage(void *object TSRMLS_DC)
 {
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)object;
-    zend_hash_destroy(obj->std.properties);
-    FREE_HASHTABLE(obj->std.properties);
+//    zend_hash_destroy(obj->std.properties);
+//    FREE_HASHTABLE(obj->std.properties);
     efree(obj);
 }
 
@@ -88,8 +86,8 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
     memset(obj, 0, sizeof(aopTriggeredJoinpoint_object));
     obj->std.ce = type;
 
-    ALLOC_HASHTABLE(obj->std.properties);
-    zend_hash_init(obj->std.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+//    ALLOC_HASHTABLE(obj->std.properties);
+//    zend_hash_init(obj->std.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
 
     retval.handle = zend_objects_store_put(obj, NULL,
                                            aop_free_storage, NULL TSRMLS_CC);
@@ -103,9 +101,11 @@ ZEND_END_ARG_INFO()
 
 static const zend_function_entry aop_methods[] = {
     PHP_ME(aopTriggeredJoinpoint, getArguments, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, getPropertyName, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, setArguments, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
+    PHP_ME(aopTriggeredJoinpoint, getAssignedValue, arginfo_aop_args_returnbyref, 0)
     PHP_ME(aopTriggeredJoinpoint, setReturnedValue, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, getPointcut, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, getTriggeringObject, NULL, 0)
@@ -135,26 +135,18 @@ PHP_RINIT_FUNCTION(aop)
 }
 
 
-#if ZEND_MODULE_API_NO >= 20100525
-ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, const zend_literal *key TSRMLS_DC) {
-#else
-ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member TSRMLS_DC) {
-#endif
+ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
     zval **to_return;
 
-    #if ZEND_MODULE_API_NO >= 20100525
-    to_return = zend_std_get_property_ptr_ptr(object, member, key TSRMLS_CC);
-    #else
-    to_return = zend_std_get_property_ptr_ptr(object, member TSRMLS_CC);
-    #endif
+    to_return = zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
 
     if (to_return != NULL && aop_g(count_read_property)>0) {
         zend_class_entry *ce = NULL;
         int i;
         for (i=0;i<aop_g(count_read_property);i++) {
-            property_pointcut *current_pc = aop_g(property_pointcuts_read)[i];
-            if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
+            pointcut *current_pc = aop_g(property_pointcuts_read)[i];
+            if (current_pc->method[0]!='*') {
+                if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     continue;
                 }
             }
@@ -164,7 +156,7 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
             char *current_class_name;
             current_class_name = (char *)ce->name;
 
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
                 continue;
             }
 
@@ -176,9 +168,9 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
         zend_class_entry *ce = NULL;
         int i;
         for (i=0;i<aop_g(count_write_property);i++) {
-            property_pointcut *current_pc = aop_g(property_pointcuts_write)[i];
-            if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
+            pointcut *current_pc = aop_g(property_pointcuts_write)[i];
+            if (current_pc->method[0]!='*') {
+                if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     continue;
                 }
             }
@@ -188,7 +180,7 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
             char *current_class_name;
             current_class_name = (char *)ce->name;
 
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
                 continue;
             }
             return NULL;
@@ -199,19 +191,14 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
     return to_return;
 }
 
-#if ZEND_MODULE_API_NO >= 20100525
-ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC) {
-#else
-ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type TSRMLS_DC) {
-#endif
-
+ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
     if (aop_g(count_read_property)>0 && !aop_g(lock_read_property)) {
         zend_class_entry *ce = NULL;
         int i;
         for (i=0;i<aop_g(count_read_property);i++) {
-            property_pointcut *current_pc = aop_g(property_pointcuts_read)[i];
-            if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
+            pointcut *current_pc = aop_g(property_pointcuts_read)[i];
+            if (current_pc->method[0]!='*') {
+                if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     continue;
                 }
             }
@@ -221,7 +208,7 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
             char *current_class_name;
             current_class_name = (char *)ce->name;
 
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
                 continue;
             }
 
@@ -245,62 +232,83 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 
 
 
-#if ZEND_MODULE_API_NO >= 20100525
-    return zend_std_read_property(object, member, type, key TSRMLS_CC);
-#else
-    return zend_std_read_property(object, member, type TSRMLS_CC);
-#endif
+    return zend_std_read_property(object, member, type AOP_KEY_C TSRMLS_CC);
 }
 
-#if ZEND_MODULE_API_NO >= 20100525
-ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC) {
-#else
-ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value TSRMLS_DC) {
-#endif
-    if (aop_g(count_write_property)>0 && !aop_g(lock_write_property)) {
-        zend_class_entry *ce = NULL;
-        int i;
-        for (i=0;i<aop_g(count_write_property);i++) {
-            property_pointcut *current_pc = aop_g(property_pointcuts_write)[i];
-            if (current_pc->property_name[0]!='*') {
-                if (!strcmp_with_joker_case(current_pc->property_name,Z_STRVAL_P(member), 1)) {
-                    continue;
+
+static void test_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D) {
+    if (current_pointcut_index==aop_g(count_write_property)) {
+        TSRMLS_FETCH()
+        zend_std_write_property(object,member,value AOP_KEY_C TSRMLS_CC);
+    } else {
+            pointcut *current_pc = aop_g(property_pointcuts_write)[current_pointcut_index];
+            zend_class_entry *ce = NULL;
+            if (current_pc->method[0]!='*') {
+                if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
+                    test_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
+                    return ;
                 }
             }
-            if (ce==NULL) {
-                ce = Z_OBJCE_P(object);
-            }
+            ce = Z_OBJCE_P(object);
             char *current_class_name;
             current_class_name = (char *)ce->name;
 
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_joker, ce)) {
-                continue;
+            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
+                    test_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
+                    return ;
             }
-
+            zval *aop_object;
+            MAKE_STD_ZVAL(aop_object);
+            Z_TYPE_P(aop_object) = IS_OBJECT;
+            (aop_object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
+            aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            obj->current_pointcut = current_pc;
+            obj->current_pointcut_index = current_pointcut_index; 
+            obj->object = object;
+            obj->member = member;
+            obj->value = value;
+            #if ZEND_MODULE_API_NO >= 20100525
+            obj->key = key;
+            #endif
             
-            zval **args[3], *zret_ptr;
-            args[0] = &object;
-            args[1] = &member; 
-            args[2] = &value;
-            current_pc->fci.retval_ptr_ptr= &zret_ptr;
-            current_pc->fci.params = (zval ***)args;
-            zret_ptr=NULL;
-            current_pc->fci.param_count= 3;
-            current_pc->fci.size= sizeof(current_pc->fci);
-            aop_g(lock_write_property) = 1;
-            if (zend_call_function(&(current_pc->fci), &(current_pc->fcic) TSRMLS_CC) == FAILURE) {
-                zend_error(E_ERROR, "Problem in AOP Callback");
+            if (current_pc->kind_of_advice & AOP_KIND_BEFORE) {
+                execute_pointcut (current_pc, aop_object);
             }
-            aop_g(lock_write_property) = 0;
-
-        }
+            if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
+                execute_pointcut (current_pc, aop_object);
+            } else {
+                test_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
+            }
+            if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
+                execute_pointcut (current_pc, aop_object);
+            }
+            Z_DELREF_P(aop_object);
     }
-    #if ZEND_MODULE_API_NO >= 20100525
-    zend_std_write_property(object,member,value,key TSRMLS_CC);
-    #else
-    zend_std_write_property(object,member,value TSRMLS_CC);
-    #endif
 }
+
+static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg) {
+    zval *args[1], *zret_ptr;
+    args[0] = (zval *)&(arg);
+    zret_ptr = NULL;
+    pointcut_to_execute->fci.param_count = 1;
+    pointcut_to_execute->fci.size = sizeof(pointcut_to_execute->fci);
+    pointcut_to_execute->fci.retval_ptr_ptr = &zret_ptr;
+    pointcut_to_execute->fci.params = (zval ***)args;
+    if (zend_call_function(&(pointcut_to_execute->fci), &(pointcut_to_execute->fcic) TSRMLS_CC) == FAILURE) {
+        zend_error(E_ERROR, "Problem in AOP Callback");
+    }
+}
+
+ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value AOP_KEY_D TSRMLS_DC) {
+    if (aop_g(count_write_property)>0) {
+        aop_g(lock_write_property)=1;
+        test_pointcut_and_execute(0, object, member, value AOP_KEY_C);
+        aop_g(lock_write_property)=0;
+    } else {
+        zend_std_write_property(object,member,value AOP_KEY_C TSRMLS_CC);
+    }
+}
+
 
 PHP_MINIT_FUNCTION(aop)
 {
@@ -318,6 +326,12 @@ PHP_MINIT_FUNCTION(aop)
     REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE", AOP_KIND_BEFORE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER", AOP_KIND_AFTER, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND", AOP_KIND_AROUND, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_WRITE_PROPERTY", AOP_KIND_AROUND_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_READ_PROPERTY", AOP_KIND_AROUND_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE_WRITE_PROPERTY", AOP_KIND_BEFORE_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE_READ_PROPERTY", AOP_KIND_BEFORE_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AFTER_WRITE_PROPERTY", AOP_KIND_AFTER_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AFTER_READ_PROPERTY", AOP_KIND_AFTER_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
 
 
 #if ZEND_MODULE_API_NO < 20100525
@@ -337,8 +351,19 @@ PHP_MINIT_FUNCTION(aop)
     return SUCCESS;
 }
 
+PHP_METHOD(aopTriggeredJoinpoint, getPropertyName){
+    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (obj->member!=NULL) {
+        RETURN_ZVAL(obj->member, 1, 0);
+        return; 
+    }
+    RETURN_NULL();
+}
 PHP_METHOD(aopTriggeredJoinpoint, getArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        zend_error(E_ERROR, "getArguments  is not available while using on property"); 
+    }
     if (obj->context->args != NULL) {
         RETURN_ZVAL(obj->context->args, 1, 0);
     }   
@@ -347,6 +372,9 @@ PHP_METHOD(aopTriggeredJoinpoint, getArguments){
 
 PHP_METHOD(aopTriggeredJoinpoint, setArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        zend_error(E_ERROR, "setArguments  is not available while using on property"); 
+    }
     zval *params; 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &params) == FAILURE) {
         zend_error(E_ERROR, "setArguments expects an array as its first argument");
@@ -359,23 +387,20 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments){
 
 PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    instance_of_pointcut *ipc = obj->current_pc;
-    pointcut *pc = ipc->pc;
-    RETURN_LONG(pc->kind_of_advice);
+    RETURN_LONG(obj->current_pointcut->kind_of_advice);
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, getPointcut){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    instance_of_pointcut *ipc = obj->current_pc;
-    pointcut *pc = ipc->pc;
-    RETURN_STRING(pc->selector, 1);
+    RETURN_STRING(obj->current_pointcut->selector, 1);
 
 }
 PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    instance_of_pointcut *ipc = obj->current_pc;
-    pointcut *pc = ipc->pc;
-    if (pc->kind_of_advice==AOP_KIND_BEFORE) {
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        zend_error(E_ERROR, "getReturnedValue is not available while using on property"); 
+    }
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_BEFORE) {
         zend_error(E_ERROR, "getReturnedValue is not available while using aop_add_before");
     }
     if (obj->context->ret != NULL) {
@@ -385,10 +410,24 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
     }
     RETURN_NULL();
 }
+PHP_METHOD(aopTriggeredJoinpoint, getAssignedValue){
+    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (obj->value!=NULL) {
+        zval_ptr_dtor (return_value_ptr);
+        *return_value_ptr = obj->value;
+        Z_ADDREF_P(obj->value);
+    } else {
+        RETURN_NULL();
+    }
+    
+}
 
 PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
     zval *ret;
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        zend_error(E_ERROR, "setReturnedValue is not available while using on property"); 
+    }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
                 zend_error(E_ERROR, "Error");
         return;
@@ -400,10 +439,18 @@ PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (obj->context->currentThis != NULL) {
-        RETURN_ZVAL(obj->context->currentThis, 1, 0);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        if (obj->object!=NULL) {
+            RETURN_ZVAL(obj->object, 1, 0);
+        }
+        RETURN_NULL();
+    } else {
+        if (obj->context->currentThis != NULL) {
+            RETURN_ZVAL(obj->context->currentThis, 1, 0);
+        }
+        RETURN_NULL();
     }
-    RETURN_NULL();
+    
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
@@ -424,6 +471,9 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        zend_error(E_ERROR, "getTriggeringMethodName is not available while using on property"); 
+    }
     zend_execute_data *data = obj->context->ex;
     zend_function *curr_func;
     if (data == NULL) {
@@ -435,35 +485,57 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
 
 PHP_METHOD(aopTriggeredJoinpoint, process){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    exec(obj TSRMLS_CC);
-    if (!EG(exception)) {
-        if (obj->context->ret != NULL) {
-            RETURN_ZVAL(obj->context->ret, 1, 0);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        #if ZEND_MODULE_API_NO >= 20100525
+        const zend_literal *key = obj->value;
+        #endif
+        test_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->value AOP_KEY_C);
+    } else {
+        exec(obj TSRMLS_CC);
+        if (!EG(exception)) {
+            if (obj->context->ret != NULL) {
+                RETURN_ZVAL(obj->context->ret, 1, 0);
+            } else {
+                RETURN_NULL();
+            }
         } else {
             RETURN_NULL();
         }
-    } else {
-        RETURN_NULL();
     }
 }
 
-static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
-    pointcut *pc;
-    int count;
-    aop_g(count_pcs)++;
-    count=aop_g(count_pcs)-1;
-    if (aop_g(count_pcs)==1) {
-        aop_g(pcs) = emalloc(sizeof(pointcut *));
+static void add_pointcut_property (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
+    type = type|AOP_KIND_PROPERTY;
+    if (selector_len>4 && !strncmp("read",selector, 4)) {
+        aop_add_read(estrndup(selector+5, selector_len-5), fci, fcic, type);
+    } else if (selector_len>5 && !strncmp("write",selector, 5)) {
+        aop_add_write(estrndup(selector+6,selector_len-6), fci, fcic, type);
     } else {
-        aop_g(pcs) = erealloc(aop_g(pcs),aop_g(count_pcs)*sizeof(pointcut *));
+        aop_add_read(selector, fci, fcic, type);
+        aop_add_write(selector, fci, fcic, type);
     }
-    pc = emalloc(sizeof(pointcut));
-    pc->selector = selector;
-    pc->fci = fci;
-    pc->fcic = fcic;
-    pc->kind_of_advice = type;
-    parse_pointcut(&pc);
-    aop_g(pcs)[count] = pc;
+}
+static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
+    if (selector_len>2 && (selector[selector_len-2]!='(' || selector[selector_len-1]!=')')) {
+        add_pointcut_property(fci, fcic, selector, selector_len, type TSRMLS_CC);
+    } else {
+        pointcut *pc;
+        int count;
+        aop_g(count_pcs)++;
+        count=aop_g(count_pcs)-1;
+        if (aop_g(count_pcs)==1) {
+            aop_g(pcs) = emalloc(sizeof(pointcut *));
+        } else {
+            aop_g(pcs) = erealloc(aop_g(pcs),aop_g(count_pcs)*sizeof(pointcut *));
+        }
+        pc = emalloc(sizeof(pointcut));
+        pc->selector = estrdup(selector);
+        pc->fci = fci;
+        pc->fcic = fcic;
+        pc->kind_of_advice = type;
+        parse_pointcut(&pc);
+        aop_g(pcs)[count] = pc;
+    }
 }
 
 static void parse_pointcut (pointcut **pc) {
@@ -476,7 +548,7 @@ static void parse_pointcut (pointcut **pc) {
     (*pc)->static_state = 2;
     (*pc)->method_jok = 0;
     (*pc)->class_jok = 0;
-    strval = estrdup ((*pc)->selector);
+    strval = estrndup ((*pc)->selector, strlen((*pc)->selector)-2);
     php_strtolower(strval, strlen(strval));
     (*pc)->scope = get_scope(strval);
     (*pc)->static_state = is_static(strval);
@@ -502,36 +574,20 @@ static void parse_pointcut (pointcut **pc) {
     }
 }
 
-ZEND_FUNCTION(aop_add_before_read)
-{
+static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
+    type = type|AOP_KIND_READ_PROPERTY;
     int nb_char;
     int count;
     char * temp;
-    char *selector;
-    int selector_len;
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector ,&selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "Bad params");
-        return;
-    }
-    if (fci.function_name) {
-        Z_ADDREF_P(fci.function_name);
-    }
-    if (fci.object_ptr) {
-        Z_ADDREF_P(fci.object_ptr);
-    }
-
-    property_pointcut *pc;
+    pointcut *pc;
     aop_g(count_read_property)++;
     count=aop_g(count_read_property)-1;
     if (aop_g(count_read_property)==1) {
-        aop_g(property_pointcuts_read) = emalloc(sizeof(property_pointcut *));
+        aop_g(property_pointcuts_read) = emalloc(sizeof(pointcut *));
     } else {
-        aop_g(property_pointcuts_read) = erealloc(aop_g(property_pointcuts_read),aop_g(count_read_property)*sizeof(property_pointcut *));
+        aop_g(property_pointcuts_read) = erealloc(aop_g(property_pointcuts_read),aop_g(count_read_property)*sizeof(pointcut *));
     }
-    pc = emalloc(sizeof(property_pointcut));
+    pc = emalloc(sizeof(pointcut));
 
 
     nb_char=3;
@@ -550,10 +606,10 @@ ZEND_FUNCTION(aop_add_before_read)
         zend_error(E_ERROR, "You must specify a class and a property");
     }
 
-    pc->property_name = estrdup(temp+nb_char);
+    pc->method = estrdup(temp+nb_char);
     pc->class_name = estrndup(selector, temp-selector);
-
-    pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
+    pc->kind_of_advice = type;
+    pc->class_jok =  (strchr(pc->class_name, '*')!=NULL);
 
     pc->fci = fci;
     pc->fcic = fcic;
@@ -562,36 +618,21 @@ ZEND_FUNCTION(aop_add_before_read)
 
 }
 
-ZEND_FUNCTION(aop_add_before_write)
-{
+static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
+    type = type|AOP_KIND_WRITE_PROPERTY;
     int nb_char;
     int count;
     char * temp;
-    char *selector;
-    int selector_len;
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector ,&selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "Bad params");
-        return;
-    }
-
-    if (fci.function_name) {
-        Z_ADDREF_P(fci.function_name);
-    }
-    if (fci.object_ptr) {
-        Z_ADDREF_P(fci.object_ptr);
-    }
-    property_pointcut *pc;
+    pointcut *pc;
     aop_g(count_write_property)++;
     count=aop_g(count_write_property)-1;
     if (aop_g(count_write_property)==1) {
-        aop_g(property_pointcuts_write) = emalloc(sizeof(property_pointcut *));
+        aop_g(property_pointcuts_write) = emalloc(sizeof(pointcut *));
     } else {
-        aop_g(property_pointcuts_write) = erealloc(aop_g(property_pointcuts_write),aop_g(count_write_property)*sizeof(property_pointcut *));
+        aop_g(property_pointcuts_write) = erealloc(aop_g(property_pointcuts_write),aop_g(count_write_property)*sizeof(pointcut *));
     }
-    pc = emalloc(sizeof(property_pointcut));
+    pc = emalloc(sizeof(pointcut));
     nb_char=3;
     temp = strstr(selector, "::$");
     if (temp==NULL) {
@@ -608,14 +649,13 @@ ZEND_FUNCTION(aop_add_before_write)
         zend_error(E_ERROR, "You must specify a class and a property");
     }
 
-    pc->property_name = estrdup(temp+nb_char);
+    pc->method = estrdup(temp+nb_char);
     pc->class_name = estrndup(selector, temp-selector);
-
-    pc->class_joker =  (strchr(pc->class_name, '*')!=NULL);
+    pc->kind_of_advice = type;
+    pc->class_jok =  (strchr(pc->class_name, '*')!=NULL);
 
     pc->fci = fci;
     pc->fcic = fcic;
-
     aop_g(property_pointcuts_write)[count]=pc;
 
 }
@@ -736,6 +776,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
         if (pointcut_match_zend_function(aop_g(pcs)[i], curr_func)) {
             if (context == NULL) {
                 context = malloc(sizeof (joinpoint_context));
+                context->property = NULL;
                 context->op = ops;
                 context->ex = EG(current_execute_data);
                 context->currentThis = EG(This);
@@ -755,6 +796,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
             obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(object TSRMLS_CC);
             obj->context = context;
             obj->pc = previous_ipc; 
+            obj->current_pointcut = aop_g(pcs)[i];
             previous_ipc = emalloc(sizeof(instance_of_pointcut));
             previous_ipc->pc = aop_g(pcs)[i];
             previous_ipc->previous_pc = previous_ipc->pc;
@@ -811,7 +853,7 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     if (zend_call_function(&(pc->pc->fci), &(pc->pc->fcic) TSRMLS_CC) == FAILURE) {
         zend_error(E_ERROR, "Problem in AOP Callback");
     }
-    if (!EG(exception) && pc->pc->kind_of_advice == AOP_KIND_BEFORE) {
+    if (!EG(exception) && pc->pc->kind_of_advice & AOP_KIND_BEFORE) {
         exec(obj TSRMLS_CC);
     }
     if (!EG(exception) && pc->pc->kind_of_advice != AOP_KIND_BEFORE && zret_ptr != NULL) {
@@ -824,145 +866,145 @@ void joinpoint_execute (instance_of_pointcut *pc) {
 
 void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
     if (obj->pc == NULL) {
-        zend_execute_data *prev_data;
-        zend_execute_data execute_data;
-        zend_op **original_opline_ptr;
-        zend_op_array *prev_op;
-        HashTable *calling_symbol_table;
-        zval *prev_this;
-        zend_class_entry *current_scope;
-        unsigned int arg_count, i;
-        zval ***params;
-        zval **return_value_ptr;
+            zend_execute_data *prev_data;
+            zend_execute_data execute_data;
+            zend_op **original_opline_ptr;
+            zend_op_array *prev_op;
+            HashTable *calling_symbol_table;
+            zval *prev_this;
+            zend_class_entry *current_scope;
+            unsigned int arg_count, i;
+            zval ***params;
+            zval **return_value_ptr;
 
-        //Save previous context
-        prev_op = EG(active_op_array);
-        prev_data = EG(current_execute_data);
-        original_opline_ptr = EG(opline_ptr);
-        calling_symbol_table = EG(active_symbol_table);
-        current_scope = EG(scope);
+            //Save previous context
+            prev_op = EG(active_op_array);
+            prev_data = EG(current_execute_data);
+            original_opline_ptr = EG(opline_ptr);
+            calling_symbol_table = EG(active_symbol_table);
+            current_scope = EG(scope);
 
-        prev_this = EG(This);
+            prev_this = EG(This);
 
-        EG(active_op_array) = (zend_op_array *) obj->context->op;
-        EG(current_execute_data) = obj->context->ex;
-        if (obj->context->internal) {
-            execute_data = *obj->context->current_execute_data;
-        } else {
-            execute_data = *EG(current_execute_data);
-        }
-        EG(This) = obj->context->currentThis;
-        EG(scope) = obj->context->scope;
-        arg_count=0;
-        if (Z_TYPE_P(obj->context->args) == IS_ARRAY) {
-            HashPosition pos;
-            zval ** temp = NULL;
-            zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(obj->context->args), &pos);
-            while (zend_hash_get_current_data_ex(Z_ARRVAL_P(obj->context->args), (void **)&temp, &pos) == SUCCESS) {
-                arg_count++;
-                if (arg_count == 1) {
-                    params = emalloc(sizeof(zval **));
-                } else {
-                    params = erealloc(params, arg_count*sizeof(zval **));
-                }
-                params[arg_count-1] = temp;
-                zend_hash_move_forward_ex(Z_ARRVAL_P(obj->context->args), &pos);
-            }
-        }
-		if (arg_count>0) {
-            //Copy from zend_call_function
-			ZEND_VM_STACK_GROW_IF_NEEDED((int) arg_count + 1);
-			for (i=0; i<arg_count; i++) {
-				zval *param;
-				if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-					if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
-						zval *new_zval;
-		
-						if (
-						    !ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-							if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
-								zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
-								zend_vm_stack_clear_multiple(TSRMLS_C);
-							}
-		
-							zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
-								i+1,
-								EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
-								EX(function_state).function->common.scope ? "::" : "",
-								EX(function_state).function->common.function_name);
-							return;
-						}
-		
-						ALLOC_ZVAL(new_zval);
-						*new_zval = **params[i];
-						zval_copy_ctor(new_zval);
-						Z_SET_REFCOUNT_P(new_zval, 1);
-						Z_DELREF_PP(params[i]);
-						*params[i] = new_zval;
-					}
-					Z_ADDREF_PP(params[i]);
-					Z_SET_ISREF_PP(params[i]);
-					param = *params[i];
-				} else if (PZVAL_IS_REF(*params[i]) &&
-				           (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
-					ALLOC_ZVAL(param);
-					*param = **(params[i]);
-					INIT_PZVAL(param);
-					zval_copy_ctor(param);
-				} else if (*params[i] != &EG(uninitialized_zval)) {
-					Z_ADDREF_PP(params[i]);
-					param = *params[i];
-				} else {
-					ALLOC_ZVAL(param);
-					*param = **(params[i]);
-					INIT_PZVAL(param);
-				}
-				zend_vm_stack_push_nocheck(param TSRMLS_CC);
-			}
-			EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
-			zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
-		}    
-
-        aop_g(overloaded)=0;
-        if (obj->context->internal) {
-            if (_zend_execute_internal) {
-                _zend_execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
+            EG(active_op_array) = (zend_op_array *) obj->context->op;
+            EG(current_execute_data) = obj->context->ex;
+            if (obj->context->internal) {
+                execute_data = *obj->context->current_execute_data;
             } else {
-                execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
+                execute_data = *EG(current_execute_data);
             }
-            //Copy from execute_internal
-            #if ZEND_MODULE_API_NO >= 20100525
-            return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.var)).var.ptr;
-            #else
-            return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.u.var)).var.ptr;
-            #endif
-            if (!EG(exception)) {
-                if (return_value_ptr && *return_value_ptr) {
-                    obj->context->ret = *return_value_ptr;
-                }
-            } 
-        } else {
-            _zend_execute(EG(active_op_array) TSRMLS_CC);
-        }
-        if (arg_count) {
-            zend_vm_stack_clear_multiple(TSRMLS_C);
-        }
-        aop_g(overloaded)=1;
-        //Take previous context
-        EG(This) = prev_this;
-        EG(opline_ptr) = original_opline_ptr;
-        EG(active_op_array) = (zend_op_array *) prev_op;
-        EG(current_execute_data) = prev_data;
-        EG(active_symbol_table) = calling_symbol_table;
-        EG(scope)=current_scope;
-        //Only if we do not have exception
-        if (!EG(exception)) {
-            if (!obj->context->internal) {
-                if (EG(return_value_ptr_ptr)) {
-                    obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
+            EG(This) = obj->context->currentThis;
+            EG(scope) = obj->context->scope;
+            arg_count=0;
+            if (Z_TYPE_P(obj->context->args) == IS_ARRAY) {
+                HashPosition pos;
+                zval ** temp = NULL;
+                zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(obj->context->args), &pos);
+                while (zend_hash_get_current_data_ex(Z_ARRVAL_P(obj->context->args), (void **)&temp, &pos) == SUCCESS) {
+                    arg_count++;
+                    if (arg_count == 1) {
+                        params = emalloc(sizeof(zval **));
+                    } else {
+                        params = erealloc(params, arg_count*sizeof(zval **));
+                    }
+                    params[arg_count-1] = temp;
+                    zend_hash_move_forward_ex(Z_ARRVAL_P(obj->context->args), &pos);
                 }
             }
-        }
+            if (arg_count>0) {
+                //Copy from zend_call_function
+                ZEND_VM_STACK_GROW_IF_NEEDED((int) arg_count + 1);
+                for (i=0; i<arg_count; i++) {
+                    zval *param;
+                    if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+                        if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
+                            zval *new_zval;
+            
+                            if (
+                                !ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+                                        if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
+                                            zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
+                                            zend_vm_stack_clear_multiple(TSRMLS_C);
+                                        }
+                
+                                        zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
+                                        i+1,
+                                        EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
+                                        EX(function_state).function->common.scope ? "::" : "",
+                                        EX(function_state).function->common.function_name);
+                                    return;
+                                }
+                
+                                ALLOC_ZVAL(new_zval);
+                                *new_zval = **params[i];
+                                zval_copy_ctor(new_zval);
+                                Z_SET_REFCOUNT_P(new_zval, 1);
+                                Z_DELREF_PP(params[i]);
+                                *params[i] = new_zval;
+                            }
+                            Z_ADDREF_PP(params[i]);
+                            Z_SET_ISREF_PP(params[i]);
+                            param = *params[i];
+                        } else if (PZVAL_IS_REF(*params[i]) &&
+                                   (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
+                            ALLOC_ZVAL(param);
+                            *param = **(params[i]);
+                            INIT_PZVAL(param);
+                            zval_copy_ctor(param);
+                        } else if (*params[i] != &EG(uninitialized_zval)) {
+                            Z_ADDREF_PP(params[i]);
+                            param = *params[i];
+                        } else {
+                            ALLOC_ZVAL(param);
+                            *param = **(params[i]);
+                            INIT_PZVAL(param);
+                        }
+                        zend_vm_stack_push_nocheck(param TSRMLS_CC);
+                    }
+                    EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+                    zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
+                }    
+
+                aop_g(overloaded)=0;
+                if (obj->context->internal) {
+                    if (_zend_execute_internal) {
+                        _zend_execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
+                    } else {
+                        execute_internal(obj->context->current_execute_data, 1 TSRMLS_CC);
+                    }
+                    //Copy from execute_internal
+                    #if ZEND_MODULE_API_NO >= 20100525
+                    return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.var)).var.ptr;
+                    #else
+                    return_value_ptr = &(*(temp_variable *)((char *) obj->context->current_execute_data->Ts + obj->context->current_execute_data->opline->result.u.var)).var.ptr;
+                    #endif
+                    if (!EG(exception)) {
+                        if (return_value_ptr && *return_value_ptr) {
+                            obj->context->ret = *return_value_ptr;
+                        }
+                    } 
+                } else {
+                    _zend_execute(EG(active_op_array) TSRMLS_CC);
+                }
+                if (arg_count) {
+                    zend_vm_stack_clear_multiple(TSRMLS_C);
+                }
+                aop_g(overloaded)=1;
+                //Take previous context
+                EG(This) = prev_this;
+                EG(opline_ptr) = original_opline_ptr;
+                EG(active_op_array) = (zend_op_array *) prev_op;
+                EG(current_execute_data) = prev_data;
+                EG(active_symbol_table) = calling_symbol_table;
+                EG(scope)=current_scope;
+                //Only if we do not have exception
+                if (!EG(exception)) {
+                    if (!obj->context->internal) {
+                        if (EG(return_value_ptr_ptr)) {
+                            obj->context->ret = (zval *)*EG(return_value_ptr_ptr);
+                        }
+                    }
+                }
     } else {
         instance_of_pointcut *pc = obj->pc;
         joinpoint_execute(pc);        

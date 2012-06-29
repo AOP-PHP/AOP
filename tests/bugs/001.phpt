@@ -10,7 +10,7 @@ class A {
 	}
 }
 
-aop_add_around("A::test", function ($pObj) { 
+aop_add_around("A::test()", function ($pObj) { 
 	echo $pObj->getTriggeringMethodName().'|'.$pObj->getTriggeringMethodName();
 });
 $test = new A();

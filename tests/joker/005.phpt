@@ -17,7 +17,7 @@ class AECT {
 	}
 }
 
-aop_add_around("test\\truc\*::admin*", function ($pObj) {return "[".$pObj->process()."]";});
+aop_add_around("test\\truc\*::admin*()", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new AECT();
 echo $test->adminTest();
 echo $test->adminTest2();

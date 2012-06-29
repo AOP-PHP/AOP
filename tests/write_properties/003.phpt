@@ -6,16 +6,20 @@ Write Property Selector -> ->$ :: ::$
 class Tracer {
     private $_modified = array ();
 
-    public function touch1 ($pObject, $pVarName, $pValue) {
+    public function touch1 ($pObject) {
+        $pVarName = $pObject->getPropertyName();
         $this->_modified[] = $pVarName.'1';
     }
-    public function touch2 ($pObject, $pVarName, $pValue) {
+    public function touch2 ($pObject) {
+        $pVarName = $pObject->getPropertyName();
         $this->_modified[] = $pVarName.'2';
     }
-    public function touch3 ($pObject, $pVarName, $pValue) {
+    public function touch3 ($pObject) {
+        $pVarName = $pObject->getPropertyName();
         $this->_modified[] = $pVarName.'3';
     }
-    public function touch4 ($pObject, $pVarName, $pValue) {
+    public function touch4 ($pObject) {
+        $pVarName = $pObject->getPropertyName();
         $this->_modified[] = $pVarName.'4';
     }
     public function getModified () {
@@ -30,12 +34,10 @@ class A {
 
 
 $tracer = new Tracer ();
-
-aop_add_before_write("A::*", array ($tracer, 'touch1'));
-aop_add_before_write("A->*", array ($tracer, 'touch2'));
-aop_add_before_write("A::$*", array ($tracer, 'touch3'));
-aop_add_before_write("A->$*", array ($tracer, 'touch4'));
-
+aop_add_before("write A::*", array ($tracer, 'touch1'));
+aop_add_before("write A->*", array ($tracer, 'touch2'));
+aop_add_before("write A::$*", array ($tracer, 'touch3'));
+aop_add_before("write A->$*", array ($tracer, 'touch4'));
 $test = new A();
 $test->var1 = 'test';
 $test->var2 = 'test2';

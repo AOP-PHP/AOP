@@ -6,8 +6,8 @@ Write Property Test
 class Tracer {
     private $_modified = array ();
 
-    public function touch ($pObject, $pVarName, $pValue) {
-        $this->_modified[] = $pVarName;
+    public function touch ($pObject) {
+        $this->_modified[] = $pObject->getPropertyName();
     }
     public function getModified () {
         return $this->_modified;
@@ -22,7 +22,7 @@ class A {
 
 $tracer = new Tracer ();
 
-aop_add_before_write("A::*", array ($tracer, 'touch'));
+aop_add_before("write A::*", array ($tracer, 'touch'));
 
 $test = new A();
 $test->var1 = 'test';

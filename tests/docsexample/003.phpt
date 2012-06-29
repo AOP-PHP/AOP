@@ -2,7 +2,7 @@
 Internal Return
 --FILE--
 <?php
-aop_add_after('str_replace',function ($pObj) {
+aop_add_after('str_replace()',function ($pObj) {
     var_dump($pObj->getReturnedValue());
 });
 $return = str_replace('test','test','test');

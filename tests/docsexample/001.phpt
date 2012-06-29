@@ -15,7 +15,7 @@ $advice = function () {
     echo "I was called before doing stuff...";
 };
 
-aop_add_before('MyServices::doStuff', $advice);
+aop_add_before('MyServices::doStuff()', $advice);
 
 $services = new MyServices();
 $services->doStuff();

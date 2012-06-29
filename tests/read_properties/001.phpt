@@ -23,7 +23,7 @@ public $var2 = 'oo';
 
 $tracer = new Tracer ();
 
-aop_add_before_read("A::*", array ($tracer, 'touch'));
+aop_add_before("read A::*", array ($tracer, 'touch'));
 
 $test = new A();
 $test->var1 = 'test';

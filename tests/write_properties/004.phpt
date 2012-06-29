@@ -9,8 +9,8 @@ class A {
 }
 
 
-aop_add_before_write("A::*", function () { echo "WRITE\n";});
-aop_add_before_read("A::*", function () { echo "READ\n";});
+aop_add_before("write A::*", function () { echo "WRITE\n";});
+aop_add_before("read A::*", function () { echo "READ\n";});
 
 $test = new A();
 $test->var1++;

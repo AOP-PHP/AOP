@@ -12,7 +12,7 @@ class A implements IA {
 
 class B extends A {
 }
-aop_add_around("IBaseA::test", function ($pObj) {return "[".$pObj->process()."]";});
+aop_add_around("IBaseA::test()", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new B();
 echo $test->test();
 

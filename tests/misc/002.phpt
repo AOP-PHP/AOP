@@ -7,7 +7,7 @@ class mytest {
 		echo "intest";
 	}
 }
-$selector = "mytest::test";
+$selector = "mytest::test()";
 aop_add_around($selector, function ($pObj) {echo "before"; $pObj->process(); echo "after"; });
 $selector = "foobar::foo";
 $test = new mytest();

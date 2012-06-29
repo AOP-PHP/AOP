@@ -8,9 +8,12 @@ class Tracer {
 
     private $_original = array ();
 
-    public function touch ($pObject, $pVarName, $pValue) {
+    public function touch ($pObject) {
+        $pVarName = $pObject->getPropertyName();
+        $pValue = $pObject->getAssignedValue();
+        $pObjectModify = $pObject->getTriggeringObject();
         if (!isset ($this->_original[$pVarName])) {
-            $this->_original[$pVarName] = $pObject->$pVarName;
+            $this->_original[$pVarName] = $pObjectModify->$pVarName;
         }
         $this->_modified[$pVarName] = $pValue;
         if ($this->_original[$pVarName]==$this->_modified[$pVarName]) {
@@ -36,7 +39,7 @@ $test = new A();
 $test->var1 = 'test';
 $test->var2 = 'test2';
 
-aop_add_before_write("A::*", array ($tracer, 'touch'));
+aop_add_before("write A::*", array ($tracer, 'touch'));
 
 $test->var1 = 'test_modified';
 $test->var2 = 'test_modified';

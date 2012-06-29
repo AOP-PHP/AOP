@@ -19,7 +19,7 @@ Docs Test 2
        }
     }
 
-    aop_add_before('MyServices::doStuff', 'adviceToUpdateArguments');
+    aop_add_before('MyServices::doStuff()', 'adviceToUpdateArguments');
 
     $services = new MyServices();
     $services->doStuff(null);

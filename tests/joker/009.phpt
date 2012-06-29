@@ -9,7 +9,7 @@ class BA {
 	}
 }
 
-aop_add_around("A*::test", function ($pObj) {return "[".$pObj->process()."]";});
+aop_add_around("A*::test()", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new BA();
 echo $test->test();
 

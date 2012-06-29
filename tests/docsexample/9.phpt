@@ -20,7 +20,7 @@ Docs Test 9
        $object->process();
     }
 
-    aop_add_around('MyServices::doStuff', 'adviceUpdatingArguments');
+    aop_add_around('MyServices::doStuff()', 'adviceUpdatingArguments');
 
     $services = new MyServices();
     $services->doStuff(null);

@@ -9,7 +9,7 @@ class mytest {
 	}
 }
 
-aop_add_before("mytest->test", array('Foo', 'bar'));
+aop_add_before("mytest->test()", array('Foo', 'bar'));
 $test = new mytest();
 echo $test->test();
 

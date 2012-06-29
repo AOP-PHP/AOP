@@ -24,7 +24,7 @@ Docs Test 15
        $result = "This is the new text";
     };
 
-    aop_add_after("Writer::getText", $advice);
+    aop_add_after("Writer::getText()", $advice);
 
     $writer = new Writer();
     $text = $writer->getText();

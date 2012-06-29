@@ -9,7 +9,7 @@ class mytest {
 	}
 }
 
-aop_add_around("mytest::test", function ($pObj) {return $pObj->process();});
+aop_add_around("mytest::test()", function ($pObj) {return $pObj->process();});
 $test = new mytest();
 try {
 	echo $test->test();

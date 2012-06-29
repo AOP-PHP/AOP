@@ -16,7 +16,7 @@ Docs Test 4
         $joinpoint->setReturnedValue($returnValue);
     };
 
-    aop_add_after('MyServices::doStuff', $advice);
+    aop_add_after('MyServices::doStuff()', $advice);
 
     $services = new MyServices();
     echo $services->doStuff();

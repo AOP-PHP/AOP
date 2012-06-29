@@ -9,7 +9,7 @@ Docs Test 5
         }
     };
 
-    aop_add_after('file_get_contents', $advice);
+    aop_add_after('file_get_contents()', $advice);
 
     try {
        @file_get_contents('foo file that does not exists');

@@ -10,7 +10,7 @@ class A {
 	}
 }
 
-aop_add_around("A::test", function ($pObj) {$pObj->getTriggeringObject()->data="overload"; return "[".$pObj->process()."]";});
+aop_add_around("A::test()", function ($pObj) {$pObj->getTriggeringObject()->data="overload"; return "[".$pObj->process()."]";});
 $test = new A();
 echo $test->test();
 

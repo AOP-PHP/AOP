@@ -2,21 +2,21 @@
 Scope with static
 --FILE--
 <?php 
-aop_add_around('public static A::test*',
+aop_add_around('public static A::test*()',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "1".$toReturn."\n";
     return $toReturn;
 });
 
-aop_add_around('public !static A::test*',
+aop_add_around('public !static A::test*()',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "2".$toReturn."\n";
     return $toReturn;
 });
 
-aop_add_around('public A::test*',
+aop_add_around('public A::test*()',
 function ($pObj) {
     $toReturn = $pObj->process();
     echo "3".$toReturn."\n";

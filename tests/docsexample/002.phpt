@@ -18,7 +18,7 @@ function adviceToInterruptDoStuff ()
    }
 }
 
-aop_add_before('MyServices::doStuff', 'adviceToInterruptDoStuff');
+aop_add_before('MyServices::doStuff()', 'adviceToInterruptDoStuff');
 
 $services = new MyServices();
 try {

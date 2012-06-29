@@ -17,7 +17,7 @@ class A {
 	}
 }
 
-aop_add_around("A::admin*", function ($pObj) {return "[".$pObj->process()."]";});
+aop_add_around("A::admin*()", function ($pObj) {return "[".$pObj->process()."]";});
 $test = new A();
 echo $test->adminTest();
 echo $test->adminTest2();
