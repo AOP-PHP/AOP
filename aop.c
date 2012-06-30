@@ -192,51 +192,71 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
 }
 
 ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
-    if (aop_g(count_read_property)>0 && !aop_g(lock_read_property)) {
-        zend_class_entry *ce = NULL;
-        int i;
-        for (i=0;i<aop_g(count_read_property);i++) {
-            pointcut *current_pc = aop_g(property_pointcuts_read)[i];
+    if (aop_g(count_read_property)>0) {
+        if (aop_g(lock_read_property)>25) {
+            zend_error(E_ERROR, "Nested ?");
+        }
+        zval *to_return;
+        aop_g(lock_read_property)++;
+        to_return = test_read_pointcut_and_execute(0, object, member, type AOP_KEY_C);
+        aop_g(lock_read_property)--;
+        return to_return;
+    } else {
+        return zend_std_read_property(object,member, type AOP_KEY_C TSRMLS_CC);
+    }
+}
+
+
+static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type AOP_KEY_D) {
+    if (current_pointcut_index==aop_g(count_read_property)) {
+        TSRMLS_FETCH()
+        return zend_std_read_property(object,member, type AOP_KEY_C TSRMLS_CC);
+    } else {
+            zval *to_return;
+            pointcut *current_pc = aop_g(property_pointcuts_read)[current_pointcut_index];
+            zend_class_entry *ce = NULL;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
-                    continue;
+                    return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
                 }
             }
-            if (ce==NULL) {
-                ce = Z_OBJCE_P(object);
-            }
+            ce = Z_OBJCE_P(object);
             char *current_class_name;
             current_class_name = (char *)ce->name;
 
             if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
-                continue;
+                    return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
             }
-
+            zval *aop_object;
+            MAKE_STD_ZVAL(aop_object);
+            Z_TYPE_P(aop_object) = IS_OBJECT;
+            (aop_object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
+            aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            obj->current_pointcut = current_pc;
+            obj->current_pointcut_index = current_pointcut_index; 
+            obj->object = object;
+            obj->member = member;
+            #if ZEND_MODULE_API_NO >= 20100525
+            obj->key = key;
+            #endif
             
-            zval **args[2], *zret_ptr;
-            zret_ptr=NULL;
-            args[0] = &object;
-            args[1] = &member; 
-            current_pc->fci.retval_ptr_ptr= &zret_ptr;
-            current_pc->fci.params = (zval ***)args;
-            current_pc->fci.param_count= 2;
-            current_pc->fci.size= sizeof(current_pc->fci);
-            aop_g(lock_read_property) = 1;
-            if (zend_call_function(&(current_pc->fci), &(current_pc->fcic) TSRMLS_CC) == FAILURE) {
-                zend_error(E_ERROR, "Problem in AOP Callback");
+            if (current_pc->kind_of_advice & AOP_KIND_BEFORE) {
+                execute_pointcut (current_pc, aop_object);
             }
-            aop_g(lock_read_property) = 0;
-
-        }
+            if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
+                execute_pointcut (current_pc, aop_object);
+            } else {
+                to_return = test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
+            }
+            if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
+                execute_pointcut (current_pc, aop_object);
+            }
+            Z_DELREF_P(aop_object);
+            return to_return;
     }
-
-
-
-    return zend_std_read_property(object, member, type AOP_KEY_C TSRMLS_CC);
 }
 
-
-static void test_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D) {
+static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D) {
     if (current_pointcut_index==aop_g(count_write_property)) {
         TSRMLS_FETCH()
         zend_std_write_property(object,member,value AOP_KEY_C TSRMLS_CC);
@@ -245,7 +265,7 @@ static void test_pointcut_and_execute(int current_pointcut_index, zval *object, 
             zend_class_entry *ce = NULL;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
-                    test_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
+                    test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
                     return ;
                 }
             }
@@ -254,7 +274,7 @@ static void test_pointcut_and_execute(int current_pointcut_index, zval *object, 
             current_class_name = (char *)ce->name;
 
             if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
-                    test_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
+                    test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
                     return ;
             }
             zval *aop_object;
@@ -277,7 +297,7 @@ static void test_pointcut_and_execute(int current_pointcut_index, zval *object, 
             if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
                 execute_pointcut (current_pc, aop_object);
             } else {
-                test_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
+                test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
             }
             if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
                 execute_pointcut (current_pc, aop_object);
@@ -301,9 +321,12 @@ static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg) {
 
 ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value AOP_KEY_D TSRMLS_DC) {
     if (aop_g(count_write_property)>0) {
-        aop_g(lock_write_property)=1;
-        test_pointcut_and_execute(0, object, member, value AOP_KEY_C);
-        aop_g(lock_write_property)=0;
+        if (aop_g(lock_write_property)>25) {
+            zend_error(E_ERROR, "Nested ?");
+        }
+        aop_g(lock_write_property)++;
+        test_write_pointcut_and_execute(0, object, member, value AOP_KEY_C);
+        aop_g(lock_write_property)--;
     } else {
         zend_std_write_property(object,member,value AOP_KEY_C TSRMLS_CC);
     }
@@ -489,7 +512,7 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
         #if ZEND_MODULE_API_NO >= 20100525
         const zend_literal *key = obj->value;
         #endif
-        test_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->value AOP_KEY_C);
+        test_write_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->value AOP_KEY_C);
     } else {
         exec(obj TSRMLS_CC);
         if (!EG(exception)) {

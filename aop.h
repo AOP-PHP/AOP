@@ -183,7 +183,8 @@ static void (*zend_std_write_property)(zval *object, zval *member, zval *value T
 #endif
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
-static void test_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D);
+static zval * test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type AOP_KEY_D);
+static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D);
 static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
