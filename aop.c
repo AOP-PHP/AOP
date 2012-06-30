@@ -376,6 +376,9 @@ PHP_MINIT_FUNCTION(aop)
 
 PHP_METHOD(aopTriggeredJoinpoint, getPropertyName){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY)) {
+        zend_error(E_ERROR, "getPropertyName is only available while using on property"); 
+    }
     if (obj->member!=NULL) {
         RETURN_ZVAL(obj->member, 1, 0);
         return; 
@@ -385,7 +388,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getPropertyName){
 PHP_METHOD(aopTriggeredJoinpoint, getArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "getArguments  is not available while using on property"); 
+        zend_error(E_ERROR, "getArguments is not available while using on property"); 
     }
     if (obj->context->args != NULL) {
         RETURN_ZVAL(obj->context->args, 1, 0);
@@ -396,7 +399,7 @@ PHP_METHOD(aopTriggeredJoinpoint, getArguments){
 PHP_METHOD(aopTriggeredJoinpoint, setArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "setArguments  is not available while using on property"); 
+        zend_error(E_ERROR, "setArguments is not available while using on property"); 
     }
     zval *params; 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &params) == FAILURE) {
@@ -435,14 +438,16 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
 }
 PHP_METHOD(aopTriggeredJoinpoint, getAssignedValue){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY)) {
+        zend_error(E_ERROR, "getAssignedValue is only available while using on write property"); 
+    }
     if (obj->value!=NULL) {
         zval_ptr_dtor (return_value_ptr);
         *return_value_ptr = obj->value;
         Z_ADDREF_P(obj->value);
     } else {
         RETURN_NULL();
-    }
-    
+    } 
 }
 
 PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
@@ -478,16 +483,23 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    zend_class_entry *ce;
-    zend_execute_data *data = obj->context->ex;
-    zend_function *curr_func;
-    if (data == NULL) {
-        RETURN_NULL();
-    }
-    curr_func = data->function_state.function;
-    ce = curr_func->common.scope;
-    if (ce != NULL) {
-        RETURN_STRING(ce->name, 1);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        if (obj->object!=NULL) {
+            zend_class_entry *ce = Z_OBJCE_P(obj->object);
+            RETURN_STRING(ce->name, 1);
+        }
+    } else {
+        zend_class_entry *ce;
+        zend_execute_data *data = obj->context->ex;
+        zend_function *curr_func;
+        if (data == NULL) {
+            RETURN_NULL();
+        }
+        curr_func = data->function_state.function;
+        ce = curr_func->common.scope;
+        if (ce != NULL) {
+            RETURN_STRING(ce->name, 1);
+        }
     }
     RETURN_NULL();
 }
@@ -508,6 +520,9 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
 
 PHP_METHOD(aopTriggeredJoinpoint, process){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_AROUND)) {
+        zend_error(E_ERROR, "process is only available while using on around"); 
+    }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         #if ZEND_MODULE_API_NO >= 20100525
         const zend_literal *key = obj->value;
