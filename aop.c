@@ -140,6 +140,14 @@ static zval *get_aopTriggeringJoinpoint () {
     for (i=0;i<aop_g(count_aopTriggeringJoinpoint_cache);i++) {
         zval *aop_object = aop_g(aopTriggeringJoinpoint_cache)[i];
         if (Z_REFCOUNT_P(aop_object)==1) {
+            aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            obj->value = NULL;
+            #if ZEND_MODULE_API_NO >= 20100525
+            obj->key = NULL;
+            #endif
+            obj->member = NULL;
+            obj->type = NULL;
+            obj->object = NULL;
             Z_ADDREF_P(aop_object);
             return aop_object;
         }
@@ -258,7 +266,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
             obj->current_pointcut_index = current_pointcut_index; 
             obj->object = object;
             obj->member = member;
-            obj->value = NULL;
+            obj->type = type;
             #if ZEND_MODULE_API_NO >= 20100525
             obj->key = key;
             #endif
@@ -268,11 +276,15 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
             }
             if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
                 execute_pointcut (current_pc, aop_object);
+                to_return = obj->value;
             } else {
                 to_return = test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
             }
             if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
                 execute_pointcut (current_pc, aop_object);
+                if (obj->value!=NULL) {
+                    to_return = obj->value;
+                }
             }
             Z_DELREF_P(aop_object);
             return to_return;
@@ -477,15 +489,21 @@ PHP_METHOD(aopTriggeredJoinpoint, getAssignedValue){
 PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
     zval *ret;
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "setReturnedValue is not available while using on property"); 
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY) {
+        zend_error(E_ERROR, "setReturnedValue is not available while using on write property"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
                 zend_error(E_ERROR, "Error");
         return;
     }
-    obj->context->ret = ret;
-    Z_ADDREF_P(ret);
+    
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ_PROPERTY) {
+        obj->value = ret;
+        Z_ADDREF_P(ret);
+    } else {
+        obj->context->ret = ret;
+        Z_ADDREF_P(ret);
+    }
     RETURN_NULL();
 }
 
@@ -548,10 +566,21 @@ PHP_METHOD(aopTriggeredJoinpoint, process){
         zend_error(E_ERROR, "process is only available while using on around"); 
     }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        #if ZEND_MODULE_API_NO >= 20100525
-        const zend_literal *key = obj->value;
-        #endif
-        test_write_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->value AOP_KEY_C);
+        if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY) {
+            #if ZEND_MODULE_API_NO >= 20100525
+//            zend_literal *key = obj->key;
+// NULL for no segfault (use by zend_get_property_info_quick)
+            zend_literal *key = NULL;
+            #endif
+            test_write_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->value AOP_KEY_C);
+        } else {
+            #if ZEND_MODULE_API_NO >= 20100525
+//            zend_literal *key = obj->key;
+// NULL for no segfault (use by zend_get_property_info_quick)
+            zend_literal *key = NULL;
+            #endif
+            obj->value = test_read_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->type AOP_KEY_C);
+        }
     } else {
         exec(obj TSRMLS_CC);
         if (!EG(exception)) {

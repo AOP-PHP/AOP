@@ -103,6 +103,7 @@ typedef struct {
     zval *object;
     zval *member;
     zval *value;
+    int type;
 #if ZEND_MODULE_API_NO >= 20100525
     const zend_literal *key;
 #endif
