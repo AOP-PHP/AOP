@@ -135,6 +135,30 @@ PHP_RINIT_FUNCTION(aop)
 }
 
 
+static zval *get_aopTriggeringJoinpoint () {
+    int i;
+    for (i=0;i<aop_g(count_aopTriggeringJoinpoint_cache);i++) {
+        zval *aop_object = aop_g(aopTriggeringJoinpoint_cache)[i];
+        if (Z_REFCOUNT_P(aop_object)==1) {
+            Z_ADDREF_P(aop_object);
+            return aop_object;
+        }
+    }
+    aop_g(count_aopTriggeringJoinpoint_cache)++;
+    if (aop_g(count_aopTriggeringJoinpoint_cache)==1) {
+        aop_g(aopTriggeringJoinpoint_cache) = emalloc(sizeof(pointcut *));
+    } else {
+        aop_g(aopTriggeringJoinpoint_cache) = erealloc(aop_g(aopTriggeringJoinpoint_cache),aop_g(count_aopTriggeringJoinpoint_cache)*sizeof(pointcut *));
+    }
+    zval *aop_object;
+    MAKE_STD_ZVAL(aop_object);
+    Z_TYPE_P(aop_object) = IS_OBJECT;
+    (aop_object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
+    aop_g(aopTriggeringJoinpoint_cache)[aop_g(count_aopTriggeringJoinpoint_cache)-1] = aop_object;
+    Z_ADDREF_P(aop_object);
+    return aop_object;
+}
+
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
     zval **to_return;
 
@@ -228,14 +252,13 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
                     return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
             }
             zval *aop_object;
-            MAKE_STD_ZVAL(aop_object);
-            Z_TYPE_P(aop_object) = IS_OBJECT;
-            (aop_object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
+            aop_object = get_aopTriggeringJoinpoint();
             aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             obj->current_pointcut = current_pc;
             obj->current_pointcut_index = current_pointcut_index; 
             obj->object = object;
             obj->member = member;
+            obj->value = NULL;
             #if ZEND_MODULE_API_NO >= 20100525
             obj->key = key;
             #endif
@@ -278,9 +301,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
                     return ;
             }
             zval *aop_object;
-            MAKE_STD_ZVAL(aop_object);
-            Z_TYPE_P(aop_object) = IS_OBJECT;
-            (aop_object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
+            aop_object = get_aopTriggeringJoinpoint();
             aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             obj->current_pointcut = current_pc;
             obj->current_pointcut_index = current_pointcut_index; 
@@ -349,6 +370,9 @@ PHP_MINIT_FUNCTION(aop)
     REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE", AOP_KIND_BEFORE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER", AOP_KIND_AFTER, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND", AOP_KIND_AROUND, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_PROPERTY", AOP_KIND_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_READ_PROPERTY", AOP_KIND_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_WRITE_PROPERTY", AOP_KIND_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_WRITE_PROPERTY", AOP_KIND_AROUND_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_READ_PROPERTY", AOP_KIND_AROUND_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE_WRITE_PROPERTY", AOP_KIND_BEFORE_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);

@@ -125,6 +125,8 @@ int count_read_property;
 int lock_read_property;
 pointcut **property_pointcuts_read;
 
+int count_aopTriggeringJoinpoint_cache;
+zval **aopTriggeringJoinpoint_cache;
 
 ZEND_END_MODULE_GLOBALS(aop)
 
