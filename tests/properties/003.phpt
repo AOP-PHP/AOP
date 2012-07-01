@@ -13,6 +13,6 @@ aop_add_before('write Hero->name', function (AopTriggeredJoinPoint $tjp) {
 
 $wizard = new Hero();
 $wizard->name = "Gandalf";
-echo $wizard->name;
+$temp =  $wizard->name;
 --EXPECT--
 I shall pass

@@ -14,4 +14,4 @@ aop_add_after('Hero->name', function (AopTriggeredJoinPoint $tjp) {
 $wizard = new Hero();
 echo $wizard->name;
 --EXPECT--
-Gandalf the Grey
+the GreyGandalf 
