@@ -26,8 +26,8 @@ http://pear.php.net/dtd/package-2.0.xsd">
 
    <date>2012-07-02</date>
    <version>
-    <release>1.0.0</release>
-    <api>1.0.0</api>
+    <release>0.9.0</release>
+    <api>0.9.0</api>
    </version>
    <stability>
     <release>beta</release>
@@ -51,116 +51,126 @@ http://pear.php.net/dtd/package-2.0.xsd">
             <file role="doc"  name="README.md" />
             <file role="doc"  name="THANKS" />
             <dir name="tests">
-				<dir name="arguments_overload" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-				</dir>
-				<dir name="autoload" >
-					<file role="test" name="001.phpt" />
-				</dir>
-				<dir name="bugs" >
-					<file role="test" name="001.phpt" />
-				</dir>
-				<dir name="consts" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-					<file role="test" name="004.phpt" />
-				</dir>
-				<dir name="context" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-				</dir>
-				<dir name="docsexample" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-					<file role="test" name="0.phpt" />
-					<file role="test" name="10.phpt" />
-					<file role="test" name="11.phpt" />
-					<file role="test" name="12.phpt" />
-					<file role="test" name="13.phpt" />
-					<file role="test" name="14.phpt" />
-					<file role="test" name="15.phpt" />
-					<file role="test" name="1.phpt" />
-					<file role="test" name="2.phpt" />
-					<file role="test" name="3.phpt" />
-					<file role="test" name="4.phpt" />
-					<file role="test" name="5.phpt" />
-					<file role="test" name="6.phpt" />
-					<file role="test" name="7.phpt" />
-					<file role="test" name="8.phpt" />
-					<file role="test" name="9.phpt" />
-				</dir>
-				<dir name="exception" >
-					<file role="test" name="001.phpt" />
-				</dir>
-				<dir name="getargs" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-				</dir>
-				<dir name="getthis" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-				</dir>
-				<dir name="inheritance" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-					<file role="test" name="005.phpt" />
-					<file role="test" name="006.phpt" />
-					<file role="test" name="007.phpt" />
-				</dir>
-				<dir name="joker" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-					<file role="test" name="004.phpt" />
-					<file role="test" name="005.phpt" />
-					<file role="test" name="006.phpt" />
-					<file role="test" name="007.phpt" />
-					<file role="test" name="008.phpt" />
-					<file role="test" name="009.phpt" />
-				</dir>
-				<dir name="misc" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-				</dir>
-				<dir name="ns" >
-					<file role="test" name="001.phpt" />
-				</dir>
-				<dir name="read_properties" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="003.phpt" />
-				</dir>
-				<dir name="scope" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-				</dir>
-				<dir name="simple" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-					<file role="test" name="004.phpt" />
-					<file role="test" name="005.phpt" />
-					<file role="test" name="006.phpt" />
-					<file role="test" name="007.phpt" />
-					<file role="test" name="008.phpt" />
-					<file role="test" name="009.phpt" />
-				</dir>
-				<dir name="traits" >
-					<file role="test" name="001.phpt" />
-				</dir>
-				<dir name="write_properties" >
-					<file role="test" name="001.phpt" />
-					<file role="test" name="002.phpt" />
-					<file role="test" name="003.phpt" />
-					<file role="test" name="004.phpt" />
-					<file role="test" name="005.phpt" />
-					<file role="test" name="006.phpt" /> 
-				</dir>
+              <dir name="arguments_overload" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+              </dir>
+                <dir name="autoload" >
+                    <file role="test" name="001.phpt" />
+              </dir>
+                <dir name="bugs" >
+                    <file role="test" name="001.phpt" />
+              </dir>
+                <dir name="consts" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="004.phpt" />
+              </dir>
+                <dir name="context" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+              </dir>
+                <dir name="docsexample" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="0.phpt" />
+                    <file role="test" name="10.phpt" />
+                    <file role="test" name="11.phpt" />
+                    <file role="test" name="12.phpt" />
+                    <file role="test" name="13.phpt" />
+                    <file role="test" name="14.phpt" />
+                    <file role="test" name="15.phpt" />
+                    <file role="test" name="1.phpt" />
+                    <file role="test" name="2.phpt" />
+                    <file role="test" name="3.phpt" />
+                    <file role="test" name="4.phpt" />
+                    <file role="test" name="5.phpt" />
+                    <file role="test" name="6.phpt" />
+                    <file role="test" name="7.phpt" />
+                    <file role="test" name="8.phpt" />
+                    <file role="test" name="9.phpt" />
+              </dir>
+                <dir name="exception" >
+                    <file role="test" name="001.phpt" />
+              </dir>
+                <dir name="getargs" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+              </dir>
+                <dir name="getthis" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+              </dir>
+                <dir name="inheritance" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="005.phpt" />
+                    <file role="test" name="006.phpt" />
+                    <file role="test" name="007.phpt" />
+              </dir>
+                <dir name="joker" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="004.phpt" />
+                    <file role="test" name="005.phpt" />
+                    <file role="test" name="006.phpt" />
+                    <file role="test" name="007.phpt" />
+                    <file role="test" name="008.phpt" />
+                    <file role="test" name="009.phpt" />
+              </dir>
+                <dir name="misc" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+              </dir>
+                <dir name="ns" >
+                    <file role="test" name="001.phpt" />
+              </dir>
+                <dir name="properties" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="004.phpt" />
+                    <file role="test" name="005.phpt" />
+                    <file role="test" name="006.phpt" />
+                    <file role="test" name="007.phpt" />
+              </dir>
+                <dir name="read_properties" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="003.phpt" />
+              </dir>
+                <dir name="scope" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+              </dir>
+                <dir name="simple" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="004.phpt" />
+                    <file role="test" name="005.phpt" />
+                    <file role="test" name="006.phpt" />
+                    <file role="test" name="007.phpt" />
+                    <file role="test" name="008.phpt" />
+                    <file role="test" name="009.phpt" />
+              </dir>
+                <dir name="traits" >
+                    <file role="test" name="001.phpt" />
+              </dir>
+                <dir name="write_properties" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="004.phpt" />
+                    <file role="test" name="005.phpt" />
+                    <file role="test" name="006.phpt" />
+                    <file role="test" name="007.phpt" />
+              </dir>
             </dir>
         </dir>
  </contents>
