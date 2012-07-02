@@ -131,7 +131,7 @@ will output
     {
        $paparazzi->alert();
     };
-    //As no parenthesis are given in the selector, the advice deals with properties
+    //As no parenthesis are given in the selector, the advice deals with properties (read / write)
     aop_add_before('Celebrity->*Stuff', $paparazzi_informer);
 
     $CynthiaBellulla = new Celebrity();
@@ -142,6 +142,47 @@ will output
 
     [screen]
     Celebrity will act or say something !Celebrity will act or say something !public thinking
+
+### An advice that is interested only in properties writing ###
+
+    [php]
+    class Paparazzi
+    {
+        public function alert ()
+        {
+            echo "Celebrity secretly act on something !";
+        }
+    }
+
+    class Celebrity
+    {
+       private $secretStuff;
+       public function act ()
+       {
+          //Reads the property (won't trigger the pointcut as it's a read operation)
+          $oldValue = $this->secretStuff;
+
+          //Writing the new value.
+          $this->secretStuff = 'secret';
+       }
+    }
+
+    //the advice is a simple function
+    $paparazzi = new Paparazzi();
+    $paparazzi_informer = function () use ($paparazzi)
+    {
+       $paparazzi->alert();
+    };
+    //will be triggered before writing the property privateStuff
+    aop_add_before('write Celebrity->secretStuff', $paparazzi_informer);
+
+    $CynthiaBellulla = new Celebrity();
+    $CynthiaBellulla->act();
+
+will output
+
+    [screen]
+    Celebrity secretly act on something !
 
 ## aop_add_after ##
 
