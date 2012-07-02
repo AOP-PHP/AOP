@@ -9,7 +9,7 @@ class Tracer {
     private $_original = array ();
 
     public function touch ($pObject) {
-        $pVarName = $pObject->getPropertyName();
+        $pVarName = $pObject->getTriggeringPropertyName();
         $pValue = $pObject->getAssignedValue();
         $pObjectModify = $pObject->getTriggeringObject();
         if (!isset ($this->_original[$pVarName])) {

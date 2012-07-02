@@ -101,7 +101,7 @@ ZEND_END_ARG_INFO()
 
 static const zend_function_entry aop_methods[] = {
     PHP_ME(aopTriggeredJoinpoint, getArguments, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getPropertyName, NULL, 0)
+    PHP_ME(aopTriggeredJoinpoint, getTriggeringPropertyName, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, setArguments, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice, NULL, 0)
     PHP_ME(aopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
@@ -412,10 +412,10 @@ PHP_MINIT_FUNCTION(aop)
     return SUCCESS;
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getPropertyName){
+PHP_METHOD(aopTriggeredJoinpoint, getTriggeringPropertyName){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY)) {
-        zend_error(E_ERROR, "getPropertyName is only available while using on property"); 
+        zend_error(E_ERROR, "getTriggeringPropertyName is only available while using on property"); 
     }
     if (obj->member!=NULL) {
         RETURN_ZVAL(obj->member, 1, 0);

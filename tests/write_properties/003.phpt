@@ -7,19 +7,19 @@ class Tracer {
     private $_modified = array ();
 
     public function touch1 ($pObject) {
-        $pVarName = $pObject->getPropertyName();
+        $pVarName = $pObject->getTriggeringPropertyName();
         $this->_modified[] = $pVarName.'1';
     }
     public function touch2 ($pObject) {
-        $pVarName = $pObject->getPropertyName();
+        $pVarName = $pObject->getTriggeringPropertyName();
         $this->_modified[] = $pVarName.'2';
     }
     public function touch3 ($pObject) {
-        $pVarName = $pObject->getPropertyName();
+        $pVarName = $pObject->getTriggeringPropertyName();
         $this->_modified[] = $pVarName.'3';
     }
     public function touch4 ($pObject) {
-        $pVarName = $pObject->getPropertyName();
+        $pVarName = $pObject->getTriggeringPropertyName();
         $this->_modified[] = $pVarName.'4';
     }
     public function getModified () {

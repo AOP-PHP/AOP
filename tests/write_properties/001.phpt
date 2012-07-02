@@ -7,7 +7,7 @@ class Tracer {
     private $_modified = array ();
 
     public function touch ($pObject) {
-        $this->_modified[] = $pObject->getPropertyName();
+        $this->_modified[] = $pObject->getTriggeringPropertyName();
     }
     public function getModified () {
         return $this->_modified;

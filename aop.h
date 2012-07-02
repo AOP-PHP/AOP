@@ -146,7 +146,7 @@ PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
 
 PHP_METHOD(aopTriggeredJoinpoint, getArguments);
-PHP_METHOD(aopTriggeredJoinpoint, getPropertyName);
+PHP_METHOD(aopTriggeredJoinpoint, getTriggeringPropertyName);
 PHP_METHOD(aopTriggeredJoinpoint, setArguments);
 PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice);
 PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue);
