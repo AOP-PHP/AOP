@@ -837,6 +837,11 @@ If the class is declared in a namespace, getTriggeringClassName indicates the fu
 getTriggeringMethodName returns the name of the method name (or function name) of the triggered joinpoint. If the j
 oinpoint was triggered by a property operation, will raise an error.
 
+### getTriggeringPropertyName ###
+
+getTriggeringPropertyName returns the name of the property of the triggered joinpoin. If the joinpoint was triggered by a
+method operation, will raise an error.
+
 ## Pointcuts syntax ##
 
 ### Basics ###
