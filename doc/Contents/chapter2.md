@@ -842,6 +842,11 @@ triggered by a property operation, will raise an error.
 getTriggeringPropertyName returns the name of the property of the triggered joinpoin. If the joinpoint was triggered by a
 method operation, will raise an error.
 
+### getAssignedValue ###
+
+getAssignedValue returns the value assigned to the property of the triggered joinpoint. If the joinpoint was triggered by
+a method operation, will raise an error. If the joinpoint was triggered by a read operation, will also raise an error.
+
 ## Pointcuts syntax ##
 
 ### Basics ###
