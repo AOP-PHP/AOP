@@ -34,6 +34,7 @@ An advice that is interested only in properties writing
 
     $CynthiaBellulla = new Celebrity();
     $CynthiaBellulla->act();
+?>
 --EXPECT--
 Celebrity secretly act on something !
 

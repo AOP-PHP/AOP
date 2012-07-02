@@ -55,5 +55,6 @@ An advice that knows what happened on the hooked properties
 
     $CynthiaBellulla = new Celebrity('Cynthia Bellula');
     $CynthiaBellulla->act();
+?>
 --EXPECT--
 I'm taking pictures of Cynthia Bellula doing some shoping at london (that's supposed to be secret)

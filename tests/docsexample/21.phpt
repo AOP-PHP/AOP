@@ -26,7 +26,8 @@ setAssignedValue
     $developper->preferences = $loveWhat;
 
     echo "This developper loves ", $developper->preferences;
-    echo ", Yes, $loveWhat"
+    echo ", Yes, $loveWhat";
+?>
 --EXPECT--
 This developper loves Python and PHP, Yes, Python and PHP
 

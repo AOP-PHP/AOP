@@ -25,6 +25,6 @@ An advice that updates the assigned value of a property
  
     echo "This developper loves ", $developper->preferences;
     echo ", Yes, $loveWhat";
-
+?>
 --EXPECT--
 This developper loves Python and PHP, Yes, Python and PHP

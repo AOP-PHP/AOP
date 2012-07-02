@@ -37,6 +37,6 @@ An advice that knows you're dealing with an object's property
     $CynthiaBellulla = new Celebrity();
     $CynthiaBellulla->act();
     echo $CynthiaBellulla->say();
-    
+?>
 --EXPECT--
 Celebrity will act or say something !Celebrity will act or say something !public thinking
