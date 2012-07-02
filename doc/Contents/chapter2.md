@@ -7,7 +7,7 @@ before kind of advices enables you to
 *    launch advices before the execution of a given function, without interrupting anything
 *    launch advices before the execution of a given function, and to interrupt its execution while raising an exception
 *    launch advices before the execution of a given function, and to update the targeted function's arguments
-*    launch advices before reading an object's property
+*    launch advices before reading and / or writing an object's property
 
 ### A simple advice execution ###
 
@@ -101,6 +101,7 @@ will output
 
 ### An advice that knows you're dealing with an object's property ###
 
+    [php]
     class Paparazzi
     {
         public function alert ()
