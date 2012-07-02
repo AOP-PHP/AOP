@@ -259,7 +259,7 @@ will output
 
     $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
     {
-       $assigned = & $aop_tjp->getAssignedValue();
+       $assigned = $aop_tjp->getAssignedValue();
        if ($assigned !== 'PHP') {
            $assigned .= ' and PHP';
        }
@@ -847,6 +847,44 @@ method operation, will raise an error.
 getAssignedValue returns the value assigned to the property of the triggered joinpoint. If the joinpoint was triggered by
 a method operation, will raise an error. If the joinpoint was triggered by a read operation, will also raise an error.
 
+### setAssignedValue ###
+
+setAssignedValue will update the value of the variable assigned to the property of the triggered joinpoint.  If the joinpoint
+was triggered by a method operation, will raise an error. If the joinpoint was triggered by a read operation, will also
+raise an error.
+
+    [php]
+    class Developper
+    {
+       public $preferences;
+    }
+
+    $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
+    {
+       $assigned = $aop_tjp->getAssignedValue();
+
+       if ($assigned !== 'PHP') {
+           $assigned .= ' and PHP';
+       }
+
+       $aop_tjp->setAssignedValue($assigned);
+    };
+
+    //will be triggered before writing the property privateStuff
+    aop_add_before('write Developper->preferences', $spread_the_love);
+
+    $developper = new Developper();
+    $loveWhat = 'Python';
+    $developper->preferences = $loveWhat;
+
+    echo "This developper loves ", $developper->preferences;
+    echo ", Yes, $loveWhat"
+
+will output
+
+    [screen]
+    This developper loves Python and PHP, Yes, Python and PHP
+
 ## Pointcuts syntax ##
 
 ### Basics ###
@@ -911,7 +949,6 @@ namespace
 
 
 ### Wildcards ###
-
 
 *    * match anything inside a name but stops when it encounters a /
 *    ** match anything, the scope includes the paths (/)
