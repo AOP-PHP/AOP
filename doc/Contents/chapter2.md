@@ -839,7 +839,7 @@ triggered by a property operation, will raise an error.
 
 ### getTriggeringPropertyName ###
 
-getTriggeringPropertyName returns the name of the property of the triggered joinpoin. If the joinpoint was triggered by a
+getTriggeringPropertyName returns the name of the property of the triggered joinpoint. If the joinpoint was triggered by a
 method operation, will raise an error.
 
 ### getAssignedValue ###
