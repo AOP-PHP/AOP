@@ -6,7 +6,8 @@ before kind of advices enables you to
 
 *    launch advices before the execution of a given function, without interrupting anything
 *    launch advices before the execution of a given function, and to interrupt its execution while raising an exception
-*    launch advices before the execution of a given function, and to update the targeted function's arguments #CHECK
+*    launch advices before the execution of a given function, and to update the targeted function's arguments
+*    launch advices before reading an object's property
 
 ### A simple advice execution ###
 
@@ -97,6 +98,49 @@ will output
 
     [screen]
     I'll do my best stuff for anyone !
+
+### An advice that knows you're dealing with an object's property ###
+
+    class Paparazzi
+    {
+        public function alert ()
+        {
+            echo "Celebrity will act or say something !";
+        }
+    }
+
+    class Celebrity
+    {
+       public $publicStuff = 'public thinking';
+       private $secretStuff;
+       public function act ()
+       {
+          $this->secretStuff = 'secret';
+       }
+
+       public function say ()
+       {
+          echo $this->publicStuff;
+       }
+    }
+
+    //the advice is a simple function
+    $paparazzi = new Paparazzi();
+    $paparazzi_informer = function () use ($paparazzi)
+    {
+       $paparazzi->alert();
+    };
+    //As no parenthesis are given in the selector, the advice deals with properties
+    aop_add_before('Celebrity->*Stuff', $paparazzi_informer);
+
+    $CynthiaBellulla = new Celebrity();
+    $CynthiaBellulla->act();
+    echo $CynthiaBellulla->say();
+
+will output
+
+    [screen]
+    Celebrity will act or say something !Celebrity will act or say something !public thinking
 
 ## aop_add_after ##
 
