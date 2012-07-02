@@ -620,33 +620,26 @@ such as the pointcut who triggered the joinpoint, the arguments, the returned va
 
 ### getKindOfAdvice ###
 
-This will tell you if your advice is run
+This will tell in wich condition your advice was launched
 
-*    around - Aop::AROUND
-*    before - Aop::BEFORE
-*    after  - Aop::AFTER
-*    on exception - Aop::EXCEPTION
-*    after, even if an exception was triggered (final) - Aop::FINAL
-
-    [php]
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
-        switch ($joinpoint->getKindOfAdvice()) {
-            Aop::AROUND: //...
-            break;
-
-            Aop::BEFORE: //...
-            break;
-
-            Aop::AFTER: //...
-            break;
-
-            Aop::EXCEPTION: //...
-            break;
-
-            Aop::FINAL: //...
-            break;
-        }
-    }
+*    AOP_KIND_BEFORE before a given call, may it be function, method or property access (read / write)
+*    AOP_KIND_BEFORE_METHOD before a method call (method of an object)
+*    AOP_KIND_BEFORE_FUNCTION before a function call (not a method call)
+*    AOP_KIND_BEFORE_PROPERTY before a property (read or write)
+*    AOP_KIND_BEFORE_READ_PROPERTY before a property access (read only)
+*    AOP_KIND_BEFORE_WRITE_PROPERTY before a property write (write only)
+*    AOP_KIND_AROUND around a given call, may it be function, method or property access (read / write)
+*    AOP_KIND_AROUND_METHOD around a method call (method of an object)
+*    AOP_KIND_AROUND_FUNCTION around a function call (not a method call)
+*    AOP_KIND_AROUND_PROPERTY around a property (read or write)
+*    AOP_KIND_AROUND_READ_PROPERTY around a property access (read only)
+*    AOP_KIND_AROUND_WRITE_PROPERTY around a property write (write only)
+*    AOP_KIND_AFTER after a given call, may it be function, method or property access (read / write)
+*    AOP_KIND_AFTER_METHOD after a method call (method of an object)
+*    AOP_KIND_AFTER_FUNCTION after a function call (not a method call)
+*    AOP_KIND_AFTER_PROPERTY after a property (read or write)
+*    AOP_KIND_AFTER_READ_PROPERTY after a property access (read only)
+*    AOP_KIND_AFTER_WRITE_PROPERTY after a property write (write only)
 
 ### getArguments ###
 
