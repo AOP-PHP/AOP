@@ -2,7 +2,6 @@
 An advice that do not update the assigned value of a property if not gotten by property
 --FILE--
 <?php
-    [php]
     class Developper
     {
        public $preferences;
@@ -25,7 +24,7 @@ An advice that do not update the assigned value of a property if not gotten by p
     $developper->preferences = $loveWhat;
 
     echo "This developper loves ", $developper->preferences;
-    echo ", Not just $loveWhat"
+    echo ", Not just $loveWhat";
 
 --EXPECT--
 This developper loves Python and PHP, Not just Python
