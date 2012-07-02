@@ -310,38 +310,6 @@ will output
     [screen]
     This developper loves Python and PHP, Yes, Python and PHP
 
-But there is no need to update the variable if you don't want to
-
-    [php]
-    class Developper
-    {
-       public $preferences;
-    }
-
-    $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
-    {
-       //we get the assigned variable by copy, it will not be updated by the advice
-       $assigned = $aop_tjp->getAssignedValue();
-       if ($assigned !== 'PHP') {
-           $assigned .= ' and PHP';
-       }
-    };
-
-    //will be triggered before writing the property privateStuff
-    aop_add_before('write Developper->preferences', $spread_the_love);
-
-    $developper = new Developper();
-    $loveWhat = 'Python';
-    $developper->preferences = $loveWhat;
-
-    echo "This developper loves ", $developper->preferences;
-    echo ", Not just $loveWhat"
-
-will output
-
-    [screen]
-    This developper loves Python and PHP, Not just Python
-
 ## aop_add_after ##
 
 after kind of advices enables you to
