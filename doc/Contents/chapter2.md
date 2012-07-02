@@ -303,7 +303,7 @@ Of course, if you were assigning a variable to the property, the variable could 
     $developper->preferences = $loveWhat;
 
     echo "This developper loves ", $developper->preferences;
-    echo ", Yes, $loveWhat"
+    echo ", Yes, $loveWhat";
 
 will output
 
@@ -878,7 +878,7 @@ raise an error.
     $developper->preferences = $loveWhat;
 
     echo "This developper loves ", $developper->preferences;
-    echo ", Yes, $loveWhat"
+    echo ", Yes, $loveWhat";
 
 will output
 
