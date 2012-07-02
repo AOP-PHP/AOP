@@ -278,7 +278,7 @@ will output
     [screen]
     This developper loves Java and PHP
 
-Of course, if ou were assigning a variable to the property, the variable could be updated by the advice using its reference.
+Of course, if you were assigning a variable to the property, the variable could be updated by the advice using its reference.
 
     [php]
     class Developper
@@ -320,7 +320,7 @@ But there is no need to update the variable if you don't want to
 
     $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
     {
-       //we get the assigned variable by reference, it will be updated by the advice
+       //we get the assigned variable by copy, it will not be updated by the advice
        $assigned = $aop_tjp->getAssignedValue();
        if ($assigned !== 'PHP') {
            $assigned .= ' and PHP';
