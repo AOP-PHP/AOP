@@ -811,7 +811,7 @@ documentation.
 
 ### process ###
 
-The process method allow you to explicitely launch the triggering method.
+The process method allow you to explicitely launch the triggering method or property operation (read / write).
 
 The process method will only be available for advices of kind around. Any call to process in advices of other kinds will
  launch an AopException with a message like "Cannot launch the process method in an advice of kind XXX".
