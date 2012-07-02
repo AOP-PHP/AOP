@@ -68,11 +68,11 @@ ZEND_GET_MODULE(aop)
 static zend_class_entry* aop_class_entry;
 static zend_class_entry* aop_const_class_entry;
 
-zend_object_handlers aopTriggeredJoinpoint_object_handlers;
+zend_object_handlers AopTriggeredJoinpoint_object_handlers;
 
 void aop_free_storage(void *object TSRMLS_DC)
 {
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)object;
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)object;
 //    zend_hash_destroy(obj->std.properties);
 //    FREE_HASHTABLE(obj->std.properties);
     efree(obj);
@@ -82,8 +82,8 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
 {
     zend_object_value retval;
 
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)emalloc(sizeof(aopTriggeredJoinpoint_object));
-    memset(obj, 0, sizeof(aopTriggeredJoinpoint_object));
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)emalloc(sizeof(AopTriggeredJoinpoint_object));
+    memset(obj, 0, sizeof(AopTriggeredJoinpoint_object));
     obj->std.ce = type;
 
 //    ALLOC_HASHTABLE(obj->std.properties);
@@ -91,7 +91,7 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
 
     retval.handle = zend_objects_store_put(obj, NULL,
                                            aop_free_storage, NULL TSRMLS_CC);
-    retval.handlers = &aopTriggeredJoinpoint_object_handlers;
+    retval.handlers = &AopTriggeredJoinpoint_object_handlers;
 
     return retval;
 }
@@ -100,18 +100,18 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_args_returnbyref, 0, ZEND_RETURN_REFERENCE, -
 ZEND_END_ARG_INFO()
 
 static const zend_function_entry aop_methods[] = {
-    PHP_ME(aopTriggeredJoinpoint, getArguments, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringPropertyName, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, setArguments, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getKindOfAdvice, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
-    PHP_ME(aopTriggeredJoinpoint, getAssignedValue, arginfo_aop_args_returnbyref, 0)
-    PHP_ME(aopTriggeredJoinpoint, setReturnedValue, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getPointcut, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringObject, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringClassName, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, getTriggeringMethodName, NULL, 0)
-    PHP_ME(aopTriggeredJoinpoint, process, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getArguments, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getTriggeringPropertyName, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, setArguments, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getKindOfAdvice, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
+    PHP_ME(AopTriggeredJoinpoint, getAssignedValue, arginfo_aop_args_returnbyref, 0)
+    PHP_ME(AopTriggeredJoinpoint, setReturnedValue, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getPointcut, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getTriggeringObject, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getTriggeringClassName, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getTriggeringMethodName, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, process, NULL, 0)
     {NULL, NULL, NULL}
 };
 
@@ -142,7 +142,7 @@ static zval *get_aopTriggeringJoinpoint () {
     for (i=0;i<aop_g(count_aopTriggeringJoinpoint_cache);i++) {
         zval *aop_object = aop_g(aopTriggeringJoinpoint_cache)[i];
         if (Z_REFCOUNT_P(aop_object)==1) {
-            aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             obj->value = NULL;
             #if ZEND_MODULE_API_NO >= 20100525
             obj->key = NULL;
@@ -249,7 +249,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
             zend_class_entry *ce = NULL;
             char *current_class_name;
             zval *aop_object;
-            aopTriggeredJoinpoint_object *obj;
+            AopTriggeredJoinpoint_object *obj;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
@@ -261,7 +261,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
                     return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
             }
             aop_object = get_aopTriggeringJoinpoint();
-            obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             obj->current_pointcut = current_pc;
             obj->current_pointcut_index = current_pointcut_index; 
             obj->object = object;
@@ -299,7 +299,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
             pointcut *current_pc = aop_g(property_pointcuts_write)[current_pointcut_index];
             zend_class_entry *ce = NULL;
             char *current_class_name;
-            aopTriggeredJoinpoint_object *obj;
+            AopTriggeredJoinpoint_object *obj;
             zval *aop_object;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
@@ -315,7 +315,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
                     return ;
             }
             aop_object = get_aopTriggeringJoinpoint();
-            obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             obj->current_pointcut = current_pc;
             obj->current_pointcut_index = current_pointcut_index; 
             obj->object = object;
@@ -374,12 +374,12 @@ PHP_MINIT_FUNCTION(aop)
 
     ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals, NULL);
 
-    INIT_CLASS_ENTRY(ce, "aopTriggeredJoinpoint", aop_methods);
+    INIT_CLASS_ENTRY(ce, "AopTriggeredJoinpoint", aop_methods);
     aop_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
 
     aop_class_entry->create_object = aop_create_handler;
-    memcpy(&aopTriggeredJoinpoint_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-    aopTriggeredJoinpoint_object_handlers.clone_obj = NULL;
+    memcpy(&AopTriggeredJoinpoint_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    AopTriggeredJoinpoint_object_handlers.clone_obj = NULL;
 
     REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE", AOP_KIND_BEFORE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER", AOP_KIND_AFTER, CONST_CS | CONST_PERSISTENT);
@@ -412,8 +412,8 @@ PHP_MINIT_FUNCTION(aop)
     return SUCCESS;
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringPropertyName){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringPropertyName){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY)) {
         zend_error(E_ERROR, "getTriggeringPropertyName is only available while using on property"); 
     }
@@ -423,8 +423,8 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringPropertyName){
     }
     RETURN_NULL();
 }
-PHP_METHOD(aopTriggeredJoinpoint, getArguments){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getArguments){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         zend_error(E_ERROR, "getArguments is not available while using on property"); 
     }
@@ -434,8 +434,8 @@ PHP_METHOD(aopTriggeredJoinpoint, getArguments){
     RETURN_NULL();
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, setArguments){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, setArguments){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zval *params;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         zend_error(E_ERROR, "setArguments is not available while using on property"); 
@@ -449,18 +449,18 @@ PHP_METHOD(aopTriggeredJoinpoint, setArguments){
     RETURN_NULL();
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getKindOfAdvice){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     RETURN_LONG(obj->current_pointcut->kind_of_advice);
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getPointcut){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getPointcut){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     RETURN_STRING(obj->current_pointcut->selector, 1);
 
 }
-PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getReturnedValue){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         zend_error(E_ERROR, "getReturnedValue is not available while using on property"); 
     }
@@ -474,8 +474,8 @@ PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue){
     }
     RETURN_NULL();
 }
-PHP_METHOD(aopTriggeredJoinpoint, getAssignedValue){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY)) {
         zend_error(E_ERROR, "getAssignedValue is only available while using on write property"); 
     }
@@ -488,9 +488,9 @@ PHP_METHOD(aopTriggeredJoinpoint, getAssignedValue){
     } 
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
+PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue){
     zval *ret;
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY) {
         zend_error(E_ERROR, "setReturnedValue is not available while using on write property"); 
     }
@@ -509,8 +509,8 @@ PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue){
     RETURN_NULL();
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringObject) {
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         if (obj->object!=NULL) {
             RETURN_ZVAL(obj->object, 1, 0);
@@ -525,8 +525,8 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject) {
     
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringClassName){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         if (obj->object!=NULL) {
             zend_class_entry *ce = Z_OBJCE_P(obj->object);
@@ -548,8 +548,8 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
     RETURN_NULL();
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringMethodName){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zend_execute_data *data = obj->context->ex;
     zend_function *curr_func;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
@@ -562,8 +562,8 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
     RETURN_STRING(curr_func->common.function_name, 1);
 }
 
-PHP_METHOD(aopTriggeredJoinpoint, process){
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(AopTriggeredJoinpoint, process){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_AROUND)) {
         zend_error(E_ERROR, "process is only available while using on around"); 
     }
@@ -856,7 +856,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
     zend_execute_data *data;
     zend_function      *curr_func = NULL;
     zval *rtr;
-    aopTriggeredJoinpoint_object *obj;
+    AopTriggeredJoinpoint_object *obj;
 
     arounded=0;
     previous_ipc = NULL;
@@ -887,7 +887,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
             MAKE_STD_ZVAL(object);
             Z_TYPE_P(object) = IS_OBJECT;
             (object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
-            obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(object TSRMLS_CC);
+            obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(object TSRMLS_CC);
             obj->context = context;
             obj->pc = previous_ipc; 
             obj->current_pointcut = aop_g(pcs)[i];
@@ -930,7 +930,7 @@ void aop_execute_global (int internal, zend_op_array *ops, zend_execute_data *cu
 void joinpoint_execute (instance_of_pointcut *pc) {
     zval *args[1], *zret_ptr;
     TSRMLS_FETCH();
-    aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
     if (pc->pc->kind_of_advice == AOP_KIND_AFTER) {
         exec(obj TSRMLS_CC);
     }
@@ -958,7 +958,7 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     }
 }
 
-void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC) {
+void exec(AopTriggeredJoinpoint_object *obj TSRMLS_DC) {
     if (obj->pc == NULL) {
             zend_execute_data *prev_data;
             zend_execute_data execute_data;

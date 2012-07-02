@@ -107,7 +107,7 @@ typedef struct {
 #if ZEND_MODULE_API_NO >= 20100525
     const zend_literal *key;
 #endif
-}  aopTriggeredJoinpoint_object;
+}  AopTriggeredJoinpoint_object;
 
 #ifdef ZTS
 #include "TSRM.h"
@@ -145,18 +145,18 @@ PHP_FUNCTION(aop_add_around);
 PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
 
-PHP_METHOD(aopTriggeredJoinpoint, getArguments);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringPropertyName);
-PHP_METHOD(aopTriggeredJoinpoint, setArguments);
-PHP_METHOD(aopTriggeredJoinpoint, getKindOfAdvice);
-PHP_METHOD(aopTriggeredJoinpoint, getReturnedValue);
-PHP_METHOD(aopTriggeredJoinpoint, getAssignedValue);
-PHP_METHOD(aopTriggeredJoinpoint, setReturnedValue);
-PHP_METHOD(aopTriggeredJoinpoint, getPointcut);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringObject);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName);
-PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName);
-PHP_METHOD(aopTriggeredJoinpoint, process);
+PHP_METHOD(AopTriggeredJoinpoint, getArguments);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringPropertyName);
+PHP_METHOD(AopTriggeredJoinpoint, setArguments);
+PHP_METHOD(AopTriggeredJoinpoint, getKindOfAdvice);
+PHP_METHOD(AopTriggeredJoinpoint, getReturnedValue);
+PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue);
+PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue);
+PHP_METHOD(AopTriggeredJoinpoint, getPointcut);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringObject);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringClassName);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringMethodName);
+PHP_METHOD(AopTriggeredJoinpoint, process);
 
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
@@ -170,7 +170,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
-void exec(aopTriggeredJoinpoint_object *obj TSRMLS_DC);
+void exec(AopTriggeredJoinpoint_object *obj TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
 static int strcmp_with_joker_case (char *str_with_jok, char *str, int case_sensitive);
 static int is_static (char *str);
