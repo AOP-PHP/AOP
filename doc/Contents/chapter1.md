@@ -96,7 +96,7 @@ course we do realize that you may have more complex routines to do that, be we'l
 Now, let's use AOP to tell PHP to execute this method "before" any execution of admin methods.
 
     [php]
-    aop_add_before('MyServices::doAdmin*', 'adviceForDoAdmin');
+    aop_add_before('MyServices->doAdmin*()', 'adviceForDoAdmin');
 
 Now, each time you'll invoke a method of an object of the class MyServices, starting by doAdmin, AOP will launch the function
 basicAdminChecker *before* the called method.

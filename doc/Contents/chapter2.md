@@ -24,7 +24,7 @@ before kind of advices enables you to
         echo "I was called before doing stuff...";
     };
 
-    aop_add_before('MyServices::doStuff', $advice);
+    aop_add_before('MyServices->doStuff()', $advice);
 
     $services = new MyServices();
     $services->doStuff();
@@ -53,7 +53,7 @@ will output
        }
     }
 
-    aop_add_before('MyServices::doStuff', 'adviceToInterruptDoStuff');
+    aop_add_before('MyServices->doStuff()', 'adviceToInterruptDoStuff');
 
     $services = new MyServices();
     try {
@@ -88,7 +88,7 @@ will output
        }
     }
 
-    aop_add_before('MyServices::doStuff', 'adviceToUpdateArguments');
+    aop_add_before('MyServices->doStuff()', 'adviceToUpdateArguments');
 
     $services = new MyServices();
     $services->doStuff(null);
@@ -122,7 +122,7 @@ after kind of advices enables you to
         echo "Did some stuff !\n";
     };
 
-    aop_add_after('MyServices::doStuff', $advice);
+    aop_add_after('MyServices->doStuff()', $advice);
 
     $services = new MyServices();
     echo $services->doStuff();
@@ -154,7 +154,7 @@ but before anything else can occur (echo $services->doSuff()).
         $joinpoint->setReturnedValue($returnValue);
     };
 
-    aop_add_after('MyServices::doStuff', $advice);
+    aop_add_after('MyServices->doStuff()', $advice);
 
     $services = new MyServices();
     echo $services->doStuff();
@@ -179,7 +179,7 @@ if you're using an old PHP library that is not using exceptions as a mean to rai
         }
     };
 
-    aop_add_after('file_get_contents', $advice);
+    aop_add_after('file_get_contents()', $advice);
 
     try {
        @file_get_contents('foo file that does not exists');
@@ -224,7 +224,7 @@ around kind of advices enables you to
         }
     }
 
-    aop_add_around('MyGoodServices::doStuff', array('evil', 'advice'));
+    aop_add_around('MyGoodServices->doStuff()', array('evil', 'advice'));
 
     $services = new MyGoodServices();
     $services->doStuff('you');
@@ -256,7 +256,7 @@ will output
     }
 
     $evil = new Evil();
-    aop_add_around('MyGoodServices::doStuff', array($evil, 'advice'));
+    aop_add_around('MyGoodServices->doStuff()', array($evil, 'advice'));
 
     $services = new MyGoodServices();
     $services->doStuff('you');
@@ -296,7 +296,7 @@ will output
         echo "]";//do stuff after
     };
 
-    aop_add_around('DivideServices::divide', $advice);
+    aop_add_around('DivideServices->divide()', $advice);
 
     $services = new DivideServices();
     $services->divide(4, 2);
@@ -329,7 +329,7 @@ will output
        $object->process();
     }
 
-    aop_add_around('MyServices::doStuff', 'adviceUpdatingArguments');
+    aop_add_around('MyServices->doStuff()', 'adviceUpdatingArguments');
 
     $services = new MyServices();
     $services->doStuff(null);
@@ -358,7 +358,7 @@ will output
         $joinpoint->setReturnedValue($returnValue);
     };
 
-    aop_add_around('MyServices::doStuff', $advice);
+    aop_add_around('MyServices->doStuff()', $advice);
 
     $services = new MyServices();
     echo $services->doStuff();
@@ -421,7 +421,7 @@ the triggering method expected values, and references where the triggering metho
        $args[1] = 'UPDATED $reference';//WILL update the original $reference parameter as it is a reference
     };
 
-    aop_add_before('callMe', $advice);
+    aop_add_before('callMe()', $advice);
 
     $name = "name";
     $reference = "reference";
@@ -462,7 +462,7 @@ references, you will have to explicitely pass them back to setArguments.
        $joinpoint->setArguments($newArgs);
     };
 
-    aop_add_before('callMe', $advice);
+    aop_add_before('callMe()', $advice);
 
     $name = "name";
     $reference = "reference";
@@ -495,7 +495,7 @@ their values and give the array back back to setArguments.
        $joinpoint->setArguments($args);
     };
 
-    aop_add_before('callMe', $advice);
+    aop_add_before('callMe()', $advice);
 
     $name = "name";
     $reference = "reference";
@@ -544,7 +544,7 @@ asks for the reference while calling getReturnedValue.
        $result = "This is the new text";
     };
 
-    aop_add_after("Writer::getText", $advice);
+    aop_add_after("Writer->getText()", $advice);
 
     $writer = new Writer();
     $text = $writer->getText();
@@ -581,7 +581,7 @@ If you do the same without the use of reference the value of "Writer->foo" won't
        $result = "This is the new text";
     };
 
-    aop_add_after("Writer::getText", $advice);
+    aop_add_after("Writer->getText()", $advice);
 
     $writer = new Writer();
     $text = $writer->getText();
@@ -729,26 +729,4 @@ class who's name end with EndingClassName in the root namespace
 ### Selectors using super wildcards examples ###
 *    '**\\' 
 *    **/*::admin* represents every call of a method starting by admin of any class in any namespace
-*    **\\* represents every call of any method in any namespace 
-
-## aop_selector_test ##
-
-If you want to check if you wrote your selectors right, you can use the aop_test_selector function to see if your selector match what you want it to match.
-
-aop_selector_test accepts three parameters
-*    the selector you want to test
-*    the method name you want to test (you cannot specify whether your method is private / protected / public)
-*    if you want the method to ouput whether the selector matched or not (false by default)
-
-    [php]
-    aop_selector_test('**', 'MyNamespace\\MyClass::myMethod', true);
-    //Wil output
-    ** matches MyNamespace\MyClass::myMethod
-
-    aop_selector_test('*/MyClass*', 'MyNamespace\\MyClass::myMethod', true);
-    //Will output
-    */MyClass* does not match MyNamespace\\MyClass::myMethod
-
-    aop_selector_test('*/MyClass::*', 'MyNamespace\\MyClass::myMethod', true);
-    //Will output
-    */MyClass::* match MyNamespace\\MyClass::myMethod
+*    **\\* represents every call of any method in any namespace
