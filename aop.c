@@ -136,7 +136,9 @@ PHP_RINIT_FUNCTION(aop)
 
 
 static zval *get_aopTriggeringJoinpoint () {
+    TSRMLS_FETCH();
     int i;
+    zval *aop_object;
     for (i=0;i<aop_g(count_aopTriggeringJoinpoint_cache);i++) {
         zval *aop_object = aop_g(aopTriggeringJoinpoint_cache)[i];
         if (Z_REFCOUNT_P(aop_object)==1) {
@@ -146,7 +148,7 @@ static zval *get_aopTriggeringJoinpoint () {
             obj->key = NULL;
             #endif
             obj->member = NULL;
-            obj->type = NULL;
+            obj->type = 0;
             obj->object = NULL;
             Z_ADDREF_P(aop_object);
             return aop_object;
@@ -158,7 +160,6 @@ static zval *get_aopTriggeringJoinpoint () {
     } else {
         aop_g(aopTriggeringJoinpoint_cache) = erealloc(aop_g(aopTriggeringJoinpoint_cache),aop_g(count_aopTriggeringJoinpoint_cache)*sizeof(pointcut *));
     }
-    zval *aop_object;
     MAKE_STD_ZVAL(aop_object);
     Z_TYPE_P(aop_object) = IS_OBJECT;
     (aop_object)->value.obj = aop_create_handler(aop_class_entry TSRMLS_CC);
@@ -169,6 +170,7 @@ static zval *get_aopTriggeringJoinpoint () {
 
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
     zval **to_return;
+    char *current_class_name;
 
     to_return = zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
 
@@ -185,7 +187,6 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
             if (ce==NULL) {
                 ce = Z_OBJCE_P(object);
             }
-            char *current_class_name;
             current_class_name = (char *)ce->name;
 
             if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
@@ -209,7 +210,6 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
             if (ce==NULL) {
                 ce = Z_OBJCE_P(object);
             }
-            char *current_class_name;
             current_class_name = (char *)ce->name;
 
             if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
@@ -224,11 +224,11 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
 }
 
 ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
+    zval *to_return;
     if (aop_g(count_read_property)>0) {
         if (aop_g(lock_read_property)>25) {
             zend_error(E_ERROR, "Nested ?");
         }
-        zval *to_return;
         aop_g(lock_read_property)++;
         to_return = test_read_pointcut_and_execute(0, object, member, type AOP_KEY_C);
         aop_g(lock_read_property)--;
@@ -240,28 +240,28 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 
 
 static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type AOP_KEY_D) {
+    TSRMLS_FETCH();
     if (current_pointcut_index==aop_g(count_read_property)) {
-        TSRMLS_FETCH()
         return zend_std_read_property(object,member, type AOP_KEY_C TSRMLS_CC);
     } else {
             zval *to_return;
             pointcut *current_pc = aop_g(property_pointcuts_read)[current_pointcut_index];
             zend_class_entry *ce = NULL;
+            char *current_class_name;
+            zval *aop_object;
+            aopTriggeredJoinpoint_object *obj;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
                 }
             }
             ce = Z_OBJCE_P(object);
-            char *current_class_name;
             current_class_name = (char *)ce->name;
-
             if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
                     return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
             }
-            zval *aop_object;
             aop_object = get_aopTriggeringJoinpoint();
-            aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             obj->current_pointcut = current_pc;
             obj->current_pointcut_index = current_pointcut_index; 
             obj->object = object;
@@ -292,12 +292,15 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
 }
 
 static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D) {
+    TSRMLS_FETCH();
     if (current_pointcut_index==aop_g(count_write_property)) {
-        TSRMLS_FETCH()
         zend_std_write_property(object,member,value AOP_KEY_C TSRMLS_CC);
     } else {
             pointcut *current_pc = aop_g(property_pointcuts_write)[current_pointcut_index];
             zend_class_entry *ce = NULL;
+            char *current_class_name;
+            aopTriggeredJoinpoint_object *obj;
+            zval *aop_object;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
@@ -305,16 +308,14 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
                 }
             }
             ce = Z_OBJCE_P(object);
-            char *current_class_name;
             current_class_name = (char *)ce->name;
 
             if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
                     test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
                     return ;
             }
-            zval *aop_object;
             aop_object = get_aopTriggeringJoinpoint();
-            aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             obj->current_pointcut = current_pc;
             obj->current_pointcut_index = current_pointcut_index; 
             obj->object = object;
@@ -340,6 +341,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
 }
 
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg) {
+    TSRMLS_FETCH();
     zval *args[1], *zret_ptr;
     args[0] = (zval *)&(arg);
     zret_ptr = NULL;
@@ -434,10 +436,10 @@ PHP_METHOD(aopTriggeredJoinpoint, getArguments){
 
 PHP_METHOD(aopTriggeredJoinpoint, setArguments){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    zval *params;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         zend_error(E_ERROR, "setArguments is not available while using on property"); 
     }
-    zval *params; 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &params) == FAILURE) {
         zend_error(E_ERROR, "setArguments expects an array as its first argument");
         return;
@@ -548,11 +550,11 @@ PHP_METHOD(aopTriggeredJoinpoint, getTriggeringClassName){
 
 PHP_METHOD(aopTriggeredJoinpoint, getTriggeringMethodName){
     aopTriggeredJoinpoint_object *obj = (aopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    zend_execute_data *data = obj->context->ex;
+    zend_function *curr_func;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         zend_error(E_ERROR, "getTriggeringMethodName is not available while using on property"); 
     }
-    zend_execute_data *data = obj->context->ex;
-    zend_function *curr_func;
     if (data == NULL) {
         RETURN_NULL();
     }
@@ -666,11 +668,12 @@ static void parse_pointcut (pointcut **pc) {
 }
 
 static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
-    type = type|AOP_KIND_READ_PROPERTY;
+    TSRMLS_FETCH();
     int nb_char;
     int count;
     char * temp;
     pointcut *pc;
+    type = type|AOP_KIND_READ_PROPERTY;
     aop_g(count_read_property)++;
     count=aop_g(count_read_property)-1;
     if (aop_g(count_read_property)==1) {
@@ -710,12 +713,12 @@ static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_c
 }
 
 static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
-    type = type|AOP_KIND_WRITE_PROPERTY;
+    TSRMLS_FETCH();
     int nb_char;
     int count;
     char * temp;
-
     pointcut *pc;
+    type = type|AOP_KIND_WRITE_PROPERTY;
     aop_g(count_write_property)++;
     count=aop_g(count_write_property)-1;
     if (aop_g(count_write_property)==1) {
