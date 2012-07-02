@@ -231,9 +231,9 @@ on what exactly happened.
        if ($aop_tjp->getKindOfAdvice() === AOP_KIND_BEFORE_READ_PROPERTY) {
           return;//we don't care if the value is just readed
        } elseif ($aop_tjp->getKindOfAdvice() === AOP_KIND_BEFORE_WRITE_PROPERTY) {
-          $paparazzi->shoot($aop_tjp->getTriggeringObject()->getName(),
-                            $aop_tjp->getAssignedValue(),
-                            $aop_tjp->getTriggeringPropertyName()
+          $paparazzi->shoot($aop_tjp->getTriggeringObject()->getName(),//calls getName on the caught celebrity
+                            $aop_tjp->getAssignedValue(),//gets the value that should be assigned to $object->secret
+                            $aop_tjp->getTriggeringPropertyName()//the name of the caught property
                             );
        }
     };
@@ -248,6 +248,35 @@ will output
 
     [screen]
     I'm taking pictures of Cynthia Bellula doing some shoping at london (that's supposed to be secret)
+
+### An advice that updates the assigned value of a property ###
+
+    [php]
+    class Developper
+    {
+       public $preferences;
+    }
+
+    $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
+    {
+       $assigned = & $aop_tjp->getAssignedValue();
+       if ($assigned !== 'PHP') {
+           $assigned .= ' and PHP';
+       }
+    };
+
+    //will be triggered before writing the property privateStuff
+    aop_add_before('write Developper->preferences', $spread_the_love);
+
+    $developper = new Developper();
+    $developper->preferences = 'Java';
+
+    echo "This developper loves ", $developper->preferences;
+
+will output
+
+    [screen]
+    This developper loves Java and PHP
 
 ## aop_add_after ##
 
