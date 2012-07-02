@@ -841,10 +841,6 @@ If you are assigning a returned value to a method that was expected to return a 
 be lost and won't be replaced. To replace the content of an original reference, just proceed as explained in the getReturnedValue
 documentation.
 
-    [php]
-
-
-
 ### process ###
 
 The process method allow you to explicitely launch the triggering method.
@@ -869,6 +865,9 @@ a class, getTriggeringClassName returns null.
 If the class is declared in a namespace, getTriggeringClassName indicates the full name of the class (with the namespace).
 
 ### getTriggeringMethodName ###
+
+getTriggeringMethodName returns the name of the method name (or function name) of the triggered joinpoint. If the j
+oinpoint was triggered by a property operation, will raise an error.
 
 ## Pointcuts syntax ##
 
