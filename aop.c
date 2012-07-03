@@ -107,6 +107,7 @@ static const zend_function_entry aop_methods[] = {
     PHP_ME(AopTriggeredJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
     PHP_ME(AopTriggeredJoinpoint, getAssignedValue, arginfo_aop_args_returnbyref, 0)
     PHP_ME(AopTriggeredJoinpoint, setReturnedValue, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, setAssignedValue, NULL, 0)
     PHP_ME(AopTriggeredJoinpoint, getPointcut, NULL, 0)
     PHP_ME(AopTriggeredJoinpoint, getTriggeringObject, NULL, 0)
     PHP_ME(AopTriggeredJoinpoint, getTriggeringClassName, NULL, 0)
@@ -331,6 +332,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
             if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
                 execute_pointcut (current_pc, aop_object);
             } else {
+                value = obj->value;
                 test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
             }
             if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
@@ -486,6 +488,21 @@ PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue){
     } else {
         RETURN_NULL();
     } 
+}
+
+PHP_METHOD(AopTriggeredJoinpoint, setAssignedValue){
+    zval *ret;
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ_PROPERTY) {
+        zend_error(E_ERROR, "setReturnedValue is not available while using on read property"); 
+    }
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
+                zend_error(E_ERROR, "Error");
+        return;
+    } 
+    obj->value = ret;
+    Z_ADDREF_P(ret);
+    RETURN_NULL();
 }
 
 PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue){

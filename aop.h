@@ -152,6 +152,7 @@ PHP_METHOD(AopTriggeredJoinpoint, getKindOfAdvice);
 PHP_METHOD(AopTriggeredJoinpoint, getReturnedValue);
 PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue);
 PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue);
+PHP_METHOD(AopTriggeredJoinpoint, setAssignedValue);
 PHP_METHOD(AopTriggeredJoinpoint, getPointcut);
 PHP_METHOD(AopTriggeredJoinpoint, getTriggeringObject);
 PHP_METHOD(AopTriggeredJoinpoint, getTriggeringClassName);
