@@ -133,6 +133,7 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(count_read_property)=0;
     aop_g(lock_read_property)=0;
 
+    aop_g(count_aopTriggeringJoinpoint_cache)=0;
     return SUCCESS;
 }
 
