@@ -27,7 +27,7 @@ Download the AOP from github, compile and add the extension to your php.ini
 
 ```sh
     #Clone the repository on your computer
-    git clone https://github/juliens/AOP
+    git clone https://github/AOP-PHP/AOP
     cd AOP
     #prepare the package, you will need to have development tools for php
     phpize
