@@ -170,58 +170,15 @@ static zval *get_aopTriggeringJoinpoint () {
 }
 
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
-    zval **to_return;
-    char *current_class_name;
-
-    to_return = zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
-
-    if (to_return != NULL && aop_g(count_read_property)>0) {
-        zend_class_entry *ce = NULL;
-        int i;
-        for (i=0;i<aop_g(count_read_property);i++) {
-            pointcut *current_pc = aop_g(property_pointcuts_read)[i];
-            if (current_pc->method[0]!='*') {
-                if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
-                    continue;
-                }
-            }
-            if (ce==NULL) {
-                ce = Z_OBJCE_P(object);
-            }
-            current_class_name = (char *)ce->name;
-
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
-                continue;
-            }
-
-            return NULL;
-
-        }
+    zend_execute_data *ex = EG(current_execute_data);
+    //Test if ++
+    if (ex->opline->opcode!=ZEND_PRE_INC_OBJ &&  ex->opline->opcode!=ZEND_POST_INC_OBJ && ex->opline->opcode!=ZEND_PRE_DEC_OBJ && ex->opline->opcode!=ZEND_POST_DEC_OBJ) {
+        return zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
+    } else {
+        // Call original to not have a notice
+        zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
+        return NULL;
     }
-    if (to_return != NULL && aop_g(count_write_property)>0) {
-        zend_class_entry *ce = NULL;
-        int i;
-        for (i=0;i<aop_g(count_write_property);i++) {
-            pointcut *current_pc = aop_g(property_pointcuts_write)[i];
-            if (current_pc->method[0]!='*') {
-                if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
-                    continue;
-                }
-            }
-            if (ce==NULL) {
-                ce = Z_OBJCE_P(object);
-            }
-            current_class_name = (char *)ce->name;
-
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
-                continue;
-            }
-            return NULL;
-        }
-    }
-
-
-    return to_return;
 }
 
 ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
