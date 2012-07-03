@@ -865,25 +865,22 @@ Of course you may not want to list for the AOP extension every functions of ever
  pointcuts for. There are case where you would prefer to tell AOP the format of those elements, and that's why there
   are wildcards.
 
-*    *  will accept any function call in the root namespace
-*    admin* will accept any function call in the root namespace wich name starts with admin
-*    *admin will accept any function call in the root namespace wich name ends with admin
-*    namespaceOne/* will accept any function call in the namespace namespaceOne, but not in subnamespaces of namespaceOne
-*    namespaceOne/namespaceTwo/* will accept any function call in the namespace namespaceOne/namespaceTwo only
-*    */* will accept any function call in any single level namespace (eg namespaceOne/functionName or namespaceTwo/otherFunctionName
+*    *()  will accept any function call in the root namespace
+*    admin*() will accept any function call in the root namespace wich name starts with admin
+*    *admin() will accept any function call in the root namespace wich name ends with admin
+*    namespaceOne/*() will accept any function call in the namespace namespaceOne, but not in subnamespaces of namespaceOne
+*    namespaceOne/namespaceTwo/*() will accept any function call in the namespace namespaceOne/namespaceTwo only
+*    */*() will accept any function call in any single level namespace (eg namespaceOne/functionName or namespaceTwo/otherFunctionName
 but not namespaceOne/namespaceTwo/functionName)
-*    admin*/*/cache* will accept functions called with names names that starts with cache in a namespace called admin something
+*    admin*/*/cache*() will accept functions called with names names that starts with cache in a namespace called admin something
  with a second level namespace of any name (eg adminStuff/anything/cacheStuff)
 
 Wildcards can also be used to specify class names.
 
-*    *::methodName will accept all methods call named methodName in any object (eg Object1::methodName, Object2::methodName
+*    *::methodName() will accept all methods call named methodName in any object (eg Object1::methodName, Object2::methodName
 in the root namespace)
-*    *Foo*::admin* will accept methods call that start with admin in classes that contains Foo in their names, in the root
+*    *Foo*::admin*() will accept methods call that start with admin in classes that contains Foo in their names, in the root
 namespace
-
-### Specific keywords ###
-
 
 ### Wildcards ###
 
@@ -894,27 +891,25 @@ namespace
 
 the syntax to describe selectors is quite easy.
 
-*    'functionName' represent any call of a function called 'functionName' in the root namespace
-*    'namespaceName\\functionName' represent any call of a function called 'functionName' in the namespaceName namespace
-*    'ClassName::methodName' represent any call of a method called methodName from an instance (or not) of a class ClassName in the root namespace
-*    'namespaceName\\ClassName::methodName' represent any call of a method called methodName from an instance (or not) of a class
+*    'functionName()' represent any call of a function called 'functionName' in the root namespace
+*    'namespaceName\\functionName()' represent any call of a function called 'functionName' in the namespaceName namespace
+*    'ClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a class ClassName in the root namespace
+*    'namespaceName\\ClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a class
 ClassName located in the namespace namespaceName
 
 You can use both :: and -> as a seperator for classes/method (e.g. Class->method equals Class::method).
 
-
 ### Selectors using wildcards examples ###
 
-*    'startingFunctionName*' represent any call of a function who's name starts with startingFunctionName in the root namespace
-*    '*endingFunctionName' represent any call of a function who's name ends with endingFunctionName in the root namespace
-*    '*\\functionName' represent any call of a function called functionName in any single level namespace
-*    '*\\*\\functionName'  represent any call of a function called functionName in any two level namespace
-*    'StartingClassName*::methodName' represent any call of a method called methodName from an instance (or not) of a
+*    'startingFunctionName*()' represent any call of a function who's name starts with startingFunctionName in the root namespace
+*    '*endingFunctionName()' represent any call of a function who's name ends with endingFunctionName in the root namespace
+*    '*\\functionName()' represent any call of a function called functionName in any single level namespace
+*    '*\\*\\functionName()'  represent any call of a function called functionName in any two level namespace
+*    'StartingClassName*->methodName()' represent any call of a method called methodName from an instance (or not) of a
 class who's name start with StartingClassName in the root namespace
-*    '*EndingClassName::methodName' represent any call of a method called methodName from an instance (or not) of a
+*    '*EndingClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a
 class who's name end with EndingClassName in the root namespace
 
 ### Selectors using super wildcards examples ###
-*    '**\\' 
-*    **/*::admin* represents every call of a method starting by admin of any class in any namespace
-*    **\\* represents every call of any method in any namespace
+*    **\\*::admin*() represents every call of a method starting by admin of any class in any namespace
+*    **\\*() represents every call of any method in any namespace
