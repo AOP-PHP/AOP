@@ -207,6 +207,18 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
             zend_class_entry *ce = NULL;
             char *current_class_name;
             zval *aop_object;
+            zval *tmp_member;
+            if (Z_TYPE_P(member)!=IS_STRING ) {
+                ALLOC_ZVAL(tmp_member);
+                *tmp_member = *member;
+                INIT_PZVAL(tmp_member);
+                zval_copy_ctor(tmp_member);
+                convert_to_string(tmp_member);
+                member = tmp_member;
+            #if ZEND_MODULE_API_NO >= 20100525
+                key = NULL;
+            #endif
+            }
             AopTriggeredJoinpoint_object *obj;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
@@ -259,6 +271,18 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
             char *current_class_name;
             AopTriggeredJoinpoint_object *obj;
             zval *aop_object;
+            zval *tmp_member;
+            if (Z_TYPE_P(member)!=IS_STRING ) {
+                ALLOC_ZVAL(tmp_member);
+                *tmp_member = *member;
+                INIT_PZVAL(tmp_member);
+                zval_copy_ctor(tmp_member);
+                convert_to_string(tmp_member);
+                member = tmp_member;
+            #if ZEND_MODULE_API_NO >= 20100525
+                key = NULL;
+            #endif
+            }
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
