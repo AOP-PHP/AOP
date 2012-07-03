@@ -112,6 +112,7 @@ static const zend_function_entry aop_methods[] = {
     PHP_ME(AopTriggeredJoinpoint, getTriggeringObject, NULL, 0)
     PHP_ME(AopTriggeredJoinpoint, getTriggeringClassName, NULL, 0)
     PHP_ME(AopTriggeredJoinpoint, getTriggeringMethodName, NULL, 0)
+    PHP_ME(AopTriggeredJoinpoint, getTriggeringFunctionName, NULL, 0)
     PHP_ME(AopTriggeredJoinpoint, process, NULL, 0)
     {NULL, NULL, NULL}
 };
@@ -556,12 +557,33 @@ PHP_METHOD(AopTriggeredJoinpoint, getTriggeringClassName){
     RETURN_NULL();
 }
 
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringFunctionName){
+    AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    zend_execute_data *data = obj->context->ex;
+    zend_function *curr_func;
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
+        zend_error(E_ERROR, "getTriggeringMethodName is not available while using on property"); 
+    }
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_METHOD) {
+        zend_error(E_ERROR, "getTriggeringFunctionName is not available while using on class"); 
+    }
+    if (data == NULL) {
+        RETURN_NULL();
+    }
+    curr_func = data->function_state.function;
+    RETURN_STRING(curr_func->common.function_name, 1);
+}
+
+
 PHP_METHOD(AopTriggeredJoinpoint, getTriggeringMethodName){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zend_execute_data *data = obj->context->ex;
     zend_function *curr_func;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         zend_error(E_ERROR, "getTriggeringMethodName is not available while using on property"); 
+    }
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_FUNCTION) {
+        zend_error(E_ERROR, "getTriggeringMethodName is not available while using on function"); 
     }
     if (data == NULL) {
         RETURN_NULL();

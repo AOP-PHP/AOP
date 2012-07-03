@@ -162,6 +162,7 @@ PHP_METHOD(AopTriggeredJoinpoint, getPointcut);
 PHP_METHOD(AopTriggeredJoinpoint, getTriggeringObject);
 PHP_METHOD(AopTriggeredJoinpoint, getTriggeringClassName);
 PHP_METHOD(AopTriggeredJoinpoint, getTriggeringMethodName);
+PHP_METHOD(AopTriggeredJoinpoint, getTriggeringFunctionName);
 PHP_METHOD(AopTriggeredJoinpoint, process);
 
 extern zend_module_entry aop_module_entry;
