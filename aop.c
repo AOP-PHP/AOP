@@ -202,7 +202,17 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type AOP_KEY_D) {
     TSRMLS_FETCH();
     if (current_pointcut_index==aop_g(count_read_property)) {
-        return zend_std_read_property(object,member, type AOP_KEY_C TSRMLS_CC);
+        zval *temp,*to_return;
+        zend_class_entry *scope;
+        EG(scope) = Z_OBJCE_P(object);
+        scope = EG(scope);
+        temp = EG(This);
+        EG(This) = object;
+        to_return = zend_std_read_property(object,member, type AOP_KEY_C TSRMLS_CC);
+        EG(This) = temp;
+        EG(scope) = scope;
+        return to_return;
+
     } else {
             zval *to_return;
             pointcut *current_pc = aop_g(property_pointcuts_read)[current_pointcut_index];
@@ -266,7 +276,15 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
 static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D) {
     TSRMLS_FETCH();
     if (current_pointcut_index==aop_g(count_write_property)) {
+        zval *temp;
+        zend_class_entry *scope;
+        EG(scope) = Z_OBJCE_P(object);
+        scope = EG(scope);
+        temp = EG(This);
+        EG(This) = object;
         zend_std_write_property(object,member,value AOP_KEY_C TSRMLS_CC);
+        EG(This) = temp;
+        EG(scope) = scope;
     } else {
             pointcut *current_pc = aop_g(property_pointcuts_write)[current_pointcut_index];
             zend_class_entry *ce = NULL;
