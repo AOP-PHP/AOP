@@ -833,6 +833,7 @@ At their simpliest form, selectors will be given the name of the function itself
 parenthesis.
 
 eg :
+
 *    functionName() will raise advices for every call of the function functionName
 *    namespaceOne\namespaceTwo\functionName() will raise advices for every call of the function functionName in
 the namespace namespaceOne\namespaceTwo, but won't be triggered if you're calling only a method named functionName in an
@@ -842,6 +843,7 @@ Of course you can specify a method of an object of a given class name, by separa
 by "->".
 
 eg :
+
 *    MyClass->myMethod() will be triggered while calling the method myMethod of any instance of the class MyClass
 *    \namespaceOne\namespaceTwo\MyClass->myMethod() will be triggered while calling the method myMethod of any instance of
 the class MyClass in the namespace \namespaceOne\namespaceTwo.
@@ -849,6 +851,7 @@ the class MyClass in the namespace \namespaceOne\namespaceTwo.
 If you want to work on properties, the syntax for methods is to be considered, you simply have to ommit the final parenthesis.
 
 eg :
+
 *    MyClass->myProperty will be triggered while using the property myProperty of any instance of the class MyClass
 *    \namespaceOne\namespaceTwo\MyClass->myProperty will be triggered while using the property myProperty of any instance of
 the class MyClass in the namespace \namespaceOne\namespaceTwo.
@@ -858,6 +861,7 @@ the class MyClass in the namespace \namespaceOne\namespaceTwo.
 There is a specitic keyword you can use to tell AOP to consider only methods / properties that are public, protected or private.
 
 eg :
+
 *    public MyClass->myMethod() will be triggered while calling public methods named myMethod.
 *    public | protected MyClass->myMethod() will be triggered while calling public or protected methods named myMethod.
 *    public MyClass->myProperty will be triggered while using a public property named myProperty on an object of class MyClass.
@@ -867,6 +871,7 @@ of an object of class MyClass.
 For those keywords, you can use a negation with the exclamation mark (!)
 
 eg :
+
 *    !public MyClass->*() will accept every non public method call of objects of type MyClass in the root namespace
 *    !public MyClass->* will accept every non public property operation on objects of type MyClass in the root namespace
 
@@ -895,8 +900,8 @@ namespace
 
 ### Wildcards ###
 
-*    * match anything inside a name but stops when it encounters a /
-*    ** match anything, the scope includes the paths (/)
+*    '*' match anything inside a name but stops when it encounters a /
+*    '**' match anything, the scope includes the paths (/)
 
 ### Simple selectors examples ###
 
@@ -941,7 +946,7 @@ You can use both :: and -> as a seperator for classes/method class/properties (e
 *    'startingFunctionName*()' represent any call of a function who's name starts with startingFunctionName in the root namespace
 *    '*endingFunctionName()' represent any call of a function who's name ends with endingFunctionName in the root namespace
 *    '*\\functionName()' represent any call of a function called functionName in any single level namespace
-*    '*\\*\\functionName()'  represent any call of a function called functionName in any two level namespace
+*    '\*\\\*\\functionName()'  represent any call of a function called functionName in any two level namespace
 *    'StartingClassName*->methodName()' represent any call of a method called methodName from an instance (or not) of a
 class who's name start with StartingClassName in the root namespace
 *    '*EndingClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a
