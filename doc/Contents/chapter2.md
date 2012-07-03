@@ -278,38 +278,6 @@ will output
     [screen]
     This developper loves Java and PHP
 
-Of course, if you were assigning a variable to the property, the variable could be updated by the advice using its reference.
-
-    [php]
-    class Developper
-    {
-       public $preferences;
-    }
-
-    $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
-    {
-       //we get the assigned variable by reference, it will be updated by the advice
-       $assigned = & $aop_tjp->getAssignedValue();
-       if ($assigned !== 'PHP') {
-           $assigned .= ' and PHP';
-       }
-    };
-
-    //will be triggered before writing the property privateStuff
-    aop_add_before('write Developper->preferences', $spread_the_love);
-
-    $developper = new Developper();
-    $loveWhat = 'Python';
-    $developper->preferences = $loveWhat;
-
-    echo "This developper loves ", $developper->preferences;
-    echo ", Yes, $loveWhat";
-
-will output
-
-    [screen]
-    This developper loves Python and PHP, Yes, Python and PHP
-
 ## aop_add_after ##
 
 after kind of advices enables you to
@@ -846,44 +814,6 @@ method operation, will raise an error.
 
 getAssignedValue returns the value assigned to the property of the triggered joinpoint. If the joinpoint was triggered by
 a method operation, will raise an error. If the joinpoint was triggered by a read operation, will also raise an error.
-
-### setAssignedValue ###
-
-setAssignedValue will update the value of the variable assigned to the property of the triggered joinpoint.  If the joinpoint
-was triggered by a method operation, will raise an error. If the joinpoint was triggered by a read operation, will also
-raise an error.
-
-    [php]
-    class Developper
-    {
-       public $preferences;
-    }
-
-    $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
-    {
-       $assigned = $aop_tjp->getAssignedValue();
-
-       if ($assigned !== 'PHP') {
-           $assigned .= ' and PHP';
-       }
-
-       $aop_tjp->setAssignedValue($assigned);
-    };
-
-    //will be triggered before writing the property privateStuff
-    aop_add_before('write Developper->preferences', $spread_the_love);
-
-    $developper = new Developper();
-    $loveWhat = 'Python';
-    $developper->preferences = $loveWhat;
-
-    echo "This developper loves ", $developper->preferences;
-    echo ", Yes, $loveWhat";
-
-will output
-
-    [screen]
-    This developper loves Python and PHP, Yes, Python and PHP
 
 ## Pointcuts syntax ##
 
