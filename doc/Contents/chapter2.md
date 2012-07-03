@@ -826,38 +826,49 @@ a method operation, will raise an error. If the joinpoint was triggered by a rea
 
 ### Basics ###
 
-Selectors will enables you to describe with a very simple syntax functions and methods that should be considered for
+Selectors will enables you to describe with a very simple syntax functions, methods and properties that should be considered for
 raising the execution of a given advice.
 
-At their simpliest form, selectors will be given the name of the function itself, including its namespace.
+At their simpliest form, selectors will be given the name of the function itself, including its namespace, followed by
+parenthesis.
 
 eg :
-*    functionName will raise advices for every call of the function functionName
-*    namespaceOne\namespaceTwo\functionName will raise advices for every call of the function functionName in
+*    functionName() will raise advices for every call of the function functionName
+*    namespaceOne\namespaceTwo\functionName() will raise advices for every call of the function functionName in
 the namespace namespaceOne\namespaceTwo, but won't be triggered if you're calling only a method named functionName in an
 another namespace.
 
 Of course you can specify a method of an object of a given class name, by separating the class name and the method name
-by two colons (::).
+by "->".
 
 eg :
-*    MyClass::myMethod will be triggered while calling the method myMethod of any instance of the class MyClass
-*    \namespaceOne\namespaceTwo\MyClass::myMethod will be triggered while calling the method myMethod of any instance of
+*    MyClass->myMethod() will be triggered while calling the method myMethod of any instance of the class MyClass
+*    \namespaceOne\namespaceTwo\MyClass->myMethod() will be triggered while calling the method myMethod of any instance of
+the class MyClass in the namespace \namespaceOne\namespaceTwo.
+
+If you want to work on properties, the syntax for methods is to be considered, you simply have to ommit the final parenthesis.
+
+eg :
+*    MyClass->myProperty will be triggered while using the property myProperty of any instance of the class MyClass
+*    \namespaceOne\namespaceTwo\MyClass->myProperty will be triggered while using the property myProperty of any instance of
 the class MyClass in the namespace \namespaceOne\namespaceTwo.
 
 ### public / protected / private ###
 
-There is a specitic keyword you can use to tell AOP to consider only methods that are public, protected or private.
+There is a specitic keyword you can use to tell AOP to consider only methods / properties that are public, protected or private.
 
 eg :
-*    public MyClass::myMethod will be triggered while calling public methods named myMethod.
-*    public | protected MyClass::myMethod will be triggered while calling public or protected methods named myMethod.
+*    public MyClass->myMethod() will be triggered while calling public methods named myMethod.
+*    public | protected MyClass->myMethod() will be triggered while calling public or protected methods named myMethod.
+*    public MyClass->myProperty will be triggered while using a public property named myProperty on an object of class MyClass.
+*    public | protected MyClass->myProperty will be triggered while using a public or protected property named myProperty
+of an object of class MyClass.
 
 For those keywords, you can use a negation with the exclamation mark (!)
 
 eg :
-*    !public MyClass::* will accept every non public method call of objects of type MyClass in the root namespace
-
+*    !public MyClass->*() will accept every non public method call of objects of type MyClass in the root namespace
+*    !public MyClass->* will accept every non public property operation on objects of type MyClass in the root namespace
 
 ### Wildcards ###
 
@@ -889,15 +900,41 @@ namespace
 
 ### Simple selectors examples ###
 
-the syntax to describe selectors is quite easy.
+#### For functions ####
+
+End the selector with parenthesis ()
 
 *    'functionName()' represent any call of a function called 'functionName' in the root namespace
 *    'namespaceName\\functionName()' represent any call of a function called 'functionName' in the namespaceName namespace
+
+#### For methods ####
+
+Start your selector with a Classname (Interface or Traits will also work, inheritance is taken into account)
+
 *    'ClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a class ClassName in the root namespace
 *    'namespaceName\\ClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a class
 ClassName located in the namespace namespaceName
 
-You can use both :: and -> as a seperator for classes/method (e.g. Class->method equals Class::method).
+#### Properties ####
+
+Start your selector with a Classname (Interface or Traits will also work, inheritance is taken into account), do not end
+ with parenthesis.
+
+Of course, the property part of selectors are case sensitive (as properties are case sensitive in PHP).
+
+*    'ClassName->propertyName' represent any use of a property called propertyName from an instance (or not) of a class ClassName in the root namespace
+*    'namespaceName\\ClassName->propertyName' represent any use of a property called propertyName from an instance (or not) of a class
+ClassName located in the namespace namespaceName
+
+By default, read and write operations are considered from a property selector. To specificly hook write or read operations,
+prefix your selector by "read" or "write".
+
+*    'read ClassName->propertyName' represent all the reading operations on the property propertyName of objects of type ClassName in the
+root namespace
+*    'write ClassName->propertyName' represent all the writing operations on the property propertyName of objects of type ClassName in the
+root namespace
+
+You can use both :: and -> as a seperator for classes/method class/properties (e.g. Class->method() equals Class::method()).
 
 ### Selectors using wildcards examples ###
 
