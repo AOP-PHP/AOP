@@ -7,7 +7,7 @@ class mytest {
 		echo "intest";
 	}
 }
-aop_add_after('mytest::test()', function ($pObj) {echo $pObj->getKindOfAdvice() === AOP_KIND_AFTER ? 'yes' : 'no'; });
+aop_add_after('mytest::test()', function ($pObj) {echo $pObj->getKindOfAdvice() === AOP_KIND_AFTER_METHOD ? 'yes' : 'no'; });
 $test = new mytest();
 $test->test();
 
