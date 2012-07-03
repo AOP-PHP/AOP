@@ -802,8 +802,15 @@ If the class is declared in a namespace, getTriggeringClassName indicates the fu
 
 ### getTriggeringMethodName ###
 
-getTriggeringMethodName returns the name of the method (or function) of the triggered joinpoint. If the joinpoint was
-triggered by a property operation, will raise an error.
+getTriggeringMethodName returns the name of the method of the triggered joinpoint. If the joinpoint was
+triggered by a property operation, will raise an error. If the joinpoint was triggered by a function operation, will
+raise an error.
+
+### getTriggeringFunctionName ###
+
+getTriggeringFunctionName returns the name of the function of the triggered joinpoint. If the joinpoint was
+triggered by a property operation, will raise an error. If the joinpoint was triggered by a method operation, will
+raise an error.
 
 ### getTriggeringPropertyName ###
 
