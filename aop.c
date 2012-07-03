@@ -368,8 +368,10 @@ PHP_MINIT_FUNCTION(aop)
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER", AOP_KIND_AFTER, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND", AOP_KIND_AROUND, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_PROPERTY", AOP_KIND_PROPERTY, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("AOP_KIND_READ_PROPERTY", AOP_KIND_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("AOP_KIND_WRITE_PROPERTY", AOP_KIND_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_FUNCTION", AOP_KIND_FUNCTION, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_METHOD", AOP_KIND_METHOD, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_READ", AOP_KIND_READ, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_WRITE", AOP_KIND_WRITE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_WRITE_PROPERTY", AOP_KIND_AROUND_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_READ_PROPERTY", AOP_KIND_AROUND_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE_WRITE_PROPERTY", AOP_KIND_BEFORE_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
@@ -377,6 +379,14 @@ PHP_MINIT_FUNCTION(aop)
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER_WRITE_PROPERTY", AOP_KIND_AFTER_WRITE_PROPERTY, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER_READ_PROPERTY", AOP_KIND_AFTER_READ_PROPERTY, CONST_CS | CONST_PERSISTENT);
 
+    
+    REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE_METHOD", AOP_KIND_BEFORE_METHOD, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AFTER_METHOD", AOP_KIND_AFTER_METHOD, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_METHOD", AOP_KIND_AROUND_METHOD, CONST_CS | CONST_PERSISTENT);
+
+    REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE_FUNCTION", AOP_KIND_BEFORE_FUNCTION, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AFTER_FUNCTION", AOP_KIND_AFTER_FUNCTION, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("AOP_KIND_AROUND_FUNCTION", AOP_KIND_AROUND_FUNCTION, CONST_CS | CONST_PERSISTENT);
 
 #if ZEND_MODULE_API_NO < 20100525
     zend_std_write_property = std_object_handlers.write_property;
@@ -459,7 +469,7 @@ PHP_METHOD(AopTriggeredJoinpoint, getReturnedValue){
 }
 PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY)) {
+    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE)) {
         zend_error(E_ERROR, "getAssignedValue is only available while using on write property"); 
     }
     if (obj->value!=NULL) {
@@ -474,7 +484,7 @@ PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue){
 PHP_METHOD(AopTriggeredJoinpoint, setAssignedValue){
     zval *ret;
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ_PROPERTY) {
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ) {
         zend_error(E_ERROR, "setReturnedValue is not available while using on read property"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
@@ -489,7 +499,7 @@ PHP_METHOD(AopTriggeredJoinpoint, setAssignedValue){
 PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue){
     zval *ret;
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY) {
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
         zend_error(E_ERROR, "setReturnedValue is not available while using on write property"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
@@ -497,7 +507,7 @@ PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue){
         return;
     }
     
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ_PROPERTY) {
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ) {
         obj->value = ret;
         Z_ADDREF_P(ret);
     } else {
@@ -566,7 +576,7 @@ PHP_METHOD(AopTriggeredJoinpoint, process){
         zend_error(E_ERROR, "process is only available while using on around"); 
     }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE_PROPERTY) {
+        if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
             #if ZEND_MODULE_API_NO >= 20100525
 //            zend_literal *key = obj->key;
 // NULL for no segfault (use by zend_get_property_info_quick)
@@ -661,7 +671,10 @@ static void parse_pointcut (pointcut **pc) {
     
     (*pc)->method_jok = (strchr((*pc)->method, '*') != NULL);
     if ((*pc)->class_name != NULL) {
+        (*pc)->kind_of_advice = (*pc)->kind_of_advice|AOP_KIND_METHOD;
         (*pc)->class_jok = (strchr((*pc)->class_name, '*') != NULL);
+    } else {
+        (*pc)->kind_of_advice = (*pc)->kind_of_advice|AOP_KIND_FUNCTION;
     }
 }
 
@@ -671,7 +684,7 @@ static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_c
     int count;
     char * temp;
     pointcut *pc;
-    type = type|AOP_KIND_READ_PROPERTY;
+    type = type|AOP_KIND_READ;
     aop_g(count_read_property)++;
     count=aop_g(count_read_property)-1;
     if (aop_g(count_read_property)==1) {
@@ -716,7 +729,7 @@ static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_
     int count;
     char * temp;
     pointcut *pc;
-    type = type|AOP_KIND_WRITE_PROPERTY;
+    type = type|AOP_KIND_WRITE;
     aop_g(count_write_property)++;
     count=aop_g(count_write_property)-1;
     if (aop_g(count_write_property)==1) {
@@ -929,7 +942,7 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     zval *args[1], *zret_ptr;
     TSRMLS_FETCH();
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(pc->object TSRMLS_CC);
-    if (pc->pc->kind_of_advice == AOP_KIND_AFTER) {
+    if (pc->pc->kind_of_advice & AOP_KIND_AFTER) {
         exec(obj TSRMLS_CC);
     }
     if (EG(exception)) {
@@ -948,7 +961,7 @@ void joinpoint_execute (instance_of_pointcut *pc) {
     if (!EG(exception) && pc->pc->kind_of_advice & AOP_KIND_BEFORE) {
         exec(obj TSRMLS_CC);
     }
-    if (!EG(exception) && pc->pc->kind_of_advice != AOP_KIND_BEFORE && zret_ptr != NULL) {
+    if (!EG(exception) && !(pc->pc->kind_of_advice & AOP_KIND_BEFORE) && zret_ptr != NULL) {
         //See if we can return or not
         if (Z_TYPE_P(zret_ptr)!=IS_NULL) {
             obj->context->ret = zret_ptr;
