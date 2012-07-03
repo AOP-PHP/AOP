@@ -29,5 +29,5 @@ setAssignedValue
     echo ", Yes, $loveWhat";
 ?>
 --EXPECT--
-This developper loves Python and PHP, Yes, Python and PHP
+This developper loves Python and PHP, Yes, Python
 
