@@ -51,7 +51,8 @@ http://pear.php.net/dtd/package-2.0.xsd">
             <file role="doc"  name="README.md" />
             <file role="doc"  name="THANKS" />
             <dir name="tests">
-              <dir name="arguments_overload" >
+
+                <dir name="arguments_overload" >
                     <file role="test" name="001.phpt" />
                     <file role="test" name="002.phpt" />
               </dir>
@@ -59,6 +60,12 @@ http://pear.php.net/dtd/package-2.0.xsd">
                     <file role="test" name="001.phpt" />
               </dir>
                 <dir name="bugs" >
+                    <file role="test" name="001.phpt" />
+                    <file role="test" name="002.phpt" />
+                    <file role="test" name="003.phpt" />
+                    <file role="test" name="004.phpt" />
+              </dir>
+                <dir name="complete" >
                     <file role="test" name="001.phpt" />
               </dir>
                 <dir name="consts" >
@@ -82,7 +89,12 @@ http://pear.php.net/dtd/package-2.0.xsd">
                     <file role="test" name="13.phpt" />
                     <file role="test" name="14.phpt" />
                     <file role="test" name="15.phpt" />
+                    <file role="test" name="16.phpt" />
+                    <file role="test" name="17.phpt" />
+                    <file role="test" name="18.phpt" />
+                    <file role="test" name="19.phpt" />
                     <file role="test" name="1.phpt" />
+                    <file role="test" name="21.phpt" />
                     <file role="test" name="2.phpt" />
                     <file role="test" name="3.phpt" />
                     <file role="test" name="4.phpt" />
@@ -138,6 +150,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
                     <file role="test" name="005.phpt" />
                     <file role="test" name="006.phpt" />
                     <file role="test" name="007.phpt" />
+                    <file role="test" name="008.phpt" />
               </dir>
                 <dir name="read_properties" >
                     <file role="test" name="001.phpt" />
@@ -170,7 +183,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
                     <file role="test" name="005.phpt" />
                     <file role="test" name="006.phpt" />
                     <file role="test" name="007.phpt" />
-              </dir>
+             </dir>
             </dir>
         </dir>
  </contents>
