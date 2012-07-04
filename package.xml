@@ -6,10 +6,14 @@ http://pear.php.net/dtd/package-2.0.xsd">
  <name>AOP</name>
  <channel>pecl.php.net</channel>
  <summary>
-       AOP In PHP
+       Aspect Oriented Programming On PHP
 </summary>
  <description>
-       AOP In PHP
+       AOP is a PECL extension that enables you to use Aspect Oriented Programming in PHP, without the need to compile or proceed to any other intermediate step before publishing your code.
+
+The AOP extension is designed to be the easiest way you can think of for integrating AOP to PHP.
+
+AOP aims to allow separation of cross-cutting concerns (cache, log, security, transactions, business rules, ...)
  </description>
  <lead>
   <name>Salleyron Julien</name>
@@ -23,11 +27,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>gerald@php.net</email>
   <active>yes</active>
  </lead>
-
-   <date>2012-07-02</date>
+   <date>2012-07-04</date>
    <version>
-    <release>0.9.0</release>
-    <api>0.9.0</api>
+    <release>0.1.0</release>
+    <api>0.1.0</api>
    </version>
    <stability>
     <release>beta</release>
