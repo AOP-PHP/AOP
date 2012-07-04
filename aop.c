@@ -220,6 +220,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
             char *current_class_name;
             zval *aop_object;
             zval *tmp_member;
+            AopTriggeredJoinpoint_object *obj;
             if (Z_TYPE_P(member)!=IS_STRING ) {
                 ALLOC_ZVAL(tmp_member);
                 *tmp_member = *member;
@@ -231,7 +232,6 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
                 key = NULL;
             #endif
             }
-            AopTriggeredJoinpoint_object *obj;
             if (current_pc->method[0]!='*') {
                 if (!strcmp_with_joker_case(current_pc->method,Z_STRVAL_P(member), 1)) {
                     return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
