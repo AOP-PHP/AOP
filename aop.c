@@ -51,7 +51,7 @@ zend_module_entry aop_module_entry =
     PHP_AOP_EXTNAME,
     aop_functions,
     PHP_MINIT(aop),
-    PHP_MSHUTDOWN(aop),
+    NULL,
     PHP_RINIT(aop),
     NULL,
     NULL,
@@ -116,11 +116,6 @@ static const zend_function_entry aop_methods[] = {
     PHP_ME(AopTriggeredJoinpoint, process, NULL, 0)
     {NULL, NULL, NULL}
 };
-
-PHP_MSHUTDOWN_FUNCTION(aop)
-{
-    return SUCCESS;
-}
 
 PHP_RINIT_FUNCTION(aop)
 {
