@@ -281,12 +281,13 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
     }
 }
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D) {
-#if ZEND_MODULE_API_NO < 20100525
-    ulong key = NULL;
-#endif
     zend_property_info *property_info = NULL;
     ulong h;
+#if ZEND_MODULE_API_NO < 20100525
+    h = zend_get_hash_value(Z_STRVAL_P(member), Z_STRLEN_P(member) + 1);
+#else
     h = key ? key->hash_value : zend_get_hash_value(Z_STRVAL_P(member), Z_STRLEN_P(member) + 1);
+#endif
     if (zend_hash_quick_find(&ce->properties_info, Z_STRVAL_P(member), Z_STRLEN_P(member)+1, h, (void **) &property_info)==SUCCESS) {
         if (property_info) {
             if (current_pc->static_state != 2) {
