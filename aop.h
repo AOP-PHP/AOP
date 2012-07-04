@@ -198,4 +198,5 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
 static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
+static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
 
