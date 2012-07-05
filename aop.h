@@ -26,7 +26,7 @@
     } while (0)
 #endif
 
-#define PHP_AOP_VERSION "1.0.0b1"
+#define PHP_AOP_VERSION "0.1.0"
 #define PHP_AOP_EXTNAME "aop"
 
 #define AOP_KIND_AROUND 1
