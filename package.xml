@@ -27,10 +27,10 @@ AOP aims to allow separation of cross-cutting concerns (cache, log, security, tr
   <email>gerald@php.net</email>
   <active>yes</active>
  </lead>
-   <date>2012-07-04</date>
+   <date>2012-07-05</date>
    <version>
-    <release>0.1.0</release>
-    <api>0.1.0</api>
+    <release>1.0.0b1</release>
+    <api>1.0.0b1</api>
    </version>
    <stability>
     <release>beta</release>
