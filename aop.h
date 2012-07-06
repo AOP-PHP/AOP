@@ -91,12 +91,23 @@ typedef struct {
     zend_fcall_info_cache fcic;
 } pointcut;
 
+
+typedef struct {
+    int count;
+    pointcut **poincuts_cache;
+    int declare_count;
+    zend_class_entry *ce;
+} pointcut_cache;
+
 typedef struct {
     pointcut *pc;
     pointcut *previous_pc;
     zval *object;
 } instance_of_pointcut;
 
+typedef struct {
+    HashTable *ht;
+} handled_ht;
 
 typedef struct {
     zend_object std;
@@ -133,6 +144,11 @@ pointcut **property_pointcuts_read;
 
 int count_aopTriggeringJoinpoint_cache;
 zval **aopTriggeringJoinpoint_cache;
+
+
+
+handled_ht **cache_write_properties;
+int cache_write_size;
 
 ZEND_END_MODULE_GLOBALS(aop)
 
