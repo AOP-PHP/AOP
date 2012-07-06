@@ -13,7 +13,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
 
 The AOP extension is designed to be the easiest way you can think of for integrating AOP to PHP.
 
-AOP aims to allow separation of cross-cutting concerns (cache, log, security, transactions, business rules, ...)
+AOP aims to allow separation of cross-cutting concerns (cache, log, security, transactions, ...)
  </description>
  <lead>
   <name>Salleyron Julien</name>
