@@ -5,7 +5,7 @@ to compile or proceed to any other intermediate step before publishing your code
 
 The AOP extension is designed to be the easiest way you can think of for integrating AOP to PHP.
 
-AOP aims to allow separation of cross-cutting concerns (cache, log, security, transactions, business rules, ...)
+AOP aims to allow separation of cross-cutting concerns (cache, log, security, transactions, ...)
 
 [![Build Status](https://secure.travis-ci.org/AOP-PHP/AOP.png?branch=master)](http://travis-ci.org/AOP-PHP/AOP)
 
