@@ -104,7 +104,7 @@ Now, let's use AOP to tell PHP to execute this method "before" any execution of 
 
 ``` php
 <?php
-    aop_add_before('MyServices::doAdmin*', 'adviceForDoAdmin');
+    aop_add_before('MyServices::doAdmin*()', 'adviceForDoAdmin');
 ```
 
 Now, each time you'll invoke a method of an object of the class MyServices, starting by doAdmin, AOP will launch the function
