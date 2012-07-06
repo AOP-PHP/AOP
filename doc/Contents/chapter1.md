@@ -156,7 +156,7 @@ Pointcuts are a way to describe whether or not a given join point will trigger t
 
 In PHP's AOP extension, pointcuts can be configured with a quite simple and straightforward syntax.
 
-In our first example the pointcut was "MyServices::doAdmin*" and was configured to launch the advice "before" the
+In our first example the pointcut was "MyServices->doAdmin*()" and was configured to launch the advice "before" the
 execution of the matching methods join points.
 
 ## Why or should I use AOP ? ##
