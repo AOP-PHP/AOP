@@ -83,7 +83,7 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
     zend_object_value retval;
 
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)emalloc(sizeof(AopTriggeredJoinpoint_object));
-    memset(obj, NULL, sizeof(AopTriggeredJoinpoint_object));
+    memset(obj, 0, sizeof(AopTriggeredJoinpoint_object));
     obj->std.ce = type;
 
 //    ALLOC_HASHTABLE(obj->std.properties);
