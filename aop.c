@@ -387,7 +387,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
             efree(cache);
         }
         cache = emalloc (sizeof (pointcut_cache));
-        cache->count = get_pointcuts_write_properties(object, member, &cache->poincuts_cache AOP_KEY_C);
+        cache->count = get_pointcuts_write_properties(object, member, &cache->pointcuts_cache AOP_KEY_C);
         cache->declare_count = aop_g(count_write_property);
         cache->ce = Z_OBJCE_P(object);
         zend_hash_add(aop_g(cache_write_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member), cache, sizeof(pointcut_cache), NULL);
@@ -403,7 +403,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
         EG(scope) = scope;    
         return;
     }
-    current_pc = cache->poincuts_cache[current_pointcut_index];
+    current_pc = cache->pointcuts_cache[current_pointcut_index];
     
 
     aop_object = get_aopTriggeringJoinpoint();

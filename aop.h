@@ -94,7 +94,7 @@ typedef struct {
 
 typedef struct {
     int count;
-    pointcut **poincuts_cache;
+    pointcut **pointcuts_cache;
     int declare_count;
     zend_class_entry *ce;
 } pointcut_cache;
