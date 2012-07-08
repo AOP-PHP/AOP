@@ -23,6 +23,12 @@ the extension's API.
 
 ## Installation ##
 
+Now you can use pecl
+
+```sh
+    sudo pecl install aop-beta
+```
+
 Download the AOP from github, compile and add the extension to your php.ini
 
 ```sh
