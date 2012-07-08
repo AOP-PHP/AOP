@@ -382,6 +382,10 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
         zend_hash_find(aop_g(cache_write_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member), (void **)&cache);
     }
     if (cache==NULL || cache->declare_count<aop_g(count_write_property) || cache->ce!=Z_OBJCE_P(object)) {
+        if (cache!=NULL) {
+            efree(cache->pointcuts_cache);
+            efree(cache);
+        }
         cache = emalloc (sizeof (pointcut_cache));
         cache->count = get_pointcuts_write_properties(object, member, &cache->poincuts_cache AOP_KEY_C);
         cache->declare_count = aop_g(count_write_property);
