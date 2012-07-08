@@ -27,10 +27,10 @@ AOP aims to allow separation of cross-cutting concerns (cache, log, security, tr
   <email>gerald@php.net</email>
   <active>yes</active>
  </lead>
-   <date>2012-07-05</date>
+   <date>2012-08-05</date>
    <version>
-    <release>0.1.0</release>
-    <api>0.1.0</api>
+    <release>0.2.0</release>
+    <api>0.2.0</api>
    </version>
    <stability>
     <release>beta</release>
@@ -38,7 +38,7 @@ AOP aims to allow separation of cross-cutting concerns (cache, log, security, tr
    </stability>
  <license uri="http://www.php.net/license">PHP License</license>
    <notes>
-       AOP In PHP
+    - Cache on Write Properties
    </notes>
 
  <contents>
@@ -202,4 +202,21 @@ AOP aims to allow separation of cross-cutting concerns (cache, log, security, tr
  </dependencies>
  <providesextension>AOP</providesextension>
  <extsrcrelease />
+<changelog>
+<release>
+   <date>2012-07-05</date>
+   <version>
+    <release>0.1.0</release>
+    <api>0.1.0</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <notes>
+       AOP In PHP
+   </notes>
+
+</release>
+</changelog>
 </package>
