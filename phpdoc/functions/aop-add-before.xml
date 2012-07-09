@@ -4,7 +4,7 @@
 <refentry xml:id="function.aop-add-before" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>aop_add_before</refname>
-  <refpurpose>Description</refpurpose>
+  <refpurpose>Adds an advice before a given pointcut</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -12,13 +12,11 @@
   <methodsynopsis>
    <type>ReturnType</type><methodname>aop_add_before</methodname>
    <methodparam><type>string</type><parameter>pointcut</parameter></methodparam>
-   <methodparam><type>string</type><parameter>callback</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
   </methodsynopsis>
   <para>
-
+   Adds an advice to a given pointcut.
   </para>
-
-  &warn.undocumented.func;
 
  </refsect1>
 
@@ -29,7 +27,7 @@
     <term><parameter>pointcut</parameter></term>
     <listitem>
      <para>
-      
+
      </para>
     </listitem>
    </varlistentry>

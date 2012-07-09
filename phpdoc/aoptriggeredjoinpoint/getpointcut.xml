@@ -3,14 +3,14 @@
 
 <refentry xml:id="aoptriggeredjoinpoint.getpointcut" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>aopTriggeredJoinpoint::getPointcut</refname>
+  <refname>AopTriggeredJoinpoint::getPointcut</refname>
   <refpurpose>The getPointcut purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>aopTriggeredJoinpoint::getPointcut</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::getPointcut</methodname>
    <void />
   </methodsynopsis>
   <para>

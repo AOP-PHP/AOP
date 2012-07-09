@@ -3,12 +3,12 @@
 
 <phpdoc:classref xml:id="class.aoptriggeredjoinpoint" xmlns:phpdoc="http://php.net/ns/phpdoc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
 
- <title>The aopTriggeredJoinpoint class</title>
- <titleabbrev>aopTriggeredJoinpoint</titleabbrev>
+ <title>The AopTriggeredJoinpoint class</title>
+ <titleabbrev>AopTriggeredJoinpoint</titleabbrev>
 
  <partintro>
 
-<!-- {{{ aopTriggeredJoinpoint intro -->
+<!-- {{{ AopTriggeredJoinpoint intro -->
   <section xml:id="aoptriggeredjoinpoint.intro">
    &reftitle.intro;
    <para>
@@ -22,12 +22,12 @@
 
 <!-- {{{ Synopsis -->
    <classsynopsis>
-    <ooclass><classname>aopTriggeredJoinpoint</classname></ooclass>
+    <ooclass><classname>AopTriggeredJoinpoint</classname></ooclass>
 
 <!-- {{{ Class synopsis -->
     <classsynopsisinfo>
      <ooclass>
-      <classname>aopTriggeredJoinpoint</classname>
+      <classname>AopTriggeredJoinpoint</classname>
      </ooclass>
     </classsynopsisinfo>
 <!-- }}} -->

@@ -3,14 +3,14 @@
 
 <refentry xml:id="aoptriggeredjoinpoint.process" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>aopTriggeredJoinpoint::process</refname>
+  <refname>AopTriggeredJoinpoint::process</refname>
   <refpurpose>The process purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>aopTriggeredJoinpoint::process</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::process</methodname>
    <void />
   </methodsynopsis>
   <para>

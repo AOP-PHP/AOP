@@ -3,14 +3,14 @@
 
 <refentry xml:id="aoptriggeredjoinpoint.gettriggeringmethodname" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>aopTriggeredJoinpoint::getTriggeringMethodName</refname>
+  <refname>AopTriggeredJoinpoint::getTriggeringMethodName</refname>
   <refpurpose>The getTriggeringMethodName purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>aopTriggeredJoinpoint::getTriggeringMethodName</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::getTriggeringMethodName</methodname>
    <void />
   </methodsynopsis>
   <para>

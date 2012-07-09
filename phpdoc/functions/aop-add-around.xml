@@ -4,7 +4,7 @@
 <refentry xml:id="function.aop-add-around" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>aop_add_around</refname>
-  <refpurpose>Description</refpurpose>
+  <refpurpose>Adds an advice around a given pointcut</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -12,7 +12,7 @@
   <methodsynopsis>
    <type>ReturnType</type><methodname>aop_add_around</methodname>
    <methodparam><type>string</type><parameter>pointcut</parameter></methodparam>
-   <methodparam><type>string</type><parameter>callback</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
   </methodsynopsis>
   <para>
 

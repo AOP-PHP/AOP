@@ -6,23 +6,20 @@
 
  <section xml:id="aop.requirements">
   &reftitle.required;
-  &reftitle.norequirement;
+  &no.requirement;
  </section>
 
  <section xml:id="aop.installation">
   &reftitle.install;
-  &no.install;
- </section>
-
- <section xml:id="aop.configuration">
-  &reftitle.runtime;
-  &no.config;
- </section>
-
- <section xml:id="aop.resources">
-  &reftitle.resources;
   <para>
-
+   &pecl.moved;
+  </para>
+  <para>
+   &pecl.info;
+   <link xlink:href="&url.pecl.package;aop">&url.pecl.package;aop</link>.
+  </para>
+  <para>
+   &pecl.windows.download;
   </para>
  </section>
 

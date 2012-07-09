@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 
-<refentry xml:id="function.aop-add-before-write" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="aoptriggeredjoinpoint.setassignedvalue" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>aop_add_before_write</refname>
-  <refpurpose>Description</refpurpose>
+  <refname>AopTriggeredJoinpoint::setAssignedValue</refname>
+  <refpurpose>The setAssignedValue purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>ReturnType</type><methodname>aop_add_before_write</methodname>
-   <methodparam><type>string</type><parameter>pointcut</parameter></methodparam>
-   <methodparam><type>string</type><parameter>callback</parameter></methodparam>
+   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::setAssignedValue</methodname>
+   <void />
   </methodsynopsis>
   <para>
 
@@ -24,24 +23,7 @@
 
  <refsect1 role="parameters">
   &reftitle.parameters;
-  <variablelist>
-   <varlistentry>
-    <term><parameter>pointcut</parameter></term>
-    <listitem>
-     <para>
-      
-     </para>
-    </listitem>
-   </varlistentry>
-   <varlistentry>
-    <term><parameter>callback</parameter></term>
-    <listitem>
-     <para>
-      
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
+  &no.function.parameters;
  </refsect1>
 
  <refsect1 role="returnvalues">

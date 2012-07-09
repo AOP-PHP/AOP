@@ -1,0 +1,14 @@
+&reference.aop.aoptriggeredjoinpoint.getarguments;
+&reference.aop.aoptriggeredjoinpoint.getassignedvalue;
+&reference.aop.aoptriggeredjoinpoint.getkindofadvice;
+&reference.aop.aoptriggeredjoinpoint.getpointcut;
+&reference.aop.aoptriggeredjoinpoint.getreturnedvalue;
+&reference.aop.aoptriggeredjoinpoint.gettriggeringclassname;
+&reference.aop.aoptriggeredjoinpoint.gettriggeringfunctionname;
+&reference.aop.aoptriggeredjoinpoint.gettriggeringmethodname;
+&reference.aop.aoptriggeredjoinpoint.gettriggeringobject;
+&reference.aop.aoptriggeredjoinpoint.gettriggeringpropertyname;
+&reference.aop.aoptriggeredjoinpoint.process;
+&reference.aop.aoptriggeredjoinpoint.setarguments;
+&reference.aop.aoptriggeredjoinpoint.setassignedvalue;
+&reference.aop.aoptriggeredjoinpoint.setreturnedvalue;

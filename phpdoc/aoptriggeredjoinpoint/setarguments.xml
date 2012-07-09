@@ -3,14 +3,14 @@
 
 <refentry xml:id="aoptriggeredjoinpoint.setarguments" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>aopTriggeredJoinpoint::setArguments</refname>
+  <refname>AopTriggeredJoinpoint::setArguments</refname>
   <refpurpose>The setArguments purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>aopTriggeredJoinpoint::setArguments</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::setArguments</methodname>
    <void />
   </methodsynopsis>
   <para>

@@ -4,21 +4,19 @@
 <refentry xml:id="function.aop-add-after" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>aop_add_after</refname>
-  <refpurpose>Description</refpurpose>
+  <refpurpose>Adds an advice after a given pointcut</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>ReturnType</type><methodname>aop_add_after</methodname>
+   <type>void</type><methodname>aop_add_after</methodname>
    <methodparam><type>string</type><parameter>pointcut</parameter></methodparam>
-   <methodparam><type>string</type><parameter>callback</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
   </methodsynopsis>
   <para>
-
+   Adds an advice to a given pointcut. The advice will be executed right after the matched join point execution.
   </para>
-
-  &warn.undocumented.func;
 
  </refsect1>
 
@@ -29,7 +27,7 @@
     <term><parameter>pointcut</parameter></term>
     <listitem>
      <para>
-      
+      The pointcut that will match the join points.
      </para>
     </listitem>
    </varlistentry>
@@ -37,7 +35,8 @@
     <term><parameter>callback</parameter></term>
     <listitem>
      <para>
-      
+      The advice to run if the join point matches the pointcut. The callback will receive an AopTriggeredJoinPoint as a
+      parameter.
      </para>
     </listitem>
    </varlistentry>
@@ -51,6 +50,61 @@
   </para>
  </refsect1>
 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>A simple <function>aop_add_after</function> example</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$advice = function (AopTriggeredJoinPoint $atjp) {
+   echo "The function returned the value ", $atjp->getReturnedValue(), "\n";
+};
+
+class Calculator
+{
+    public function __construct($initialValue = 0)
+    {
+        $this->total = $initialValue;
+    }
+
+    public function add($number)
+    {
+        return $this->total += $number;
+    }
+}
+
+aop_add_after('Calculator->add()', $advice);
+
+$calculator = new Calculator();
+$calculator->add(4);
+$calculator->add(2);
+$calculator->add(1);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+The function returned the value 4
+The function returned the value 6
+The function returned the value 7
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>aop_add_around</function></member>
+    <member><function>aop_add_before</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
 
 </refentry>
 

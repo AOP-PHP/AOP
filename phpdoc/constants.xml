@@ -13,6 +13,7 @@
     </term>
     <listitem>
      <simpara>
+      Represents a joinpoint triggered before any function or method call, or before any read or write property operation.
      </simpara>
     </listitem>
    </varlistentry>
@@ -23,6 +24,7 @@
     </term>
     <listitem>
      <simpara>
+      Represents a joinpoint triggered after any function or method call, or after any read or write property operation.
      </simpara>
     </listitem>
    </varlistentry>
@@ -33,6 +35,194 @@
     </term>
     <listitem>
      <simpara>
+      Represents a joinpoint triggered around any function or method call, or after any read or write property operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-property">
+    <term>
+     <constant>AOP_KIND_PROPERTY</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered in any read or write property operation, may it be before, around of after the operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-function">
+    <term>
+     <constant>AOP_KIND_FUNCTION</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered before, around of after a function call (not method call).
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-method">
+    <term>
+     <constant>AOP_KIND_METHOD</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered before, around of after a method call (not function call).
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-read">
+    <term>
+     <constant>AOP_KIND_READ</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered before, around of after a property read operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-write">
+    <term>
+     <constant>AOP_KIND_WRITE</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered before, around of after a property write operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-around-write-property">
+    <term>
+     <constant>AOP_KIND_AROUND_WRITE_PROPERTY</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered around a property write operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-around-read-property">
+    <term>
+     <constant>AOP_KIND_AROUND_READ_PROPERTY</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered around a property read operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-before-write-property">
+    <term>
+     <constant>AOP_KIND_BEFORE_WRITE_PROPERTY</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered before a property write operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-before-read-property">
+    <term>
+     <constant>AOP_KIND_BEFORE_READ_PROPERTY</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered around a property read operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-after-write-property">
+    <term>
+     <constant>AOP_KIND_AFTER_WRITE_PROPERTY</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered after a property write operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-after-read-property">
+    <term>
+     <constant>AOP_KIND_AFTER_READ_PROPERTY</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered after a property read operation.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-before-method">
+    <term>
+     <constant>AOP_KIND_BEFORE_METHOD</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered before a method call.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-after-method">
+    <term>
+     <constant>AOP_KIND_AFTER_METHOD</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered after a method call.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-around-method">
+    <term>
+     <constant>AOP_KIND_AROUND_METHOD</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered around a method call.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-before-function">
+    <term>
+     <constant>AOP_KIND_BEFORE_FUNCTION</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered before a function call.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-after-function">
+    <term>
+     <constant>AOP_KIND_AFTER_FUNCTION</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered after a function call.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="constant.aop-kind-around-function">
+    <term>
+     <constant>AOP_KIND_AROUND_FUNCTION</constant>
+     (<type>integer</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Represents a joinpoint triggered around a function call.
      </simpara>
     </listitem>
    </varlistentry>
