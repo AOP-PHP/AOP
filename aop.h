@@ -89,6 +89,7 @@ typedef struct {
     int kind_of_advice;
     zend_fcall_info fci;
     zend_fcall_info_cache fcic;
+    pcre *re;
 } pointcut;
 
 

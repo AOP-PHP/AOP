@@ -20,8 +20,9 @@
 #endif
 
 #include "php.h"
-#include "aop.h"
 #include "ext/standard/php_string.h"
+#include "ext/pcre/php_pcre.h"
+#include "aop.h"
 #include "Zend/zend_operators.h"
 
 ZEND_DECLARE_MODULE_GLOBALS(aop)
@@ -889,6 +890,26 @@ static void parse_pointcut (pointcut **pc) {
     } else {
         (*pc)->kind_of_advice = (*pc)->kind_of_advice|AOP_KIND_FUNCTION;
     }
+        pcre_extra *pcre_extra = NULL;
+        int preg_options = 0, i;
+        int *replace_count, *new_length;
+        replace_count = emalloc (sizeof(int));
+        new_length = emalloc (sizeof(int));
+        char *regexp = estrdup((*pc)->method);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "**", 2, "[.#]", 4, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "*", 1, "[^\\\\]*", 6, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#]", 4, ".*", 2, new_length, 0, replace_count);
+        char *tempregexp[500];
+        sprintf(tempregexp, "/^%s$/i", regexp);
+        //php_printf("%s", tempregexp);
+        (*pc)->re = pcre_get_compiled_regex(estrdup(tempregexp), &pcre_extra, &preg_options TSRMLS_CC);
+        if (!(*pc)->re) {
+            php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
+            return -1;
+        }
+
+
+
 }
 
 static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
@@ -1631,7 +1652,11 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
         return 0;
     }
     if (pc->method_jok) {
-        if (!pointcut_match_class_name (pc->method, 1, (char*) curr_func->common.function_name)) {
+        int vector[2];
+        int matches = pcre_exec(pc->re, NULL, curr_func->common.function_name, strlen(curr_func->common.function_name), 0, 0, vector, 2);
+        
+//        php_printf("%d %s %s\n",matches ,pc->method, curr_func->common.function_name);
+        if (matches<0) {
             return 0;
         }
     } else {
