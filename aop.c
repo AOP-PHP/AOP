@@ -1507,6 +1507,12 @@ static int pointcut_match_class_name (char *select_class_name, int with_jok, cha
         }
         pos_class = strrchr(class_name, '\\');
         if (pos_class == NULL) {
+            if (temp_pc_class_name[0]=='*' && start) {
+                //Case **
+                if (temp_pc_class_name[1]=='*') {
+                    return 1;
+                }
+            }
             return 0;
         }
         if (!strcmp_with_joker(pos+1, pos_class+1)) {
@@ -1625,7 +1631,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
         return 0;
     }
     if (pc->method_jok) {
-        if (!strcmp_with_joker(pc->method, (char*) curr_func->common.function_name)) {
+        if (!pointcut_match_class_name (pc->method, 1, (char*) curr_func->common.function_name)) {
             return 0;
         }
     } else {
