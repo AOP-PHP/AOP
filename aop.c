@@ -896,12 +896,16 @@ static void parse_pointcut (pointcut **pc) {
         replace_count = emalloc (sizeof(int));
         new_length = emalloc (sizeof(int));
         char *regexp = estrdup((*pc)->method);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "**\\", 3, "[.#}", 4, new_length, 0, replace_count);
         regexp = php_str_to_str_ex(regexp, strlen(regexp), "**", 2, "[.#]", 4, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "\\", 1, "\\\\", 2, new_length, 0, replace_count);
         regexp = php_str_to_str_ex(regexp, strlen(regexp), "*", 1, "[^\\\\]*", 6, new_length, 0, replace_count);
         regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#]", 4, ".*", 2, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
         char *tempregexp[500];
         sprintf(tempregexp, "/^%s$/i", regexp);
         //php_printf("%s", tempregexp);
+        (*pc)->preg = estrdup(tempregexp);
         (*pc)->re = pcre_get_compiled_regex(estrdup(tempregexp), &pcre_extra, &preg_options TSRMLS_CC);
         if (!(*pc)->re) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
@@ -1652,10 +1656,9 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
         return 0;
     }
     if (pc->method_jok) {
-        int vector[2];
-        int matches = pcre_exec(pc->re, NULL, curr_func->common.function_name, strlen(curr_func->common.function_name), 0, 0, vector, 2);
+        int matches = pcre_exec(pc->re, NULL, curr_func->common.function_name, strlen(curr_func->common.function_name), 0, 0, NULL, 0);
+        //php_printf("%d %s %s %s\n",matches ,pc->method,pc->preg, curr_func->common.function_name);
         
-//        php_printf("%d %s %s\n",matches ,pc->method, curr_func->common.function_name);
         if (matches<0) {
             return 0;
         }

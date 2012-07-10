@@ -90,6 +90,7 @@ typedef struct {
     zend_fcall_info fci;
     zend_fcall_info_cache fcic;
     pcre *re;
+    char *preg;
 } pointcut;
 
 
