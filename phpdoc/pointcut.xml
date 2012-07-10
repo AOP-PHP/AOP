@@ -62,7 +62,7 @@ $pointcut = '*\\*\\bar()';
 //will match any\namespace\where\is\foo() including foo()
 $pointcut = '**\\foo()';
 
-//will match startWithFooSomething\anything\else\bar() including startWithFoo\bar();
+//will match startWithFooSomething\anything\anything_else\bar() including startWithFoo\bar();
 $pointcut = 'StartWithFoo*\\**\\bar()'; //same as 'StartWithFoo**\\bar()';
 ?>
 ]]>

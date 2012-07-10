@@ -58,6 +58,17 @@ namespace some\longer\foo {
  function bar(){}
 }
 
+namespace startWithFoo {
+ function bar(){}
+ function foo(){}
+ function bar2(){}
+}
+
+namespace startWithFooSomething\anything\anything_else {
+ function bar(){}
+ function foo(){}
+}
+
 namespace Test {
  aop_add_before('foo()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), "-> foo()\n"; });
  aop_add_before('foo*()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), "-> foo*()\n"; });
@@ -67,6 +78,7 @@ namespace Test {
  aop_add_before('foo\\b*()', function (\AopTriggeredJoinPoint $atjp) {echo $atjp->getTriggeringFunctionName(), " -> foo\\b*()\n";});
  aop_add_before('foobar*\\*()', function (\AopTriggeredJoinPoint $atjp) {echo $atjp->getTriggeringFunctionName(), " -> foobar*\\*()\n";});
  aop_add_before('*\\*\\bar()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> *\\*\\bar()\n";});
+ aop_add_before('StartWithFoo*\\**\\bar()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> StartWithFoo*\\**\\bar()\n";});
 
  $object = new \Object();
  \foo();
@@ -90,6 +102,11 @@ namespace Test {
  \foobar\foo\bar();
  \foobar\foo\foobar();
  \some\longer\foo\bar();
+ \startWithFoo\bar();
+ \StartWithFoo\foo();
+ \StartWITHFoo\bar2();
+ \startWithFooSomething\anything\else\foo();
+ \startWithFooSomething\anything\else\bar();
 }
 ?>
 --EXPECT--
@@ -120,4 +137,7 @@ foobar\anything -> foobar*\*()
 foobarAnything\foo -> **\foo()
 foobarAnything\foo -> foobar*\*()
 foobar\foo\bar -> *\*\bar()
-
+startWithFoo\bar -> StartWithFoo*\**\bar()
+startWithFoo\foo -> **\foo()
+startWithFooSomething\anything\anything_else\foo -> **\foo()
+startWithFooSomething\anything\anything_else\bar -> StartWithFoo*\**\bar()
