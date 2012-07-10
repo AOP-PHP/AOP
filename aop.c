@@ -1376,15 +1376,11 @@ static int strcmp_with_joker_case(char *str_with_jok, char *str, int case_sensit
         }
     }
     if (str_with_jok[0] == '*') {
-        if (strlen(str)>strlen(str_with_jok)-1) {
             if (case_sensitive) {
                 return !strcmp(str_with_jok+1, str+(strlen(str)-(strlen(str_with_jok)-1)));
             } else {
                 return !strcasecmp(str_with_jok+1, str+(strlen(str)-(strlen(str_with_jok)-1)));
             }
-        } else {
-            return 0;
-        }
     }
     if (str_with_jok[strlen(str_with_jok)-1] == '*') {
         if (case_sensitive) {
