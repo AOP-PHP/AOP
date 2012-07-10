@@ -1227,12 +1227,16 @@ static zval *execute_context (zend_op_array *ops, zend_execute_data *ex, zend_ex
     current_scope = EG(scope);
     prev_this = EG(This);
 
+
     EG(active_op_array) = (zend_op_array *) ops;
     EG(current_execute_data) = ex;
     if (internal) {
         execute_data = *current_execute_data;
     } else {
         execute_data = *EG(current_execute_data);
+        if (!EG(return_value_ptr_ptr)) {
+            EG(return_value_ptr_ptr)= emalloc(sizeof(zval *));
+        }
     }
     EG(This) = object;
     EG(scope) = scope;
