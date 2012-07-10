@@ -70,8 +70,8 @@ namespace startWithFooSomething\anything\anything_else {
 }
 
 namespace Test {
- aop_add_before('foo()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), "-> foo()\n"; });
- aop_add_before('foo*()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), "-> foo*()\n"; });
+ aop_add_before('foo()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> foo()\n"; });
+ aop_add_before('foo*()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> foo*()\n"; });
  aop_add_before('*bar()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> *bar()\n"; });
  aop_add_before('**\\foo()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> **\\foo()\n";});
  aop_add_before('foo\\bar()', function (\AopTriggeredJoinPoint $atjp) {echo $atjp->getTriggeringFunctionName(), " -> foo\\bar()\n";});
@@ -105,8 +105,8 @@ namespace Test {
  \startWithFoo\bar();
  \StartWithFoo\foo();
  \StartWITHFoo\bar2();
- \startWithFooSomething\anything\else\foo();
- \startWithFooSomething\anything\else\bar();
+ \startWithFooSomething\anything\anything_else\foo();
+ \startWithFooSomething\anything\anything_else\bar();
 }
 ?>
 --EXPECT--
@@ -127,12 +127,12 @@ foooBar -> foo*()
 foooBar -> *bar()
 someBar -> *bar()
 bar\foo -> **\foo()
-foo\foo -> **\foo()
-foo\bar -> foo\bar()
-foo\bar -> foo\b*()
-foo\bigbar -> foo\b*()
-foo\barfoobar -> foo\b*()
-foo\bar\bar() -> *\*\bar()
+Foo\foo -> **\foo()
+Foo\bar -> foo\bar()
+Foo\bar -> foo\b*()
+Foo\bigbar -> foo\b*()
+Foo\barfoobar -> foo\b*()
+foo\bar\bar -> *\*\bar()
 foobar\anything -> foobar*\*()
 foobarAnything\foo -> **\foo()
 foobarAnything\foo -> foobar*\*()
