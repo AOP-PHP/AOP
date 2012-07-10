@@ -1617,8 +1617,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
     if (pc->scope != 0 && !(pc->scope & (curr_func->common.fn_flags & ZEND_ACC_PPP_MASK))) {
         return 0;
     }
-
-    if (pc->class_name == NULL && pc->method[0] == '*') {
+    if (pc->class_name == NULL && pc->method[0] == '*' && pc->method[1]=='\0') {
         return 1;
     }
 
