@@ -1251,7 +1251,7 @@ static zval *execute_context (zend_op_array *ops, zend_execute_data *ex, zend_ex
     unsigned int i;
     zval ***params;
     zval **return_value_ptr;
-    zval *to_return;
+    zval *to_return = NULL;
     zend_op_array *prev_op;
     zend_execute_data *prev_data;
     zend_op **original_opline_ptr;
