@@ -150,6 +150,8 @@ int count_aopTriggeringJoinpoint_cache;
 zval **aopTriggeringJoinpoint_cache;
 
 
+handled_ht **cache_read_properties;
+int cache_read_size;
 
 handled_ht **cache_write_properties;
 int cache_write_size;
