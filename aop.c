@@ -132,12 +132,7 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(count_aopTriggeringJoinpoint_cache)=0;
 
     aop_g(cache_write_size) = 1024;
-    aop_g(cache_write_properties) = emalloc(1024 * sizeof(handled_ht *));
-    int i;
-    for (i=0;i<1024;i++) {
-        aop_g(cache_write_properties)[i] = NULL;
-    }
-
+    aop_g(cache_write_properties) = ecalloc(1024, sizeof(handled_ht *));
 
     return SUCCESS;
 }
