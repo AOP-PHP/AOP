@@ -252,7 +252,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
             }
 
             current_class_name = (char *)ce->name;
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
+            if (!pointcut_match_zend_class_entry(current_pc, ce)) {
                     return test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
             }
             aop_object = get_aopTriggeringJoinpoint();
@@ -343,7 +343,7 @@ static int get_pointcuts_write_properties(zval *object, zval *member, pointcut *
         }
 
 
-        if (pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
+        if (pointcut_match_zend_class_entry(current_pc, ce)) {
             if (count==0) {
                 (*pointcuts) = emalloc(sizeof(pointcut *));
             } else {
@@ -417,7 +417,6 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
 #if ZEND_MODULE_API_NO >= 20100525
     obj->key = key;
 #endif
-
     if (current_pc->kind_of_advice & AOP_KIND_BEFORE) {
         execute_pointcut (current_pc, aop_object);
     }
@@ -485,7 +484,7 @@ static void test_write_pointcut_and_execute_old(int current_pointcut_index, zval
 
             current_class_name = (char *)ce->name;
 
-            if (!pointcut_match_zend_class_entry(current_pc->class_name, current_pc->class_jok, ce)) {
+            if (!pointcut_match_zend_class_entry(current_pc, ce)) {
                     test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
                     return ;
             }
@@ -853,6 +852,45 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
     }
 }
 
+void make_regexp_on_pointcut (pointcut **pc) { 
+    pcre_extra *pcre_extra = NULL;
+    int preg_options = 0, i;
+    int *replace_count, *new_length;
+    char *regexp;
+    char tempregexp[500];
+    (*pc)->method_jok = (strchr((*pc)->method, '*') != NULL);
+    replace_count = emalloc (sizeof(int));
+    new_length = emalloc (sizeof(int));
+    regexp = estrdup((*pc)->method);
+    regexp = php_str_to_str_ex(regexp, strlen(regexp), "**\\", 3, "[.#}", 4, new_length, 0, replace_count);
+    regexp = php_str_to_str_ex(regexp, strlen(regexp), "**", 2, "[.#]", 4, new_length, 0, replace_count);
+    regexp = php_str_to_str_ex(regexp, strlen(regexp), "\\", 1, "\\\\", 2, new_length, 0, replace_count);
+    regexp = php_str_to_str_ex(regexp, strlen(regexp), "*", 1, "[^\\\\]*", 6, new_length, 0, replace_count);
+    regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#]", 4, ".*", 2, new_length, 0, replace_count);
+    regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
+    sprintf((char *)tempregexp, "/^%s$/i", regexp);
+    (*pc)->regexp_method = estrdup(tempregexp);
+    (*pc)->re_method = pcre_get_compiled_regex(estrdup(tempregexp), &pcre_extra, &preg_options TSRMLS_CC);
+    if (!(*pc)->re_method) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
+    }
+    if ((*pc)->class_name!=NULL) {
+        regexp = estrdup((*pc)->class_name);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "**\\", 3, "[.#}", 4, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "**", 2, "[.#]", 4, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "\\", 1, "\\\\", 2, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "*", 1, "[^\\\\]*", 6, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#]", 4, ".*", 2, new_length, 0, replace_count);
+        regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
+        sprintf(tempregexp, "/^%s$/i", regexp);
+        (*pc)->regexp_class = estrdup(tempregexp);
+        (*pc)->re_class = pcre_get_compiled_regex(estrdup(tempregexp), &pcre_extra, &preg_options TSRMLS_CC);
+        if (!(*pc)->re_class) {
+            php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
+        }
+    }
+}
+
 static void parse_pointcut (pointcut **pc) {
     char *strval;
     char *space;
@@ -882,39 +920,15 @@ static void parse_pointcut (pointcut **pc) {
         temp[0] = '\0';
         (*pc)->class_name = strval;
     }
-    
-    (*pc)->method_jok = (strchr((*pc)->method, '*') != NULL);
     if ((*pc)->class_name != NULL) {
         (*pc)->kind_of_advice = (*pc)->kind_of_advice|AOP_KIND_METHOD;
         (*pc)->class_jok = (strchr((*pc)->class_name, '*') != NULL);
     } else {
         (*pc)->kind_of_advice = (*pc)->kind_of_advice|AOP_KIND_FUNCTION;
     }
-        pcre_extra *pcre_extra = NULL;
-        int preg_options = 0, i;
-        int *replace_count, *new_length;
-        replace_count = emalloc (sizeof(int));
-        new_length = emalloc (sizeof(int));
-        char *regexp = estrdup((*pc)->method);
-        regexp = php_str_to_str_ex(regexp, strlen(regexp), "**\\", 3, "[.#}", 4, new_length, 0, replace_count);
-        regexp = php_str_to_str_ex(regexp, strlen(regexp), "**", 2, "[.#]", 4, new_length, 0, replace_count);
-        regexp = php_str_to_str_ex(regexp, strlen(regexp), "\\", 1, "\\\\", 2, new_length, 0, replace_count);
-        regexp = php_str_to_str_ex(regexp, strlen(regexp), "*", 1, "[^\\\\]*", 6, new_length, 0, replace_count);
-        regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#]", 4, ".*", 2, new_length, 0, replace_count);
-        regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
-        char *tempregexp[500];
-        sprintf(tempregexp, "/^%s$/i", regexp);
-        //php_printf("%s", tempregexp);
-        (*pc)->preg = estrdup(tempregexp);
-        (*pc)->re = pcre_get_compiled_regex(estrdup(tempregexp), &pcre_extra, &preg_options TSRMLS_CC);
-        if (!(*pc)->re) {
-            php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
-            return -1;
-        }
-
-
-
+    make_regexp_on_pointcut(pc);
 }
+
 
 static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
     TSRMLS_FETCH();
@@ -968,6 +982,7 @@ static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_c
     pc->scope = get_scope(strval);
     pc->static_state = is_static(strval);
 
+    make_regexp_on_pointcut(&pc);
     aop_g(property_pointcuts_read)[count]=pc;
 
 }
@@ -1022,6 +1037,7 @@ static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_
     php_strtolower(strval, strlen(strval));
     pc->scope = get_scope(strval);
     pc->static_state = is_static(strval);
+    make_regexp_on_pointcut(&pc);
 
     aop_g(property_pointcuts_write)[count]=pc;
 
@@ -1603,26 +1619,32 @@ static int pointcut_match_class_name (char *select_class_name, int with_jok, cha
     }
 }
 
-static int pointcut_match_zend_class_entry (char *pc_class_name, int pc_class_jok, zend_class_entry *ce) {
-    int i;
-    if (pointcut_match_class_name(pc_class_name,pc_class_jok, (char*) ce->name)) {
+static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce) {
+    int i, matches;
+    
+    matches = pcre_exec(pc->re_class, NULL, ce->name, strlen(ce->name), 0, 0, NULL, 0);
+    if (matches>=0) {
         return 1;
     }
+//    php_printf("%s %s %d\n", ce->name, pc->regexp_class, matches);
     for (i=0;i<(int) ce->num_interfaces;i++) {
-        if (pointcut_match_class_name(pc_class_name, pc_class_jok, (char*) ce->interfaces[i]->name)) {
+        matches = pcre_exec(pc->re_class, NULL, ce->interfaces[i]->name, strlen(ce->interfaces[i]->name), 0, 0, NULL, 0);
+        if (matches>=0) {
             return 1;
         }
     }
     #if ZEND_MODULE_API_NO >= 20100525
     for (i=0;i<(int)ce->num_traits;i++) {
-        if (pointcut_match_class_name(pc_class_name, pc_class_jok, (char*) ce->traits[i]->name)) {
+        matches = pcre_exec(pc->re_class, NULL, ce->traits[i]->name, strlen(ce->traits[i]->name), 0, 0, NULL, 0);
+        if (matches>=0) {
             return 1;
         }
     }
     #endif
     ce = ce->parent;
     while (ce!=NULL) {
-        if (pointcut_match_class_name(pc_class_name, pc_class_jok, (char*) ce->name)) {
+        matches = pcre_exec(pc->re_class, NULL, ce->name, strlen(ce->name), 0, 0, NULL, 0);
+        if (matches>=0) {
             return 1;
         }
         ce = ce->parent;
@@ -1656,7 +1678,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
         return 0;
     }
     if (pc->method_jok) {
-        int matches = pcre_exec(pc->re, NULL, curr_func->common.function_name, strlen(curr_func->common.function_name), 0, 0, NULL, 0);
+        int matches = pcre_exec(pc->re_method, NULL, curr_func->common.function_name, strlen(curr_func->common.function_name), 0, 0, NULL, 0);
         //php_printf("%d %s %s %s\n",matches ,pc->method,pc->preg, curr_func->common.function_name);
         
         if (matches<0) {
@@ -1675,7 +1697,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
         }
     }
     if (ce!=NULL) {
-        return pointcut_match_zend_class_entry(pc->class_name, pc->class_jok, ce);
+        return pointcut_match_zend_class_entry(pc, ce);
     }
     if (pc->class_name == NULL) {
         return 1;

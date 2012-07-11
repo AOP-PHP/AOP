@@ -89,8 +89,10 @@ typedef struct {
     int kind_of_advice;
     zend_fcall_info fci;
     zend_fcall_info_cache fcic;
-    pcre *re;
-    char *preg;
+    pcre *re_method;
+    pcre *re_class;
+    char *regexp_method;
+    char *regexp_class;
 } pointcut;
 
 
@@ -203,7 +205,7 @@ static int get_scope (char *str);
 static char* get_class_part (char *str);
 static char * get_method_part (char *str);
 void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
-static int pointcut_match_zend_class_entry (char *pc_class_name, int pc_class_jok, zend_class_entry *ce);
+static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce);
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func);
 #if ZEND_MODULE_API_NO < 20100525
 static void (*zend_std_write_property)(zval *object, zval *member, zval *value TSRMLS_DC);
