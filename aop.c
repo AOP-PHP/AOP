@@ -368,7 +368,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     zval *aop_object;
     int i;
     pointcut_cache *cache = NULL;
-    if (handle>aop_g(cache_write_size)) {
+    if (handle>=aop_g(cache_write_size)) {
         aop_g(cache_write_properties) = erealloc(aop_g(cache_write_properties), sizeof (handled_ht *)*handle+1);
         for (i=aop_g(cache_write_size);i<=handle;i++) {
             aop_g(cache_write_properties)[handle]=NULL;
@@ -384,7 +384,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     }
     if (cache==NULL || cache->declare_count<aop_g(count_write_property) || cache->ce!=Z_OBJCE_P(object)) {
         if (cache!=NULL) {
-            efree(cache->pointcuts_cache);
+            //efree(cache->pointcuts_cache);
             efree(cache);
         }
         cache = emalloc (sizeof (pointcut_cache));
