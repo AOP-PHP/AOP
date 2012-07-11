@@ -353,7 +353,7 @@ static int get_pointcuts_write_properties(zval *object, zval *member, pointcut *
 }
 
 static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D) {
-    zval *temp;
+    zval *temp, *tmp_member;
     zend_class_entry *scope;
     TSRMLS_FETCH();
     zend_object_handle handle = Z_OBJ_HANDLE_P(object);
@@ -362,6 +362,18 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     AopTriggeredJoinpoint_object *obj;
     zval *aop_object;
     int i;
+    if (Z_TYPE_P(member)!=IS_STRING ) {
+        ALLOC_ZVAL(tmp_member);
+        *tmp_member = *member;
+        INIT_PZVAL(tmp_member);
+        zval_copy_ctor(tmp_member);
+        convert_to_string(tmp_member);
+        member = tmp_member;
+    #if ZEND_MODULE_API_NO >= 20100525
+        key = NULL;
+    #endif
+    }
+
     pointcut_cache *cache = NULL;
     if (handle>=aop_g(cache_write_size)) {
         aop_g(cache_write_properties) = erealloc(aop_g(cache_write_properties), sizeof (handled_ht *)*handle+1);

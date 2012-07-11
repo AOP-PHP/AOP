@@ -13,7 +13,7 @@ aop_add_before("A::test", function ($pObj) {
     echo "catch";
 });
 echo $test->$name;
-
+$test->$name = "toto";
 ?>
 --EXPECT--
-datacatchdata
+datacatchdatacatch
