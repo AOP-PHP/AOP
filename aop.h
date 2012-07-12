@@ -127,6 +127,14 @@ typedef struct {
 #if ZEND_MODULE_API_NO >= 20100525
     const zend_literal *key;
 #endif
+    zend_op_array *ops;
+    zend_execute_data *ex;
+    zend_execute_data *current_execute_data;
+    zend_class_entry *scope;
+    zval *args;
+    int arg_count;
+    int internal;
+    zval **to_return_ptr_ptr;
 }  AopTriggeredJoinpoint_object;
 
 #ifdef ZTS
@@ -208,7 +216,7 @@ static char* get_class_part (char *str);
 static char * get_method_part (char *str);
 void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce);
-static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func);
+static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func, zend_execute_data *data);
 #if ZEND_MODULE_API_NO < 20100525
 static void (*zend_std_write_property)(zval *object, zval *member, zval *value TSRMLS_DC);
 #endif
@@ -220,4 +228,4 @@ static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_c
 static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
-
+static zval *execute_context (zend_op_array *ops, zend_execute_data *ex, zend_execute_data *current_execute_data, zval *object, zend_class_entry *scope, zval *args, int arg_count, int internal);
