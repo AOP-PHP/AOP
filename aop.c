@@ -850,7 +850,7 @@ static void add_pointcut_property (zend_fcall_info fci, zend_fcall_info_cache fc
 }
 static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
     if (selector_len<2) {
-        zend_error(E_ERROR, "You must specify a class and a property name"); 
+        zend_error(E_ERROR, "The given pointcut is invalid. You must specify a function call, a method call or a property operation"); 
     }
     if (selector_len>2 && (selector[selector_len-2]!='(' || selector[selector_len-1]!=')')) {
         add_pointcut_property(fci, fcic, selector, selector_len, type TSRMLS_CC);

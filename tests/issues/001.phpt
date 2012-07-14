@@ -12,5 +12,5 @@ foo();
 echo "end";
 ?>
 --EXPECTF--
-Fatal error: You must specify a class and a property name in %stests/issues/001.php on line 6
+Fatal error: The given pointcut is invalid. You must specify a function call, a method call or a property operation %s
 
