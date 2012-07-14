@@ -1,5 +1,5 @@
 --TEST--
-No segfault while giving an empty closure
+No segfault with selector just *
 --FILE--
 <?php
 function foo () {
@@ -11,5 +11,6 @@ aop_add_before ('*', function(){});
 foo();
 echo "end";
 ?>
---EXPECT--
-function foo()end
+--EXPECTF--
+Fatal error: You must specify a class and a property name in %stests/issues/001.php on line 6
+
