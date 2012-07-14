@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 
-<refentry xml:id="aoptriggeredjoinpoint.getreturnedvalue" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="AopJoinPoint.getreturnedvalue" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>AopTriggeredJoinpoint::getReturnedValue</refname>
+  <refname>AopJoinPoint::getReturnedValue</refname>
   <refpurpose>The getReturnedValue purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::getReturnedValue</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopJoinPoint::getReturnedValue</methodname>
    <void />
   </methodsynopsis>
   <para>

@@ -2,7 +2,7 @@
 Docs Test 5
 --FILE--
 <?php    //creating the advice as a closure
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
         $args = $joinpoint->getArguments();
         if ($joinpoint->getReturnedValue() === false) {
            throw new Exception("Cannot read from file '{$args[0]}'");

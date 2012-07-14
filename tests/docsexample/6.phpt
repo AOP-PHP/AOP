@@ -12,7 +12,7 @@ Docs Test 6
     //the advice is a static function of a given class
     class Evil
     {
-        public static function advice (AopTriggeredJoinpoint $object)
+        public static function advice (AopJoinPoint $object)
         {
            echo "I'll do the worst stuff I can to everyone ... mouhahahahaha !";
         }

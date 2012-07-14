@@ -10,7 +10,7 @@ Docs Test 10
     }
 
     //creating the advice as a closure
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
         $joinpoint->process();
         $returnValue = $joinpoint->getReturnedValue();
         $returnValue = str_replace('best', 'very best', $returnValue);

@@ -135,7 +135,7 @@ typedef struct {
     int arg_count;
     int internal;
     zval **to_return_ptr_ptr;
-}  AopTriggeredJoinpoint_object;
+}  AopJoinpoint_object;
 
 #ifdef ZTS
 #include "TSRM.h"
@@ -154,8 +154,8 @@ int count_read_property;
 int lock_read_property;
 pointcut **property_pointcuts_read;
 
-int count_aopTriggeringJoinpoint_cache;
-zval **aopTriggeringJoinpoint_cache;
+int count_aopJoinpoint_cache;
+zval **aopJoinpoint_cache;
 
 
 handled_ht **cache_read_properties;
@@ -179,20 +179,20 @@ PHP_FUNCTION(aop_add_around);
 PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
 
-PHP_METHOD(AopTriggeredJoinpoint, getArguments);
-PHP_METHOD(AopTriggeredJoinpoint, getTriggeringPropertyName);
-PHP_METHOD(AopTriggeredJoinpoint, setArguments);
-PHP_METHOD(AopTriggeredJoinpoint, getKindOfAdvice);
-PHP_METHOD(AopTriggeredJoinpoint, getReturnedValue);
-PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue);
-PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue);
-PHP_METHOD(AopTriggeredJoinpoint, setAssignedValue);
-PHP_METHOD(AopTriggeredJoinpoint, getPointcut);
-PHP_METHOD(AopTriggeredJoinpoint, getTriggeringObject);
-PHP_METHOD(AopTriggeredJoinpoint, getTriggeringClassName);
-PHP_METHOD(AopTriggeredJoinpoint, getTriggeringMethodName);
-PHP_METHOD(AopTriggeredJoinpoint, getTriggeringFunctionName);
-PHP_METHOD(AopTriggeredJoinpoint, process);
+PHP_METHOD(AopJoinpoint, getArguments);
+PHP_METHOD(AopJoinpoint, getPropertyName);
+PHP_METHOD(AopJoinpoint, setArguments);
+PHP_METHOD(AopJoinpoint, getKindOfAdvice);
+PHP_METHOD(AopJoinpoint, getReturnedValue);
+PHP_METHOD(AopJoinpoint, getAssignedValue);
+PHP_METHOD(AopJoinpoint, setReturnedValue);
+PHP_METHOD(AopJoinpoint, setAssignedValue);
+PHP_METHOD(AopJoinpoint, getPointcut);
+PHP_METHOD(AopJoinpoint, getObject);
+PHP_METHOD(AopJoinpoint, getClassName);
+PHP_METHOD(AopJoinpoint, getMethodName);
+PHP_METHOD(AopJoinpoint, getFunctionName);
+PHP_METHOD(AopJoinpoint, process);
 
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
@@ -206,7 +206,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_op_array *ops TSRMLS_DC);
-void exec(AopTriggeredJoinpoint_object *obj TSRMLS_DC);
+void exec(AopJoinpoint_object *obj TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
 static int strcmp_with_joker_case (char *str_with_jok, char *str, int case_sensitive);
 static int is_static (char *str);

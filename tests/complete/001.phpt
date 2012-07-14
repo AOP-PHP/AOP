@@ -19,7 +19,7 @@ Caching example with multiple objects with advices on
     }
 
     //création de la fonction, "ce serait bien si"
-    $conseil = function (AopTriggeredJoinPoint $atjp) {
+    $conseil = function (AopJoinPoint $atjp) {
         //Le cache sera réalisé sous la forme d'une variable statique
         static $cache = array();
 
@@ -28,7 +28,7 @@ Caching example with multiple objects with advices on
         $idData = $callArguments[0];
 
         //On récupère le nom de la méthode appelée (doGetDataQqchose)
-        $calledMethodName = $atjp->getTriggeringMethodName();
+        $calledMethodName = $atjp->getMethodName();
 
         //vérifie s'il existe un cache pour l'appel courant
         if (isset($cache[$calledMethodName][$idData])) {

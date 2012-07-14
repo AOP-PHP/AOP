@@ -2,7 +2,7 @@
 First doc example in aop_add_after in phpdoc
 --FILE--
 <?php
-$advice = function (AopTriggeredJoinPoint $atjp) {
+$advice = function (AopJoinPoint $atjp) {
    echo "The function returned the value ", $atjp->getReturnedValue(), "\n";
 };
 

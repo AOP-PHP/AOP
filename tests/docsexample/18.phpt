@@ -38,14 +38,14 @@ An advice that knows what happened on the hooked properties
 
     //the advice is a simple function
     $paparazzi = new Paparazzi();
-    $paparazzi_informer = function (AopTriggeredJoinPoint $aop_tjp) use ($paparazzi)
+    $paparazzi_informer = function (AopJoinPoint $aop_tjp) use ($paparazzi)
     {
        if ($aop_tjp->getKindOfAdvice() === AOP_KIND_BEFORE_READ_PROPERTY) {
           return;//we don't care if the value is just readed
        } elseif ($aop_tjp->getKindOfAdvice() === AOP_KIND_BEFORE_WRITE_PROPERTY) {
-          $paparazzi->shoot($aop_tjp->getTriggeringObject()->getName(),
+          $paparazzi->shoot($aop_tjp->getObject()->getName(),
                             $aop_tjp->getAssignedValue(),
-                            $aop_tjp->getTriggeringPropertyName()
+                            $aop_tjp->getPropertyName()
                             );
        }
     };

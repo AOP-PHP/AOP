@@ -9,7 +9,7 @@ Docs Test 13
        $reference2 = "M - $reference2";
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        $args = $joinpoint->getArguments();
        $args[0] = "NEW {$args[0]}";
        $args[1] = "NEW {$args[1]}";

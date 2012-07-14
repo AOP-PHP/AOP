@@ -17,7 +17,7 @@ Docs Test 15
        }
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        //You're NOT asking explicitely for the reference
        $result = $joinpoint->getReturnedValue();
        //The returned value of the trigerring method won't be updated

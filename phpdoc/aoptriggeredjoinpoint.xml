@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 
-<phpdoc:classref xml:id="class.aoptriggeredjoinpoint" xmlns:phpdoc="http://php.net/ns/phpdoc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
+<phpdoc:classref xml:id="class.AopJoinPoint" xmlns:phpdoc="http://php.net/ns/phpdoc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
 
- <title>The AopTriggeredJoinpoint class</title>
- <titleabbrev>AopTriggeredJoinpoint</titleabbrev>
+ <title>The AopJoinPoint class</title>
+ <titleabbrev>AopJoinPoint</titleabbrev>
 
  <partintro>
 
-<!-- {{{ AopTriggeredJoinpoint intro -->
-  <section xml:id="aoptriggeredjoinpoint.intro">
+<!-- {{{ AopJoinPoint intro -->
+  <section xml:id="AopJoinPoint.intro">
    &reftitle.intro;
    <para>
 
@@ -17,23 +17,23 @@
   </section>
 <!-- }}} -->
 
-  <section xml:id="aoptriggeredjoinpoint.synopsis">
+  <section xml:id="AopJoinPoint.synopsis">
    &reftitle.classsynopsis;
 
 <!-- {{{ Synopsis -->
    <classsynopsis>
-    <ooclass><classname>AopTriggeredJoinpoint</classname></ooclass>
+    <ooclass><classname>AopJoinPoint</classname></ooclass>
 
 <!-- {{{ Class synopsis -->
     <classsynopsisinfo>
      <ooclass>
-      <classname>AopTriggeredJoinpoint</classname>
+      <classname>AopJoinPoint</classname>
      </ooclass>
     </classsynopsisinfo>
 <!-- }}} -->
     
     <classsynopsisinfo role="comment">&Methods;</classsynopsisinfo>
-    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.aoptriggeredjoinpoint')/db:refentry/db:refsect1[@role='description']/descendant::db:methodsynopsis[1])" />
+    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.AopJoinPoint')/db:refentry/db:refsect1[@role='description']/descendant::db:methodsynopsis[1])" />
    </classsynopsis>
 <!-- }}} -->
 
@@ -41,7 +41,7 @@
 
  </partintro>
 
- &reference.aop.entities.aoptriggeredjoinpoint;
+ &reference.aop.entities.AopJoinPoint;
 
 </phpdoc:classref>
 

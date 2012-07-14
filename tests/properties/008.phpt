@@ -35,37 +35,37 @@ class Hero
 */
 }
 
-aop_add_before('write Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "empty ".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('write Hero->*', function (AopJoinPoint $tjp) {
+    echo "empty ".$tjp->getPropertyName()."\n";
 });
 
-aop_add_before('public Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "public ".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('public Hero->*', function (AopJoinPoint $tjp) {
+    echo "public ".$tjp->getPropertyName()."\n";
 });
 
-aop_add_before('protected Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "protected ".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('protected Hero->*', function (AopJoinPoint $tjp) {
+    echo "protected ".$tjp->getPropertyName()."\n";
 });
 
-aop_add_before('private Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "private ".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('private Hero->*', function (AopJoinPoint $tjp) {
+    echo "private ".$tjp->getPropertyName()."\n";
 });
 
-aop_add_before('!public Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "!public ".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('!public Hero->*', function (AopJoinPoint $tjp) {
+    echo "!public ".$tjp->getPropertyName()."\n";
 });
 
-aop_add_before('static Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "static ".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('static Hero->*', function (AopJoinPoint $tjp) {
+    echo "static ".$tjp->getPropertyName()."\n";
 });
 
-aop_add_before('i!static Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "!static ".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('i!static Hero->*', function (AopJoinPoint $tjp) {
+    echo "!static ".$tjp->getPropertyName()."\n";
 });
 
 
-aop_add_before('static public|private Hero->*', function (AopTriggeredJoinPoint $tjp) {
-    echo "static public|private".$tjp->getTriggeringPropertyName()."\n";
+aop_add_before('static public|private Hero->*', function (AopJoinPoint $tjp) {
+    echo "static public|private".$tjp->getPropertyName()."\n";
 });
 
 $wizard = new Hero();

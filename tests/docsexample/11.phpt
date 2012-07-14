@@ -6,7 +6,7 @@ Docs Test 11
        echo "$name and $reference. ";
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        $args = $joinpoint->getArguments();
        $args[0] = 'NEW Name';//won't update the original $name parameter as it is a value
        $args[1] = 'UPDATED $reference';//WILL update the original $reference parameter as it is a reference

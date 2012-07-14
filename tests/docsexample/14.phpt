@@ -17,7 +17,7 @@ Docs Test 14
        }
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        //You're asking explicitely for the reference
        $result = & $joinpoint->getReturnedValue();
        //Updating the value of the reference

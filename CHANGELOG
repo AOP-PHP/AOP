@@ -1,0 +1,8 @@
+0.2
+AopTriggeredJoinPoint was renamed AopJoinPoint
+AopJoinPoint->getTriggering* was renamed AopJoinPoint->get*
+lots of bug fixes
+performances improvements
+
+0.1
+First Beta

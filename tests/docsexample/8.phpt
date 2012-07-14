@@ -16,7 +16,7 @@ Docs Test 8
     }
 
     //the advice is a static function of a given class
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
         //do stuff before
         $args = $joinpoint->getArguments();
         echo " {$args[0]} by {$args[1]} equals [";

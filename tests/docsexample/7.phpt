@@ -12,7 +12,7 @@ Docs Test 7
     //the advice is a simple method of an object
     class Evil
     {
-        function advice (AopTriggeredJoinpoint $object)
+        function advice (AopJoinPoint $object)
         {
            $args = $object->getArguments();
            echo "I'll do the worst stuff I can to {$args[0]} ! ... mouhahahahaha !";

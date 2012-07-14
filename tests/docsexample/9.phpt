@@ -10,7 +10,7 @@ Docs Test 9
     }
 
     //the advice is a simple function
-    function adviceUpdatingArguments (AopTriggeredJoinpoint $object)
+    function adviceUpdatingArguments (AopJoinPoint $object)
     {
        $args = $object->getArguments();
        if ($args[0] === null) {

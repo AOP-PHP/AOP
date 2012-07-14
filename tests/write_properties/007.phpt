@@ -11,21 +11,21 @@ class Foo {
 
 
 aop_add_before('write Foo::var1', function ($pObj) {
-    $pObject = $pObj->getTriggeringObject();
-    $pProperty = $pObj->getTriggeringPropertyName ();
+    $pObject = $pObj->getObject();
+    $pProperty = $pObj->getPropertyName ();
     echo "B ".$pObject->$pProperty."\n";
 });
 
 aop_add_after('write Foo::var1', function ($pObj) {
-    $pObject = $pObj->getTriggeringObject();
-    $pProperty = $pObj->getTriggeringPropertyName ();
+    $pObject = $pObj->getObject();
+    $pProperty = $pObj->getPropertyName ();
     echo "A ".$pObject->$pProperty."\n";
 });
 
 
 aop_add_around ('write Foo::var2', function ($pObj) {
-    $pObject = $pObj->getTriggeringObject();
-    $pProperty = $pObj->getTriggeringPropertyName ();
+    $pObject = $pObj->getObject();
+    $pProperty = $pObj->getPropertyName ();
     echo "B ".$pObject->$pProperty."\n";
     $pObj->process();
     echo "A ".$pObject->$pProperty."\n";

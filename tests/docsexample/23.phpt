@@ -70,15 +70,15 @@ namespace startWithFooSomething\anything\anything_else {
 }
 
 namespace Test {
- aop_add_before('foo()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> foo()\n"; });
- aop_add_before('foo*()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> foo*()\n"; });
- aop_add_before('*bar()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> *bar()\n"; });
- aop_add_before('**\\foo()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> **\\foo()\n";});
- aop_add_before('foo\\bar()', function (\AopTriggeredJoinPoint $atjp) {echo $atjp->getTriggeringFunctionName(), " -> foo\\bar()\n";});
- aop_add_before('foo\\b*()', function (\AopTriggeredJoinPoint $atjp) {echo $atjp->getTriggeringFunctionName(), " -> foo\\b*()\n";});
- aop_add_before('foobar*\\*()', function (\AopTriggeredJoinPoint $atjp) {echo $atjp->getTriggeringFunctionName(), " -> foobar*\\*()\n";});
- aop_add_before('*\\*\\bar()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> *\\*\\bar()\n";});
- aop_add_before('StartWithFoo*\\**\\bar()', function (\AopTriggeredJoinPoint $atjp) { echo $atjp->getTriggeringFunctionName(), " -> StartWithFoo*\\**\\bar()\n";});
+ aop_add_before('foo()', function (\AopJoinPoint $atjp) { echo $atjp->getFunctionName(), " -> foo()\n"; });
+ aop_add_before('foo*()', function (\AopJoinPoint $atjp) { echo $atjp->getFunctionName(), " -> foo*()\n"; });
+ aop_add_before('*bar()', function (\AopJoinPoint $atjp) { echo $atjp->getFunctionName(), " -> *bar()\n"; });
+ aop_add_before('**\\foo()', function (\AopJoinPoint $atjp) { echo $atjp->getFunctionName(), " -> **\\foo()\n";});
+ aop_add_before('foo\\bar()', function (\AopJoinPoint $atjp) {echo $atjp->getFunctionName(), " -> foo\\bar()\n";});
+ aop_add_before('foo\\b*()', function (\AopJoinPoint $atjp) {echo $atjp->getFunctionName(), " -> foo\\b*()\n";});
+ aop_add_before('foobar*\\*()', function (\AopJoinPoint $atjp) {echo $atjp->getFunctionName(), " -> foobar*\\*()\n";});
+ aop_add_before('*\\*\\bar()', function (\AopJoinPoint $atjp) { echo $atjp->getFunctionName(), " -> *\\*\\bar()\n";});
+ aop_add_before('StartWithFoo*\\**\\bar()', function (\AopJoinPoint $atjp) { echo $atjp->getFunctionName(), " -> StartWithFoo*\\**\\bar()\n";});
 
  $object = new \Object();
  \foo();

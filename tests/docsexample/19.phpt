@@ -7,7 +7,7 @@ An advice that updates the assigned value of a property
        public $preferences;
     }
 
-    $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
+    $spread_the_love = function (AopJoinPoint $aop_tjp)
     {
        $assigned = & $aop_tjp->getAssignedValue();
        if ($assigned !== 'PHP') {

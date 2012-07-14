@@ -7,7 +7,7 @@ class Hero
    public $name = 'Gandalf';
 }
 
-aop_add_before('Hero->name', function (AopTriggeredJoinPoint $tjp) {
+aop_add_before('Hero->name', function (AopJoinPoint $tjp) {
    echo "Sir ";
 });
 

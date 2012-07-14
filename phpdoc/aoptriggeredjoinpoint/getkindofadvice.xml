@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 
-<refentry xml:id="aoptriggeredjoinpoint.getkindofadvice" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="AopJoinPoint.getkindofadvice" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>AopTriggeredJoinpoint::getKindOfAdvice</refname>
+  <refname>AopJoinPoint::getKindOfAdvice</refname>
   <refpurpose>The getKindOfAdvice purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::getKindOfAdvice</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopJoinPoint::getKindOfAdvice</methodname>
    <void />
   </methodsynopsis>
   <para>

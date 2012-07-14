@@ -35,7 +35,7 @@
     <term><parameter>callback</parameter></term>
     <listitem>
      <para>
-      The advice to run if the join point matches the pointcut. The callback will receive an AopTriggeredJoinPoint as a
+      The advice to run if the join point matches the pointcut. The callback will receive an AopJoinPoint as a
       parameter.
      </para>
     </listitem>
@@ -58,7 +58,7 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-$advice = function (AopTriggeredJoinPoint $atjp) {
+$advice = function (AopJoinPoint $atjp) {
    echo "The function returned the value ", $atjp->getReturnedValue(), "\n";
 };
 

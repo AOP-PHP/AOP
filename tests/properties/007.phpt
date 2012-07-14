@@ -7,9 +7,9 @@ class Hero
    public $name = 'Gandalf';
 }
 
-aop_add_after('write Hero->name', function (AopTriggeredJoinPoint $tjp) {
-   $pObject = $tjp->getTriggeringObject();
-   $pPropertyName = $tjp->getTriggeringPropertyName();
+aop_add_after('write Hero->name', function (AopJoinPoint $tjp) {
+   $pObject = $tjp->getObject();
+   $pPropertyName = $tjp->getPropertyName();
    echo "wrote the Hero name of ", $pObject->$pPropertyName;
 });
 

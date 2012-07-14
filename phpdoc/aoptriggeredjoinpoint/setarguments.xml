@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 
-<refentry xml:id="aoptriggeredjoinpoint.setarguments" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="AopJoinPoint.setarguments" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>AopTriggeredJoinpoint::setArguments</refname>
+  <refname>AopJoinPoint::setArguments</refname>
   <refpurpose>The setArguments purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::setArguments</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopJoinPoint::setArguments</methodname>
    <void />
   </methodsynopsis>
   <para>

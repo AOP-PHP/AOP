@@ -80,7 +80,7 @@ will output
     }
 
     //the advice is a simple function
-    function adviceToUpdateArguments (AopTriggeredJoinpoint $object)
+    function adviceToUpdateArguments (AopJoinPoint $object)
     {
        $args = $object->getArguments();
        if ($args[0] === null) {
@@ -226,14 +226,14 @@ on what exactly happened.
 
     //the advice is a simple function
     $paparazzi = new Paparazzi();
-    $paparazzi_informer = function (AopTriggeredJoinPoint $aop_tjp) use ($paparazzi)
+    $paparazzi_informer = function (AopJoinPoint $aop_tjp) use ($paparazzi)
     {
        if ($aop_tjp->getKindOfAdvice() === AOP_KIND_BEFORE_READ_PROPERTY) {
           return;//we don't care if the value is just readed
        } elseif ($aop_tjp->getKindOfAdvice() === AOP_KIND_BEFORE_WRITE_PROPERTY) {
-          $paparazzi->shoot($aop_tjp->getTriggeringObject()->getName(),//calls getName on the caught celebrity
+          $paparazzi->shoot($aop_tjp->getObject()->getName(),//calls getName on the caught celebrity
                             $aop_tjp->getAssignedValue(),//gets the value that should be assigned to $object->secret
-                            $aop_tjp->getTriggeringPropertyName()//the name of the caught property
+                            $aop_tjp->getPropertyName()//the name of the caught property
                             );
        }
     };
@@ -257,7 +257,7 @@ will output
        public $preferences;
     }
 
-    $spread_the_love = function (AopTriggeredJoinPoint $aop_tjp)
+    $spread_the_love = function (AopJoinPoint $aop_tjp)
     {
        $assigned = $aop_tjp->getAssignedValue();
        if ($assigned !== 'PHP') {
@@ -328,7 +328,7 @@ but before anything else can occur (echo $services->doSuff()).
     }
 
     //creating the advice as a closure
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
         $returnValue = $joinpoint->getReturnedValue();
         $returnValue = str_replace('best', 'very best', $returnValue);
         $joinpoint->setReturnedValue($returnValue);
@@ -352,7 +352,7 @@ if you're using an old PHP library that is not using exceptions as a mean to rai
 
     [php]
     //creating the advice as a closure
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
         $args = $joinpoint->getArguments();
         if ($joinpoint->getReturnedValue() === false) {
            throw new Exception("Cannot read from file '{$args[0]}'");
@@ -398,7 +398,7 @@ around kind of advices enables you to
     //the advice is a static function of a given class
     class Evil
     {
-        public static function advice (AopTriggeredJoinpoint $object)
+        public static function advice (AopJoinPoint $object)
         {
            echo "I'll do the worst stuff I can to everyone ... mouhahahahaha !";
         }
@@ -428,7 +428,7 @@ will output
     //the advice is a simple method of an object
     class Evil
     {
-        function advice (AopTriggeredJoinpoint $object)
+        function advice (AopJoinPoint $object)
         {
            $args = $object->getArguments();
            echo "I'll do the worst stuff I can to {$args[0]} ! ... mouhahahahaha !";
@@ -464,7 +464,7 @@ will output
     }
 
     //the advice is a static function of a given class
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
         //do stuff before
         $args = $joinpoint->getArguments();
         echo " {$args[0]} by {$args[1]} equals [";
@@ -499,7 +499,7 @@ will output
     }
 
     //the advice is a simple function
-    function adviceUpdatingArguments (AopTriggeredJoinpoint $object)
+    function adviceUpdatingArguments (AopJoinPoint $object)
     {
        $args = $object->getArguments();
        if ($args[0] === null) {
@@ -531,7 +531,7 @@ will output
     }
 
     //creating the advice as a closure
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
         $joinpoint->process();
         $returnValue = $joinpoint->getReturnedValue();
         $returnValue = str_replace('best', 'very best', $returnValue);
@@ -548,9 +548,9 @@ will output
     [screen]
     doing my very best stuff !
 
-## AopTriggeredJoinpoint complete reference ##
+## AopJoinPoint complete reference ##
 
-An instance of AopTriggeredJoinpoint will always be passed to your advices. This object contains several informations,
+An instance of AopJoinPoint will always be passed to your advices. This object contains several informations,
 such as the pointcut who triggered the joinpoint, the arguments, the returned value (if available), the raised exception
 (if available), and will enables you to run the expected method in case you are "around" it.
 
@@ -588,7 +588,7 @@ the triggering method expected values, and references where the triggering metho
        echo "$name and $reference. ";
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        $args = $joinpoint->getArguments();
        $args[0] = 'NEW Name';//won't update the original $name parameter as it is a value
        $args[1] = 'UPDATED $reference';//WILL update the original $reference parameter as it is a reference
@@ -620,7 +620,7 @@ references, you will have to explicitely pass them back to setArguments.
        $reference2 = "M - $reference2";
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        $args = $joinpoint->getArguments();
 
        $args[0] = "NEW {$args[0]}";
@@ -660,7 +660,7 @@ their values and give the array back back to setArguments.
        $reference2 = "M - $reference2";
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        $args = $joinpoint->getArguments();
        $args[0] = "NEW {$args[0]}";
        $args[1] = "NEW {$args[1]}";
@@ -710,7 +710,7 @@ asks for the reference while calling getReturnedValue.
        }
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        //You're asking explicitely for the reference
        $result = & $joinpoint->getReturnedValue();
        //Updating the value of the reference
@@ -747,7 +747,7 @@ If you do the same without the use of reference the value of "Writer->foo" won't
        }
     }
 
-    $advice = function (AopTriggeredJoinpoint $joinpoint) {
+    $advice = function (AopJoinPoint $joinpoint) {
        //You're NOT asking explicitely for the reference
        $result = $joinpoint->getReturnedValue();
        //The returned value of the trigerring method won't be updated

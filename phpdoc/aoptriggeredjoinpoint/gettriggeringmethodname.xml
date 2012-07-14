@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 
-<refentry xml:id="aoptriggeredjoinpoint.gettriggeringmethodname" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="AopJoinPoint.gettriggeringmethodname" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>AopTriggeredJoinpoint::getTriggeringMethodName</refname>
+  <refname>AopJoinPoint::getTriggeringMethodName</refname>
   <refpurpose>The getTriggeringMethodName purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>AopTriggeredJoinpoint::getTriggeringMethodName</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopJoinPoint::getTriggeringMethodName</methodname>
    <void />
   </methodsynopsis>
   <para>
