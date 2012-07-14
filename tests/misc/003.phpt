@@ -16,5 +16,5 @@ $test->test();
 --EXPECTF--
 Warning: aop_add_around() expects parameter 1 to be string, array given in %s/003.php on line 8
 
-Fatal error: Bad params in %s/003.php on line 8
+Fatal error: aop_add_around() expects a string for the pointcut as a first argument and a callback as a second argument in %s/003.php on line 8
 

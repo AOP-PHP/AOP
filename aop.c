@@ -568,7 +568,7 @@ static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg) {
 ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value AOP_KEY_D TSRMLS_DC) {
     if (aop_g(count_write_property)>0) {
         if (aop_g(lock_write_property)>25) {
-            zend_error(E_ERROR, "Nested ?");
+            zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
         }
         aop_g(lock_write_property)++;
         test_write_pointcut_and_execute(0, object, member, value AOP_KEY_C);
@@ -636,7 +636,7 @@ PHP_MINIT_FUNCTION(aop)
 PHP_METHOD(AopTriggeredJoinpoint, getTriggeringPropertyName){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY)) {
-        zend_error(E_ERROR, "getTriggeringPropertyName is only available while using on property"); 
+        zend_error(E_ERROR, "getTriggeringPropertyName is only available when the JoinPoint is triggered from a property operation"); 
     }
     if (obj->member!=NULL) {
         RETURN_ZVAL(obj->member, 1, 0);
@@ -647,7 +647,7 @@ PHP_METHOD(AopTriggeredJoinpoint, getTriggeringPropertyName){
 PHP_METHOD(AopTriggeredJoinpoint, getArguments){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "getArguments is not available while using on property"); 
+        zend_error(E_ERROR, "getArguments is only available when the JoinPoint is triggered from a function or method call"); 
     }
     if (obj->args != NULL) {
         RETURN_ZVAL(obj->args, 1, 0);
@@ -659,7 +659,7 @@ PHP_METHOD(AopTriggeredJoinpoint, setArguments){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zval *params;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "setArguments is not available while using on property"); 
+        zend_error(E_ERROR, "setArguments is only available when the JoinPoint is triggered from a function or method call"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &params) == FAILURE) {
         zend_error(E_ERROR, "setArguments expects an array as its first argument");
@@ -683,10 +683,10 @@ PHP_METHOD(AopTriggeredJoinpoint, getPointcut){
 PHP_METHOD(AopTriggeredJoinpoint, getReturnedValue){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "getReturnedValue is not available while using on property"); 
+        zend_error(E_ERROR, "getReturnedValue is not available when the JoinPoint is triggered from a property operation"); 
     }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_BEFORE) {
-        zend_error(E_ERROR, "getReturnedValue is not available while using aop_add_before");
+        zend_error(E_ERROR, "getReturnedValue is not available when the advice was added with aop_add_before");
     }
     if ((*obj->to_return_ptr_ptr) != NULL) {
         zval_ptr_dtor (return_value_ptr);
@@ -698,7 +698,7 @@ PHP_METHOD(AopTriggeredJoinpoint, getReturnedValue){
 PHP_METHOD(AopTriggeredJoinpoint, getAssignedValue){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE)) {
-        zend_error(E_ERROR, "getAssignedValue is only available while using on write property"); 
+        zend_error(E_ERROR, "getAssignedValue is only available when the JoinPoint is triggered from a property write operation"); 
     }
     if (obj->value!=NULL) {
         zval_ptr_dtor (return_value_ptr);
@@ -713,7 +713,7 @@ PHP_METHOD(AopTriggeredJoinpoint, setAssignedValue){
     zval *ret;
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ) {
-        zend_error(E_ERROR, "setAssignedValue is not available while using on read property"); 
+        zend_error(E_ERROR, "setAssignedValue is not available when the JoinPoint is triggered from a property read operation"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
                 zend_error(E_ERROR, "Error");
@@ -728,7 +728,7 @@ PHP_METHOD(AopTriggeredJoinpoint, setReturnedValue){
     zval *ret;
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
-        zend_error(E_ERROR, "setReturnedValue is not available while using on write property"); 
+        zend_error(E_ERROR, "setReturnedValue is not available when the JoinPoint is triggered from a property write operation"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
                 zend_error(E_ERROR, "Error");
@@ -776,11 +776,8 @@ PHP_METHOD(AopTriggeredJoinpoint, getTriggeringFunctionName){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zend_execute_data *data = obj->ex;
     zend_function *curr_func;
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "getTriggeringMethodName is not available while using on property"); 
-    }
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_METHOD) {
-        zend_error(E_ERROR, "getTriggeringFunctionName is not available while using on class"); 
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY || obj->current_pointcut->kind_of_advice & AOP_KIND_METHOD) {
+        zend_error(E_ERROR, "getTriggeringMethodName is only available when the JoinPoint is triggered from a function call"); 
     }
     if (data == NULL) {
         RETURN_NULL();
@@ -794,11 +791,8 @@ PHP_METHOD(AopTriggeredJoinpoint, getTriggeringMethodName){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zend_execute_data *data = obj->ex;
     zend_function *curr_func;
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "getTriggeringMethodName is not available while using on property"); 
-    }
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_FUNCTION) {
-        zend_error(E_ERROR, "getTriggeringMethodName is not available while using on function"); 
+    if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY || obj->current_pointcut->kind_of_advice & AOP_KIND_FUNCTION) {
+        zend_error(E_ERROR, "getTriggeringMethodName is only available when the JoinPoint is triggered from a method call"); 
     }
     if (data == NULL) {
         RETURN_NULL();
@@ -810,7 +804,7 @@ PHP_METHOD(AopTriggeredJoinpoint, getTriggeringMethodName){
 PHP_METHOD(AopTriggeredJoinpoint, process){
     AopTriggeredJoinpoint_object *obj = (AopTriggeredJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_AROUND)) {
-        zend_error(E_ERROR, "process is only available while using on around"); 
+        zend_error(E_ERROR, "process is only available when the JoinPoint is triggered for an advice added with aop_add_around"); 
     }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
@@ -992,7 +986,7 @@ static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_c
         temp = strstr(selector, "->");
     }
     if (temp == NULL) {
-        zend_error(E_ERROR, "You must specify a class and a property");
+        zend_error(E_ERROR, "You must specify a class and a property name");
     }
 
     pc->method = estrdup(temp+nb_char);
@@ -1048,7 +1042,7 @@ static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_
         temp = strstr(selector, "->");
     }
     if (temp == NULL) {
-        zend_error(E_ERROR, "You must specify a class and a property");
+        zend_error(E_ERROR, "You must specify a class and a property name");
     }
 
     pc->method = estrdup(temp+nb_char);
@@ -1076,7 +1070,7 @@ PHP_FUNCTION(aop_add_around)
     char *selector;
     int selector_len;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "Bad params");
+        zend_error(E_ERROR, "aop_add_around() expects a string for the pointcut as a first argument and a callback as a second argument");
         return;
     }
     if (fci.function_name) {
@@ -1095,7 +1089,7 @@ PHP_FUNCTION(aop_add_before)
     char *selector;
     int selector_len;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "Bad params");
+        zend_error(E_ERROR, "aop_add_before() expects a string for the pointcut as a first argument and a callback as a second argument");
         return;
     }
     if (fci.function_name) {
@@ -1114,7 +1108,7 @@ PHP_FUNCTION(aop_add_after)
     char *selector;
     int selector_len;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "Bad params");
+        zend_error(E_ERROR, "aop_add_after() expects a string for the pointcut as a first argument and a callback as a second argument");
         return;
     }
     if (fci.function_name) {
