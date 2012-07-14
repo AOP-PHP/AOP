@@ -636,7 +636,7 @@ PHP_MINIT_FUNCTION(aop)
 PHP_METHOD(AopJoinpoint, getPropertyName){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY)) {
-        zend_error(E_ERROR, "getPropertyName is only available when the JoinPoint is triggered from a property operation"); 
+        zend_error(E_ERROR, "getPropertyName is only available when the JoinPoint is a property operation (read or write)"); 
     }
     if (obj->member!=NULL) {
         RETURN_ZVAL(obj->member, 1, 0);
@@ -647,7 +647,7 @@ PHP_METHOD(AopJoinpoint, getPropertyName){
 PHP_METHOD(AopJoinpoint, getArguments){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "getArguments is only available when the JoinPoint is triggered from a function or method call"); 
+        zend_error(E_ERROR, "getArguments is only available when the JoinPoint is a function or method call"); 
     }
     if (obj->args != NULL) {
         RETURN_ZVAL(obj->args, 1, 0);
@@ -659,7 +659,7 @@ PHP_METHOD(AopJoinpoint, setArguments){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zval *params;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "setArguments is only available when the JoinPoint is triggered from a function or method call"); 
+        zend_error(E_ERROR, "setArguments is only available when the JoinPoint is a function or ia method call"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &params) == FAILURE) {
         zend_error(E_ERROR, "setArguments expects an array as its first argument");
@@ -683,7 +683,7 @@ PHP_METHOD(AopJoinpoint, getPointcut){
 PHP_METHOD(AopJoinpoint, getReturnedValue){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        zend_error(E_ERROR, "getReturnedValue is not available when the JoinPoint is triggered from a property operation"); 
+        zend_error(E_ERROR, "getReturnedValue is not available when the JoinPoint is a property operation (read or write)"); 
     }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_BEFORE) {
         zend_error(E_ERROR, "getReturnedValue is not available when the advice was added with aop_add_before");
@@ -698,7 +698,7 @@ PHP_METHOD(AopJoinpoint, getReturnedValue){
 PHP_METHOD(AopJoinpoint, getAssignedValue){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE)) {
-        zend_error(E_ERROR, "getAssignedValue is only available when the JoinPoint is triggered from a property write operation"); 
+        zend_error(E_ERROR, "getAssignedValue is only available when the JoinPoint is a property write operation"); 
     }
     if (obj->value!=NULL) {
         zval_ptr_dtor (return_value_ptr);
@@ -713,7 +713,7 @@ PHP_METHOD(AopJoinpoint, setAssignedValue){
     zval *ret;
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ) {
-        zend_error(E_ERROR, "setAssignedValue is not available when the JoinPoint is triggered from a property read operation"); 
+        zend_error(E_ERROR, "setAssignedValue is not available when the JoinPoint is a property read operation"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
                 zend_error(E_ERROR, "Error");
@@ -728,7 +728,7 @@ PHP_METHOD(AopJoinpoint, setReturnedValue){
     zval *ret;
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
-        zend_error(E_ERROR, "setReturnedValue is not available when the JoinPoint is triggered from a property write operation"); 
+        zend_error(E_ERROR, "setReturnedValue is not available when the JoinPoint is a property write operation"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
                 zend_error(E_ERROR, "Error");
@@ -777,7 +777,7 @@ PHP_METHOD(AopJoinpoint, getFunctionName){
     zend_execute_data *data = obj->ex;
     zend_function *curr_func;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY || obj->current_pointcut->kind_of_advice & AOP_KIND_METHOD) {
-        zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is triggered from a function call"); 
+        zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is a function call"); 
     }
     if (data == NULL) {
         RETURN_NULL();
@@ -792,7 +792,7 @@ PHP_METHOD(AopJoinpoint, getMethodName){
     zend_execute_data *data = obj->ex;
     zend_function *curr_func;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY || obj->current_pointcut->kind_of_advice & AOP_KIND_FUNCTION) {
-        zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is triggered from a method call"); 
+        zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is a method call"); 
     }
     if (data == NULL) {
         RETURN_NULL();
@@ -804,7 +804,7 @@ PHP_METHOD(AopJoinpoint, getMethodName){
 PHP_METHOD(AopJoinpoint, process){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_AROUND)) {
-        zend_error(E_ERROR, "process is only available when the JoinPoint is triggered for an advice added with aop_add_around"); 
+        zend_error(E_ERROR, "process is only available when the advice was added with aop_add_around"); 
     }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
         if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
