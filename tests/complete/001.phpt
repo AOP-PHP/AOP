@@ -19,23 +19,23 @@ Caching example with multiple objects with advices on
     }
 
     //création de la fonction, "ce serait bien si"
-    $conseil = function (AopJoinPoint $atjp) {
+    $conseil = function (AopJoinPoint $jp) {
         //Le cache sera réalisé sous la forme d'une variable statique
         static $cache = array();
 
         //On récupère les arguments envoyés à la méthode doGetDataQqChose
-        $callArguments = $atjp->getArguments();
+        $callArguments = $jp->getArguments();
         $idData = $callArguments[0];
 
         //On récupère le nom de la méthode appelée (doGetDataQqchose)
-        $calledMethodName = $atjp->getMethodName();
+        $calledMethodName = $jp->getMethodName();
 
         //vérifie s'il existe un cache pour l'appel courant
         if (isset($cache[$calledMethodName][$idData])) {
            return $cache[$calledMethodName][$idData];
         } else {
            //Le cache n'existe pas, on exécute la méthode d'origine
-           $cache[$calledMethodName][$idData] = $atjp->process();        }
+           $cache[$calledMethodName][$idData] = $jp->process();        }
     }; 
 
     aop_add_around('Services->doGetDataOn*()', $conseil);

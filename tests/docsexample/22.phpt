@@ -2,8 +2,8 @@
 First doc example in aop_add_after in phpdoc
 --FILE--
 <?php
-$advice = function (AopJoinPoint $atjp) {
-   echo "The function returned the value ", $atjp->getReturnedValue(), "\n";
+$advice = function (AopJoinPoint $jp) {
+   echo "The function returned the value ", $jp->getReturnedValue(), "\n";
 };
 
 class Calculator

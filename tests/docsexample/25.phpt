@@ -36,17 +36,17 @@ namespace namespaceFoo {
 
 namespace Test {
 
-aop_add_before('Foo->bar()', function (\AopJoinPoint $atjp) {
-   echo $atjp->getClassName(), '->', $atjp->getMethodName(), " => Foo->bar()\n";
+aop_add_before('Foo->bar()', function (\AopJoinPoint $jp) {
+   echo $jp->getClassName(), '->', $jp->getMethodName(), " => Foo->bar()\n";
 });
-aop_add_before('Foo->*bar()', function (\AopJoinPoint $atjp) {
-   echo $atjp->getClassName(), '->', $atjp->getMethodName(), " => Foo->*bar()\n";
+aop_add_before('Foo->*bar()', function (\AopJoinPoint $jp) {
+   echo $jp->getClassName(), '->', $jp->getMethodName(), " => Foo->*bar()\n";
 });
-aop_add_before('foo->bar*()', function (\AopJoinPoint $atjp) {
-    echo $atjp->getClassName(), '->', $atjp->getMethodName(), " => foo->bar*()\n";
+aop_add_before('foo->bar*()', function (\AopJoinPoint $jp) {
+    echo $jp->getClassName(), '->', $jp->getMethodName(), " => foo->bar*()\n";
 });
-aop_add_before('foo->*bar*()', function (\AopJoinPoint $atjp) {
-    echo $atjp->getClassName(), '->', $atjp->getMethodName(), " => foo->*bar*()\n";
+aop_add_before('foo->*bar*()', function (\AopJoinPoint $jp) {
+    echo $jp->getClassName(), '->', $jp->getMethodName(), " => foo->*bar*()\n";
 });
 
 $foo = new \Foo();
