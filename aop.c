@@ -33,7 +33,7 @@ static void php_aop_init_globals(zend_aop_globals *aop_globals)
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add, 0, 0, 2) 
     ZEND_ARG_INFO(0,pointcut)
-    ZEND_ARG_INFO(0,callback)
+    ZEND_ARG_INFO(0,advice)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry aop_functions[] =
