@@ -4,7 +4,8 @@
 <chapter xml:id="aop.pointcut" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Pointcut syntax</title>
  <para>
-  Pointcuts are a way to describe where advices should be run in the PHP code.
+  Poincuts are predicates that matches join points. Advices are associated with a pointcut expression and runs at any join point
+  matched by the pointcut.
  </para>
  <para>
   Pointcuts can describe functions, method calls (public, protected, private, static or not) and properties operations

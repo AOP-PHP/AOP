@@ -4,7 +4,7 @@
 <refentry xml:id="function.aop-add-after" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>aop_add_after</refname>
-  <refpurpose>Adds an advice after a given pointcut</refpurpose>
+  <refpurpose>Adds an advice to be run after the matching join points</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -12,12 +12,11 @@
   <methodsynopsis>
    <type>void</type><methodname>aop_add_after</methodname>
    <methodparam><type>string</type><parameter>pointcut</parameter></methodparam>
-   <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>advice</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Adds an advice to a given pointcut. The advice will be executed right after the matched join point execution.
+   Associate an advice to a pointcut. The advice will be run right after the join points, may it end normally or not.
   </para>
-
  </refsect1>
 
  <refsect1 role="parameters">
@@ -27,16 +26,17 @@
     <term><parameter>pointcut</parameter></term>
     <listitem>
      <para>
-      The pointcut that will match the join points.
+      A predicate that matches join points. Advices are associated with a pointcut expression and runs at any join point
+      matched by the pointcut (for example, the execution of a method with a certain name).
      </para>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>callback</parameter></term>
+    <term><parameter>advice</parameter></term>
     <listitem>
      <para>
-      The advice to run if the join point matches the pointcut. The callback will receive an AopJoinPoint as a
-      parameter.
+      The action taken by the aspect. When a join point that match the pointcut will be encountered, the advice will be run.
+      The callback will get a JoinPoint object as its first parameter.
      </para>
     </listitem>
    </varlistentry>
@@ -58,8 +58,8 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-$advice = function (AopJoinPoint $atjp) {
-   echo "The function returned the value ", $atjp->getReturnedValue(), "\n";
+$advice = function (AopJoinPoint $jp) {
+   echo "The function returned the value ", $jp->getReturnedValue(), "\n";
 };
 
 class Calculator

@@ -4,7 +4,7 @@
 <refentry xml:id="function.aop-add-around" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>aop_add_around</refname>
-  <refpurpose>Adds an advice around a given pointcut</refpurpose>
+  <refpurpose>Adds an advice to be run around the matching join points</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -12,10 +12,13 @@
   <methodsynopsis>
    <type>ReturnType</type><methodname>aop_add_around</methodname>
    <methodparam><type>string</type><parameter>pointcut</parameter></methodparam>
-   <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>advice</parameter></methodparam>
   </methodsynopsis>
   <para>
-
+   Associate an advice to a pointcut. The advice will surrounds the join points. The advice will get the opportunity
+   to perform custom behavior before and after the method invocation or property operation. It is also responsible for
+   choosing whether to proceed to the join point or to shortcut the advised element by returning its own return
+   value or throwing an exception.
   </para>
 
   &warn.undocumented.func;
@@ -29,15 +32,17 @@
     <term><parameter>pointcut</parameter></term>
     <listitem>
      <para>
-      
+     A predicate that matches join points. Advices are associated with a pointcut expression and runs at any join point
+     matched by the pointcut (for example, the execution of a method with a certain name).
      </para>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>callback</parameter></term>
+    <term><parameter>advice</parameter></term>
     <listitem>
      <para>
-      
+      The action taken by the aspect. When a join point that match the pointcut will be encountered, the advice will be run.
+      The callback will get a JoinPoint object as its first parameter.
      </para>
     </listitem>
    </varlistentry>
