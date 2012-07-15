@@ -13,5 +13,6 @@ aop_add_after('Hero->name', function (AopJoinPoint $tjp) {
 
 $wizard = new Hero();
 echo $wizard->name;
+?>
 --EXPECT--
 the GreyGandalf 

@@ -71,6 +71,7 @@ aop_add_before('static public|private Hero->*', function (AopJoinPoint $tjp) {
 $wizard = new Hero();
 $wizard->touch();
 //Hero::stouch();
+?>
 --EXPECT--
 WRITE :
 public public

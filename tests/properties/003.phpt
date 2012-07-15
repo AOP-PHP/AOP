@@ -14,5 +14,6 @@ aop_add_before('write Hero->name', function (AopJoinPoint $tjp) {
 $wizard = new Hero();
 $wizard->name = "Gandalf";
 $temp =  $wizard->name;
+?>
 --EXPECT--
 I shall pass
