@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 
-<refentry xml:id="AopJoinPoint.gettriggeringclassname" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="AopJoinPoint.getclassname" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>AopJoinPoint::getTriggeringClassName</refname>
-  <refpurpose>The getTriggeringClassName purpose</refpurpose>
+  <refname>AopJoinPoint::getClassName</refname>
+  <refpurpose>The getClassName purpose</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>void</type><methodname>AopJoinPoint::getTriggeringClassName</methodname>
+   <modifier>public</modifier> <type>void</type><methodname>AopJoinPoint::getClassName</methodname>
    <void />
   </methodsynopsis>
   <para>

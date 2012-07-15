@@ -11,7 +11,7 @@
  <function name='aop_add_after' from='PECL aop &gt;= Unknown'/>
  <!-- Methods -->
  <function name='AopJoinPoint::getarguments' from='PECL aop &gt;= Unknown'/>
- <function name='AopJoinPoint::gettriggeringpropertyname' from='PECL aop &gt;= Unknown'/>
+ <function name='AopJoinPoint::getpropertyname' from='PECL aop &gt;= Unknown'/>
  <function name='AopJoinPoint::setarguments' from='PECL aop &gt;= Unknown'/>
  <function name='AopJoinPoint::getkindofadvice' from='PECL aop &gt;= Unknown'/>
  <function name='AopJoinPoint::getreturnedvalue' from='PECL aop &gt;= Unknown'/>
@@ -19,10 +19,10 @@
  <function name='AopJoinPoint::setreturnedvalue' from='PECL aop &gt;= Unknown'/>
  <function name='AopJoinPoint::setassignedvalue' from='PECL aop &gt;= Unknown'/>
  <function name='AopJoinPoint::getpointcut' from='PECL aop &gt;= Unknown'/>
- <function name='AopJoinPoint::gettriggeringobject' from='PECL aop &gt;= Unknown'/>
- <function name='AopJoinPoint::gettriggeringclassname' from='PECL aop &gt;= Unknown'/>
- <function name='AopJoinPoint::gettriggeringmethodname' from='PECL aop &gt;= Unknown'/>
- <function name='AopJoinPoint::gettriggeringfunctionname' from='PECL aop &gt;= Unknown'/>
+ <function name='AopJoinPoint::getobject' from='PECL aop &gt;= Unknown'/>
+ <function name='AopJoinPoint::getclassname' from='PECL aop &gt;= Unknown'/>
+ <function name='AopJoinPoint::getmethodname' from='PECL aop &gt;= Unknown'/>
+ <function name='AopJoinPoint::getfunctionname' from='PECL aop &gt;= Unknown'/>
  <function name='AopJoinPoint::process' from='PECL aop &gt;= Unknown'/>
 </versions>
 

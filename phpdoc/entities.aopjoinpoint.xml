@@ -1,0 +1,14 @@
+&reference.aop.aopjoinpoint.getarguments;
+&reference.aop.aopjoinpoint.getassignedvalue;
+&reference.aop.aopjoinpoint.getclassname;
+&reference.aop.aopjoinpoint.getfunctionname;
+&reference.aop.aopjoinpoint.getkindofadvice;
+&reference.aop.aopjoinpoint.getmethodname;
+&reference.aop.aopjoinpoint.getobject;
+&reference.aop.aopjoinpoint.getpointcut;
+&reference.aop.aopjoinpoint.getpropertyname;
+&reference.aop.aopjoinpoint.getreturnedvalue;
+&reference.aop.aopjoinpoint.process;
+&reference.aop.aopjoinpoint.setarguments;
+&reference.aop.aopjoinpoint.setassignedvalue;
+&reference.aop.aopjoinpoint.setreturnedvalue;
