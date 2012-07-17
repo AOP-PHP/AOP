@@ -1243,70 +1243,65 @@ static zval *execute_context (zend_execute_data *ex, zval *object, zend_class_en
             }
         }
 
-            if (arg_count>0) {
-                //Copy from zend_call_function
-                ZEND_VM_STACK_GROW_IF_NEEDED((int) arg_count + 1);
-                for (i=0; i < arg_count; i++) {
-                    zval *param;
-                    if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-                        if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
-                            zval *new_zval;
+        if (arg_count > 0) {
+            //Copy from zend_call_function
+            ZEND_VM_STACK_GROW_IF_NEEDED((int) arg_count + 1);
+            for (i=0; i < arg_count; i++) {
+                zval *param;
+                if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+                    if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
+                        zval *new_zval;
 
-                            if (
-                                !ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-                                        if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
-                                            zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
-                                            zend_vm_stack_clear_multiple(TSRMLS_C);
-                                        }
-
-                                        zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
-                                            i+1,
-                                            EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
-                                            EX(function_state).function->common.scope ? "::" : "",
-                                            EX(function_state).function->common.function_name
-                                        );
-                                    return;
+                        if (!ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+                            if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
+                                zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
+                                zend_vm_stack_clear_multiple(TSRMLS_C);
                             }
 
-                            ALLOC_ZVAL(new_zval);
-                            *new_zval = **params[i];
-                            zval_copy_ctor(new_zval);
-                            Z_SET_REFCOUNT_P(new_zval, 1);
-                            Z_DELREF_PP(params[i]);
-                            *params[i] = new_zval;
+                            zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
+                                       i+1,
+                                       EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
+                                       EX(function_state).function->common.scope ? "::" : "",
+                                       EX(function_state).function->common.function_name
+                                       );
+                            return;
                         }
-                        Z_ADDREF_PP(params[i]);
-                        Z_SET_ISREF_PP(params[i]);
-                        param = *params[i];
-                    } else if (PZVAL_IS_REF(*params[i]) && (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
-                        ALLOC_ZVAL(param);
-                        *param = **(params[i]);
-                        INIT_PZVAL(param);
-                        zval_copy_ctor(param);
-                    } else if (*params[i] != &EG(uninitialized_zval)) {
-                        Z_ADDREF_PP(params[i]);
-                        param = *params[i];
-                    } else {
-                        ALLOC_ZVAL(param);
-                        *param = **(params[i]);
-                        INIT_PZVAL(param);
+
+                        ALLOC_ZVAL(new_zval);
+                        *new_zval = **params[i];
+                        zval_copy_ctor(new_zval);
+                        Z_SET_REFCOUNT_P(new_zval, 1);
+                        Z_DELREF_PP(params[i]);
+                        *params[i] = new_zval;
                     }
-                    zend_vm_stack_push_nocheck(param TSRMLS_CC);
+                    Z_ADDREF_PP(params[i]);
+                    Z_SET_ISREF_PP(params[i]);
+                    param = *params[i];
+                } else if (PZVAL_IS_REF(*params[i]) && (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
+                    ALLOC_ZVAL(param);
+                    *param = **(params[i]);
+                    INIT_PZVAL(param);
+                    zval_copy_ctor(param);
+                } else if (*params[i] != &EG(uninitialized_zval)) {
+                    Z_ADDREF_PP(params[i]);
+                    param = *params[i];
+                } else {
+                    ALLOC_ZVAL(param);
+                    *param = **(params[i]);
+                    INIT_PZVAL(param);
                 }
-                EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
-                zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
+                zend_vm_stack_push_nocheck(param TSRMLS_CC);
+            }
+            EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+            zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
         }
     } else {
         arg_count = (int)(zend_uintptr_t) *EX(function_state).arguments;
     }
 
-
-
     current_scope = EG(scope);
     EG(scope) = calling_scope;
-
     current_this = EG(This);
-
     current_called_scope = EG(called_scope);
     if (called_scope) {
         EG(called_scope) = called_scope;
@@ -1324,14 +1319,12 @@ static zval *execute_context (zend_execute_data *ex, zval *object, zend_class_en
                 Z_ADDREF_P(EG(This)); 
             } else {
                 zval *this_ptr;
-
                 ALLOC_ZVAL(this_ptr);
                 *this_ptr = *EG(This);
                 INIT_PZVAL(this_ptr);
                 zval_copy_ctor(this_ptr);
                 EG(This) = this_ptr;
             }
-
         }
     } else {
         EG(This) = NULL;
