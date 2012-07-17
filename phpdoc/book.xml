@@ -7,61 +7,66 @@
 
  <preface xml:id="intro.aop">
   &reftitle.intro;
+  <section>
   <para>
    The Aspect Oriented Programming On PHP is a free and open aspect weaver for PHP.
    Its goal is to provide an easy way to integrate Aspect Oriented Programming techniques into PHP.
   </para>
- </preface>
-
- <para>
-  <title>Aspect Oriented Programming goals</title>
-   Aspect Oriented Programming complements Object Oriented Programming as well as Imperative programming by adding aspects
-   that enables modularization of cross cutting concerns (caching, transaction management, logging, security, ...).
-   Without AOP, programming often lead into decomposing the software into units of primary functionnality, while knowing
-   that other concerns cut across thoose units. Programmers are then led to code the behaviour of thoose concerns
-   wherever needed in the primary functionnal units.
-   AOP enable programmers to modularize thoose concerns, while giving tools to automaticaly spread thoose behaviour
-   were expected.
- </para>
-
- <para>
-  <variablelist>
-    <varlistentry>
+  </section>
+  <section>
+  <title>Aspect Oriented Programming Goals</title>
+  <para>
+    Aspect Oriented Programming complements Object Oriented Programming as well as Imperative programming by adding aspects
+    that enables modularization of cross cutting concerns (caching, transaction management, logging, security, ...).
+    Without AOP, programming often lead into decomposing the software into units of primary functionnality, while knowing
+    that other concerns cut across thoose units. Programmers are then led to code the behaviour of thoose concerns
+    wherever needed in the primary functionnal units.
+    AOP enable programmers to modularize thoose concerns, while giving tools to automaticaly spread thoose behaviour
+    were expected.
+  </para>
+  </section>
+  <section>
+  <title>AOP Terminology</title>
+  <para>
+   <variablelist>
+     <varlistentry>
+       <term>
+        Join point
+       </term>
+       <listitem>
+         <para>
+          A join point is a point in the program execution worklflow where programmers will get the opportunity to add
+          a given behaviour. In AOP, a join point can be a function call, a method call or a property operation (read or
+          write). The join point informations (AopJoinPoint) will be given to advices as a first parameter.
+         </para>
+       </listitem>
+     </varlistentry>
+     <varlistentry>
       <term>
-       Join point
+       Advice
       </term>
       <listitem>
-        <para>
-         A join point is a point in the program execution worklflow where programmers will get the opportunity to add
-         a given behaviour. In AOP, a join point can be a function call, a method call or a property operation (read or
-         write). The join point informations (AopJoinPoint) will be given to advices as a first parameter.
-        </para>
+       <para>
+        Action taken at a given join point. In AOP, advices are callbacks. Advices can be of different types : "after",
+        "around", "before", and more specifically "afterreturning" or "afterthrowing".
+       </para>
       </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>
-      Advice
-     </term>
-     <listitem>
-      <para>
-       Action taken at a given join point. In AOP, advices are callbacks. Advices can be of different types : "after",
-       "around", "before", and more specifically "afterreturning" or "afterthrowing".
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>
-      Pointcut
-     </term>
-     <listitem>
-      <para>
-       A pointcut is a set of join points. In AOP, pointcuts are predicates. Like SQL statements results
-       in a particular set of rows, a pointcut results in a particular set of join points.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
- </para>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       Pointcut
+      </term>
+      <listitem>
+       <para>
+        A pointcut is a set of join points. In AOP, pointcuts are predicates. Like SQL statements results
+        in a particular set of rows, a pointcut results in a particular set of join points.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+  </para>
+  </section>
+ </preface>
 
  &reference.aop.setup;
  &reference.aop.constants;
