@@ -229,14 +229,14 @@ static int get_pointcuts_read_properties(zval *object, zval *member, pointcut **
     return count;
 
 }
-static void test_func_pointcut_and_execute(int current_pointcut_index, zend_execute_data *ex, zval *object, zend_class_entry *scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
+static void test_func_pointcut_and_execute(int current_pointcut_index, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
     TSRMLS_FETCH();
     zend_function *curr_func = NULL;
     zval *aop_object;
     AopJoinpoint_object *obj;
     if (current_pointcut_index == aop_g(count_pcs)) {
         aop_g(overloaded) = 0;
-        (*to_return_ptr_ptr) = (zval *)execute_context (ex, object, scope, args_overloaded, args);
+        (*to_return_ptr_ptr) = (zval *)execute_context (ex, object, scope, called_scope,args_overloaded, args);
         aop_g(overloaded) = 1;
         return;
     }
@@ -246,7 +246,7 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
         curr_func = ex->function_state.function;
     }
     if (!pointcut_match_zend_function(current_pc, curr_func, ex)) {
-        test_func_pointcut_and_execute(current_pointcut_index+1, ex, object, scope, args_overloaded, args, to_return_ptr_ptr);
+        test_func_pointcut_and_execute(current_pointcut_index+1, ex, object, scope, called_scope, args_overloaded, args, to_return_ptr_ptr);
         return;
     }
     
@@ -260,6 +260,7 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
     obj->ex = ex;
     obj->object = object;
     obj->scope = scope;
+    obj->called_scope = called_scope;
     obj->args = args;
     obj->args_overloaded = args_overloaded;
     if (current_pc->kind_of_advice & AOP_KIND_BEFORE) {
@@ -271,7 +272,7 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
             (*to_return_ptr_ptr) = obj->value;
         }
     } else {
-        test_func_pointcut_and_execute(current_pointcut_index+1, ex, object, scope, obj->args_overloaded, obj->args, to_return_ptr_ptr);
+        test_func_pointcut_and_execute(current_pointcut_index+1, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr);
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
         execute_pointcut(current_pc, aop_object);
@@ -807,7 +808,7 @@ PHP_METHOD(AopJoinpoint, process){
             obj->value = test_read_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->type AOP_KEY_C);
         }
     } else {
-        test_func_pointcut_and_execute(obj->current_pointcut_index+1, obj->ex, obj->object, obj->scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
+        test_func_pointcut_and_execute(obj->current_pointcut_index+1, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
         obj->value = (*obj->to_return_ptr_ptr);
         if (!EG(exception)) {
             if ((*obj->to_return_ptr_ptr) != NULL) {
@@ -1115,7 +1116,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     zval ** to_return_ptr_ptr = emalloc(sizeof(zval *));
     (*to_return_ptr_ptr) = NULL;
     aop_g(overloaded) = 1;
-    test_func_pointcut_and_execute(0, EG(current_execute_data), EG(This), EG(scope), 0, get_current_args(TSRMLS_CC), to_return_ptr_ptr);
+    test_func_pointcut_and_execute(0, EG(current_execute_data), EG(This), EG(scope),EG(called_scope), 0, get_current_args(TSRMLS_CC), to_return_ptr_ptr);
     aop_g(overloaded) = 0;
     
     if (!EG(exception)) {
@@ -1149,7 +1150,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     }
     (*to_return_ptr_ptr) = NULL;
     aop_g(overloaded) = 1;
-    test_func_pointcut_and_execute(0, current_execute_data, EG(This), EG(scope), 0, get_current_args(TSRMLS_CC), to_return_ptr_ptr);
+    test_func_pointcut_and_execute(0, current_execute_data, EG(This), EG(scope), EG(called_scope), 0, get_current_args(TSRMLS_CC), to_return_ptr_ptr);
     aop_g(overloaded) = 0;
     if (!EG(exception)) {
         if (*to_return_ptr_ptr!=NULL) {
@@ -1163,7 +1164,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     }
 }
 
-static zval *execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, int args_overloaded, zval *args) {
+static zval *execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args) {
     zval ***params;
     zend_uint i;
     zval **original_return_value;
@@ -1173,7 +1174,6 @@ static zval *execute_context (zend_execute_data *ex, zval *object, zend_class_en
     zend_class_entry *current_scope;
     zend_class_entry *current_called_scope;
 //    zend_class_entry *calling_scope = NULL;
-    zend_class_entry *called_scope = NULL;
     zval *current_this;
     zend_execute_data execute_data;
     zend_execute_data *original_execute_data;
