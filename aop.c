@@ -184,7 +184,7 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
     zval *to_return;
     if (aop_g(count_read_property)>0) {
         if (aop_g(lock_read_property)>25) {
-            zend_error(E_ERROR, "Nested ?");
+            zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
         }
         aop_g(lock_read_property)++;
         to_return = test_read_pointcut_and_execute(0, object, member, type AOP_KEY_C);
