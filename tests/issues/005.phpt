@@ -1,5 +1,5 @@
 --TEST--
-Exception propagation is not correct
+Exceptions thrown by a before is caught by an around
 --FILE--
 <?php
     class AdminDeniedException extends Exception {}
