@@ -172,6 +172,7 @@ ZEND_END_MODULE_GLOBALS(aop)
 
 PHP_MINIT_FUNCTION(aop);
 PHP_RINIT_FUNCTION(aop);
+PHP_RSHUTDOWN_FUNCTION(aop);
 
 PHP_FUNCTION(aop_add_around);
 PHP_FUNCTION(aop_add_before);
@@ -203,7 +204,7 @@ static void parse_pointcut (pointcut **pc);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void joinpoint_execute (instance_of_pointcut *pc);
-static zval *get_current_args (TSRMLS_DC);
+static zval *get_current_args (zend_execute_data *ex TSRMLS_DC);
 void exec(AopJoinpoint_object *obj TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
 static int strcmp_with_joker_case (char *str_with_jok, char *str, int case_sensitive);
