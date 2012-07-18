@@ -1109,7 +1109,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
+    if (ops->type==ZEND_EVAL_CODE || curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
@@ -1362,6 +1362,8 @@ static zval *execute_context (zend_execute_data *ex, zval *object, zend_class_en
             *to_return = NULL;
         }
     }
+
+
     EG(current_execute_data) =  original_execute_data;
     if (args_overloaded) {
         zend_vm_stack_clear_multiple(TSRMLS_C);
