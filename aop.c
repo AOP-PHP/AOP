@@ -265,17 +265,29 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
     obj->args_overloaded = args_overloaded;
     if (current_pc->kind_of_advice & AOP_KIND_BEFORE) {
         execute_pointcut(current_pc, aop_object);
+        if (EG(exception)) {
+            return;
+        }
     }
     if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
         execute_pointcut(current_pc, aop_object);
+        if (EG(exception)) {
+            return;
+        }
         if (obj->value != NULL) {
             (*to_return_ptr_ptr) = obj->value;
         }
     } else {
         test_func_pointcut_and_execute(current_pointcut_index+1, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr);
+        if (EG(exception)) {
+            return;
+        }
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
         execute_pointcut(current_pc, aop_object);
+        if (EG(exception)) {
+            return;
+        }
         if (obj->value != NULL) {
             (*to_return_ptr_ptr) = obj->value;
         }
