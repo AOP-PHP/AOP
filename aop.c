@@ -1169,7 +1169,12 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         }
         return;
     }
+
+#if ZEND_MODULE_API_NO >= 20100525
     to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.var)).var.ptr; 
+#else
+    to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.u.var)).var.ptr;
+#endif
     aop_g(overloaded) = 1;
     test_func_pointcut_and_execute(0, current_execute_data, EG(This), EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr);
     aop_g(overloaded) = 0;
