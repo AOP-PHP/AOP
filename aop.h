@@ -227,4 +227,4 @@ static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_c
 static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
-static zval *execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args);
+static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr);
