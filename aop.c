@@ -1137,6 +1137,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     }
     if (!EG(return_value_ptr_ptr)) {
         EG(return_value_ptr_ptr) = emalloc(sizeof(zval *));
+        *(EG(return_value_ptr_ptr)) = NULL;
     }
     aop_g(overloaded) = 1;
     test_func_pointcut_and_execute(0, EG(current_execute_data), EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
