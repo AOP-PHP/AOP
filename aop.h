@@ -37,6 +37,8 @@
 #define AOP_KIND_PROPERTY 32
 #define AOP_KIND_METHOD 64
 #define AOP_KIND_FUNCTION 128
+#define AOP_KIND_CATCH 256
+#define AOP_KIND_RETURN 512
 
 #define AOP_KIND_AROUND_READ_PROPERTY (AOP_KIND_AROUND+AOP_KIND_READ+AOP_KIND_PROPERTY)
 #define AOP_KIND_AROUND_WRITE_PROPERTY (AOP_KIND_AROUND+AOP_KIND_WRITE+AOP_KIND_PROPERTY)
@@ -131,6 +133,7 @@ typedef struct {
     zend_class_entry *scope;
     zend_class_entry *called_scope;
     zval *args;
+    zval *exception;
     int args_overloaded;
     zval **to_return_ptr_ptr;
 }  AopJoinpoint_object;
@@ -177,6 +180,8 @@ PHP_RSHUTDOWN_FUNCTION(aop);
 PHP_FUNCTION(aop_add_around);
 PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
+PHP_FUNCTION(aop_add_after_returning);
+PHP_FUNCTION(aop_add_after_throwing);
 
 PHP_METHOD(AopJoinpoint, getArguments);
 PHP_METHOD(AopJoinpoint, getPropertyName);
@@ -191,6 +196,7 @@ PHP_METHOD(AopJoinpoint, getObject);
 PHP_METHOD(AopJoinpoint, getClassName);
 PHP_METHOD(AopJoinpoint, getMethodName);
 PHP_METHOD(AopJoinpoint, getFunctionName);
+PHP_METHOD(AopJoinpoint, getException);
 PHP_METHOD(AopJoinpoint, process);
 
 extern zend_module_entry aop_module_entry;
