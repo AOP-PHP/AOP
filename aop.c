@@ -1204,7 +1204,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     aop_g(overloaded) = 1;
     test_func_pointcut_and_execute(0, EG(current_execute_data), EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
     aop_g(overloaded) = 0;
-    if (!must_return) {
+    if (!must_return && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)) {
         if (*EG(return_value_ptr_ptr)) {
             zval_ptr_dtor(EG(return_value_ptr_ptr));
             efree(EG(return_value_ptr_ptr));
@@ -1224,14 +1224,15 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
+    if (curr_func == NULL || curr_func->common.function_name == NULL || !strcmp(curr_func->common.function_name, "extract") || aop_g(overloaded) || EG(exception)) {
         if (_zend_execute_internal) {
             _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
         } else {
             execute_internal(current_execute_data, return_value_used TSRMLS_CC);
         }
         return;
-    }
+    }   
+
 
 #if ZEND_MODULE_API_NO >= 20100525
     to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.var)).var.ptr; 
