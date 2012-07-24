@@ -1211,7 +1211,10 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         } else {
             efree(EG(return_value_ptr_ptr));
         }
+    } else if (!must_return) {
+            efree(EG(return_value_ptr_ptr));
     }
+    
 }
 
 void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
@@ -1233,7 +1236,6 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         return;
     }   
 
-
 #if ZEND_MODULE_API_NO >= 20100525
     to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.var)).var.ptr; 
 #else
@@ -1242,9 +1244,12 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     aop_g(overloaded) = 1;
     test_func_pointcut_and_execute(0, current_execute_data, EG(This), EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr);
     aop_g(overloaded) = 0;
-    if (!return_value_used) {
+    // SegFault
+    /*
+    if (!return_value_used && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)) {
         zval_ptr_dtor(to_return_ptr_ptr);
     }
+    //*/
 }
 
 static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
@@ -1430,7 +1435,6 @@ static void execute_context (zend_execute_data *ex, zval *object, zend_class_ent
             EG(scope) = EX(function_state).function->common.scope;
         }
         ((zend_internal_function *) EX(function_state).function)->handler(arg_count, *to_return_ptr_ptr, to_return_ptr_ptr, object, 1 TSRMLS_CC);
-
         /*  We shouldn't fix bad extensions here,
             because it can break proper ones (Bug #34045)
         if (!EX(function_state).function->common.return_reference)
