@@ -263,6 +263,7 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
     obj = (AopJoinpoint_object *) zend_object_store_get_object(aop_object TSRMLS_CC);
     obj->current_pointcut = current_pc;
     obj->current_pointcut_index = current_pointcut_index; 
+    obj->kind_of_advice = current_pc->kind_of_advice;
     obj->object = object;
     obj->to_return_ptr_ptr = to_return_ptr_ptr;
     obj->value = (*to_return_ptr_ptr);
@@ -374,6 +375,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
     obj = (AopJoinpoint_object *) zend_object_store_get_object(aop_object TSRMLS_CC);
     obj->current_pointcut = current_pc;
     obj->current_pointcut_index = current_pointcut_index; 
+    obj->kind_of_advice = (current_pc->kind_of_advice&AOP_KIND_WRITE) ? (current_pc->kind_of_advice - AOP_KIND_WRITE) : current_pc->kind_of_advice;
     obj->object = object;
     obj->member = member;
     obj->type = type;
@@ -538,6 +540,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     obj = (AopJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
     obj->current_pointcut = current_pc;
     obj->current_pointcut_index = current_pointcut_index;
+    obj->kind_of_advice = (current_pc->kind_of_advice&AOP_KIND_READ) ? (current_pc->kind_of_advice - AOP_KIND_READ) : current_pc->kind_of_advice;
     obj->object = object;
     obj->member = member;
     obj->value = value;
@@ -590,6 +593,8 @@ ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, 
     }
 }
 
+static int resource_pointcut;
+
 PHP_MINIT_FUNCTION(aop)
 {
     zend_class_entry ce;
@@ -635,6 +640,11 @@ PHP_MINIT_FUNCTION(aop)
     zend_execute  = aop_execute;
     _zend_execute_internal = zend_execute_internal;
     zend_execute_internal  = aop_execute_internal;
+
+    //Resources
+    resource_pointcut = zend_register_list_destructors_ex(NULL, NULL, PHP_POINTCUT_RES_NAME, module_number);
+
+
     return SUCCESS;
 }
 
@@ -682,7 +692,7 @@ PHP_METHOD(AopJoinpoint, setArguments){
 
 PHP_METHOD(AopJoinpoint, getKindOfAdvice){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    RETURN_LONG(obj->current_pointcut->kind_of_advice);
+    RETURN_LONG(obj->kind_of_advice);
 }
 
 PHP_METHOD(AopJoinpoint, getPointcut){
@@ -709,7 +719,7 @@ PHP_METHOD(AopJoinpoint, getReturnedValue){
 
 PHP_METHOD(AopJoinpoint, getAssignedValue){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE)) {
+    if (!(obj->kind_of_advice & AOP_KIND_WRITE)) {
         zend_error(E_ERROR, "getAssignedValue is only available when the JoinPoint is a property write operation"); 
     }
     if (obj->value != NULL) {
@@ -724,7 +734,7 @@ PHP_METHOD(AopJoinpoint, getAssignedValue){
 PHP_METHOD(AopJoinpoint, setAssignedValue){
     zval *ret;
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_READ) {
+    if (obj->kind_of_advice & AOP_KIND_READ) {
         zend_error(E_ERROR, "setAssignedValue is not available when the JoinPoint is a property read operation"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
@@ -739,7 +749,7 @@ PHP_METHOD(AopJoinpoint, setAssignedValue){
 PHP_METHOD(AopJoinpoint, setReturnedValue){
     zval *ret;
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
+    if (obj->kind_of_advice & AOP_KIND_WRITE) {
         zend_error(E_ERROR, "setReturnedValue is not available when the JoinPoint is a property write operation"); 
     }
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ret) == FAILURE) {
@@ -834,7 +844,7 @@ PHP_METHOD(AopJoinpoint, process){
         zend_error(E_ERROR, "process is only available when the advice was added with aop_add_around"); 
     }
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY) {
-        if (obj->current_pointcut->kind_of_advice & AOP_KIND_WRITE) {
+        if (obj->kind_of_advice & AOP_KIND_WRITE) {
             #if ZEND_MODULE_API_NO >= 20100525
 //            zend_literal *key = obj->key;
 // NULL for no segfault (use by zend_get_property_info_quick)
@@ -864,26 +874,38 @@ PHP_METHOD(AopJoinpoint, process){
     }
 }
 
-static void add_pointcut_property (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
+static pointcut *add_pointcut_property (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
     type = type|AOP_KIND_PROPERTY;
+    int count;
     if (selector_len > 4 && !strncmp("read", selector, 4)) {
-        aop_add_read(estrndup(selector+5, selector_len-5), fci, fcic, type);
+        return aop_add_read(estrndup(selector+5, selector_len-5), fci, fcic, type);
     } else if (selector_len > 5 && !strncmp("write", selector, 5)) {
-        aop_add_write(estrndup(selector+6, selector_len-6), fci, fcic, type);
+        return aop_add_write(estrndup(selector+6, selector_len-6), fci, fcic, type);
     } else {
-        aop_add_read(selector, fci, fcic, type);
-        aop_add_write(selector, fci, fcic, type);
+        //We create the pointcut with the read
+        pointcut *pc = aop_add_read(selector, fci, fcic, type);
+
+        //And we had it on the write
+        pc->kind_of_advice |= AOP_KIND_WRITE;
+        aop_g(count_write_property)++;
+        if (aop_g(count_write_property) == 1) {
+            aop_g(property_pointcuts_write) = emalloc(sizeof(pointcut *));
+        } else {
+            aop_g(property_pointcuts_write) = erealloc(aop_g(property_pointcuts_write), aop_g(count_write_property)*sizeof(pointcut *));
+        }
+        aop_g(property_pointcuts_write)[aop_g(count_write_property) - 1] = pc; 
+        return pc;
     }
 }
 
-static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC) {
+static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type , zval **return_value_ptr TSRMLS_DC) {
+    pointcut *pc = NULL;
     if (selector_len < 2) {
         zend_error(E_ERROR, "The given pointcut is invalid. You must specify a function call, a method call or a property operation"); 
     }
     if (selector_len > 2 && (selector[selector_len-2] != '(' || selector[selector_len-1] != ')')) {
-        add_pointcut_property(fci, fcic, selector, selector_len, type TSRMLS_CC);
+        pc = add_pointcut_property(fci, fcic, selector, selector_len, type TSRMLS_CC);
     } else {
-        pointcut *pc;
         int count;
         aop_g(count_pcs)++;
         count = aop_g(count_pcs)-1;
@@ -899,6 +921,10 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
         pc->kind_of_advice = type;
         parse_pointcut(&pc);
         aop_g(pcs)[count] = pc;
+        
+    }
+    if (pc) {
+        ZEND_REGISTER_RESOURCE((*return_value_ptr), pc, resource_pointcut);
     }
 }
 
@@ -980,7 +1006,7 @@ static void parse_pointcut (pointcut **pc) {
     make_regexp_on_pointcut(pc);
 }
 
-static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
+static pointcut *aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
     TSRMLS_FETCH();
     int nb_char;
     int count;
@@ -1032,9 +1058,10 @@ static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_c
 
     make_regexp_on_pointcut(&pc);
     aop_g(property_pointcuts_read)[count]=pc;
+    return pc;
 }
 
-static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
+static pointcut *aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {
     TSRMLS_FETCH();
     int nb_char;
     int count;
@@ -1084,6 +1111,7 @@ static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_
     pc->static_state = is_static(strval);
     make_regexp_on_pointcut(&pc);
     aop_g(property_pointcuts_write)[count] = pc;
+    return pc;
 }
 
 PHP_FUNCTION(aop_add_around)
@@ -1102,7 +1130,7 @@ PHP_FUNCTION(aop_add_around)
     if (fci.object_ptr) {
         Z_ADDREF_P(fci.object_ptr);
     }
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AROUND TSRMLS_CC);
+    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AROUND, return_value_ptr TSRMLS_CC);
 }
 
 PHP_FUNCTION(aop_add_before)
@@ -1121,7 +1149,7 @@ PHP_FUNCTION(aop_add_before)
     if (fci.object_ptr) {
         Z_ADDREF_P(fci.object_ptr);
     }
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_BEFORE TSRMLS_CC);
+    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_BEFORE, return_value_ptr TSRMLS_CC);
 }
 
 PHP_FUNCTION(aop_add_after_throwing)
@@ -1141,7 +1169,7 @@ PHP_FUNCTION(aop_add_after_throwing)
         Z_ADDREF_P(fci.object_ptr);
     }
 
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_CATCH TSRMLS_CC);
+    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_CATCH, return_value_ptr TSRMLS_CC);
 
 }
 
@@ -1162,7 +1190,7 @@ PHP_FUNCTION(aop_add_after_returning)
         Z_ADDREF_P(fci.object_ptr);
     }
 
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_RETURN TSRMLS_CC);
+    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_RETURN, return_value_ptr TSRMLS_CC);
 
 }
 
@@ -1182,7 +1210,7 @@ PHP_FUNCTION(aop_add_after)
     if (fci.object_ptr) {
         Z_ADDREF_P(fci.object_ptr);
     }
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_CATCH|AOP_KIND_RETURN TSRMLS_CC);
+    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_CATCH|AOP_KIND_RETURN, return_value_ptr TSRMLS_CC);
 }
 
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {

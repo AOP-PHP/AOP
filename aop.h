@@ -29,6 +29,9 @@
 #define PHP_AOP_VERSION "0.1.0"
 #define PHP_AOP_EXTNAME "aop"
 
+//Resource
+#define PHP_POINTCUT_RES_NAME "AOP Pointcut"
+
 #define AOP_KIND_AROUND 1
 #define AOP_KIND_BEFORE 2
 #define AOP_KIND_AFTER  4
@@ -121,6 +124,8 @@ typedef struct {
     instance_of_pointcut *pc;
     instance_of_pointcut *current_pc;
     pointcut *current_pointcut;
+    //Here because we want it different from pointcut resource
+    int kind_of_advice;
     int current_pointcut_index;
     zval *object;
     zval *member;
@@ -205,7 +210,7 @@ extern zend_module_entry aop_module_entry;
 #endif
 static void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
-static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type TSRMLS_DC);
+static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type, zval **return_value_ptr TSRMLS_DC);
 static void parse_pointcut (pointcut **pc);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
@@ -229,8 +234,8 @@ static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
 static zval * test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type AOP_KEY_D);
 static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D);
-static void aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
-static void aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
+static pointcut *aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
+static pointcut *aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
 static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr);
