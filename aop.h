@@ -183,6 +183,7 @@ PHP_RINIT_FUNCTION(aop);
 PHP_RSHUTDOWN_FUNCTION(aop);
 
 PHP_FUNCTION(aop_add_around);
+PHP_FUNCTION(aop_get_previous_joinpoint);
 PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
 PHP_FUNCTION(aop_add_after_returning);
@@ -232,8 +233,8 @@ static void (*zend_std_write_property)(zval *object, zval *member, zval *value T
 #endif
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
-static zval * test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type AOP_KEY_D);
-static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D);
+static zval * test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
+static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
 static pointcut *aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static pointcut *aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);

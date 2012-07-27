@@ -196,7 +196,7 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
             zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
         }
         aop_g(lock_read_property)++;
-        to_return = test_read_pointcut_and_execute(0, object, member, type AOP_KEY_C);
+        to_return = test_read_pointcut_and_execute(0, object, member, type, EG(scope) AOP_KEY_C);
         aop_g(lock_read_property)--;
         return to_return;
     } else {
@@ -309,7 +309,7 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
     Z_DELREF_P(aop_object);
     return;
 }
-static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type AOP_KEY_D) {
+static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D) {
     zval *temp, *to_return, *tmp_member;
     zend_class_entry *scope;
     TSRMLS_FETCH();
@@ -362,7 +362,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
     if (current_pointcut_index == cache->count) {
         scope = EG(scope);
         temp = EG(This);
-        EG(scope) = Z_OBJCE_P(object);
+        EG(scope) = current_scope;
         EG(This) = object;
         to_return = zend_std_read_property(object, member, type AOP_KEY_C TSRMLS_CC);
         EG(This) = temp;
@@ -379,6 +379,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
     obj->object = object;
     obj->member = member;
     obj->type = type;
+    obj->scope = current_scope;
 #if ZEND_MODULE_API_NO >= 20100525
     obj->key = key;
 #endif
@@ -390,7 +391,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
         execute_pointcut (current_pc, aop_object);
         to_return = obj->value;
     } else {
-        to_return = test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type AOP_KEY_C);
+        to_return = test_read_pointcut_and_execute(current_pointcut_index+1, object, member, type, current_scope AOP_KEY_C);
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
         execute_pointcut (current_pc, aop_object);
@@ -473,7 +474,7 @@ static int get_pointcuts_write_properties(zval *object, zval *member, pointcut *
 
 }
 
-static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value AOP_KEY_D) {
+static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D) {
     zval *temp, *tmp_member;
     zend_class_entry *scope;
     TSRMLS_FETCH();
@@ -527,7 +528,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     if (current_pointcut_index == cache->count) {
         scope = EG(scope);
         temp = EG(This);
-        EG(scope) = Z_OBJCE_P(object);
+        EG(scope) = current_scope;
         EG(This) = object;
         zend_std_write_property(object,member,value AOP_KEY_C TSRMLS_CC);
         EG(This) = temp;
@@ -544,6 +545,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     obj->object = object;
     obj->member = member;
     obj->value = value;
+    obj->scope = current_scope;
 #if ZEND_MODULE_API_NO >= 20100525
     obj->key = key;
 #endif
@@ -554,7 +556,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
         execute_pointcut (current_pc, aop_object);
     } else {
         value = obj->value;
-        test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value AOP_KEY_C);
+        test_write_pointcut_and_execute(current_pointcut_index+1, object, member, value, current_scope AOP_KEY_C);
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
         execute_pointcut (current_pc, aop_object);
@@ -586,7 +588,7 @@ ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, 
             zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
         }
         aop_g(lock_write_property)++;
-        test_write_pointcut_and_execute(0, object, member, value AOP_KEY_C);
+        test_write_pointcut_and_execute(0, object, member, value, EG(scope) AOP_KEY_C);
         aop_g(lock_write_property)--;
     } else {
         zend_std_write_property(object, member, value AOP_KEY_C TSRMLS_CC);
@@ -850,14 +852,14 @@ PHP_METHOD(AopJoinpoint, process){
 // NULL for no segfault (use by zend_get_property_info_quick)
             zend_literal *key = NULL;
             #endif
-            test_write_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->value AOP_KEY_C);
+            test_write_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->value, obj->scope AOP_KEY_C);
         } else {
             #if ZEND_MODULE_API_NO >= 20100525
 //            zend_literal *key = obj->key;
 // NULL for no segfault (use by zend_get_property_info_quick)
             zend_literal *key = NULL;
             #endif
-            obj->value = test_read_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->type AOP_KEY_C);
+            obj->value = test_read_pointcut_and_execute(obj->current_pointcut_index+1, obj->object, obj->member, obj->type, obj->scope AOP_KEY_C);
         }
     } else {
         test_func_pointcut_and_execute(obj->current_pointcut_index+1, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
