@@ -500,7 +500,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     if (handle >= aop_g(cache_write_size)) {
         aop_g(cache_write_properties) = erealloc(aop_g(cache_write_properties), sizeof(handled_ht *)*handle+1);
         for (i = aop_g(cache_write_size); i <= handle; i++) {
-            aop_g(cache_write_properties)[handle] = NULL;
+            aop_g(cache_write_properties)[i] = NULL;
         }
         aop_g(cache_write_size) = handle+1;
     }
