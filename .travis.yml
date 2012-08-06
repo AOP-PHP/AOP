@@ -7,4 +7,4 @@ php:
 
 before_script:
     - phpize && ./configure && make && sudo make install
-    - echo "extension=AOP.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+    - echo "extension=aop.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
