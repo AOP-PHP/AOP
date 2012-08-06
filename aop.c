@@ -1234,7 +1234,11 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     aop_g(overloaded) = 1;
     test_func_pointcut_and_execute(0, EG(current_execute_data), EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
     aop_g(overloaded) = 0;
-    if (!must_return && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)) {
+    if (!must_return 
+#if ZEND_MODULE_API_NO >= 20100525
+        && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)
+#endif
+        ) {
         if (*EG(return_value_ptr_ptr)) {
             zval_ptr_dtor(EG(return_value_ptr_ptr));
             efree(EG(return_value_ptr_ptr));
