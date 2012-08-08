@@ -335,7 +335,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
     if (handle>=aop_g(cache_read_size)) {
         aop_g(cache_read_properties) = erealloc(aop_g(cache_read_properties), sizeof (handled_ht *)*handle+1);
         for (i = aop_g(cache_read_size); i <= handle; i++) {
-            aop_g(cache_read_properties)[handle] = NULL;
+            aop_g(cache_read_properties)[i] = NULL;
         }
         aop_g(cache_read_size) = handle+1;
     }
