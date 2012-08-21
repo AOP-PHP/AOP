@@ -246,13 +246,13 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
     AopJoinpoint_object *obj;
 	pointcut *current_pc;
 	TSRMLS_FETCH();
-	current_pc = aop_g(pcs)[current_pointcut_index];
     if (current_pointcut_index == aop_g(count_pcs)) {
         aop_g(overloaded) = 0;
         execute_context (ex, object, scope, called_scope,args_overloaded, args, to_return_ptr_ptr);
         aop_g(overloaded) = 1;
         return;
     }
+	current_pc = aop_g(pcs)[current_pointcut_index];
 
     
     if (ex) {
