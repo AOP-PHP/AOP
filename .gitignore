@@ -34,3 +34,10 @@ tests/*/*.sh
 .deps
 *.swp
 *~
+Debug/
+*.opensdf
+*.sdf
+*.sln
+*.v11.suo
+*.vcxproj
+*.vcxproj.filters
