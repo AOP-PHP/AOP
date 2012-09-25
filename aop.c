@@ -936,7 +936,7 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
         
     }
     if (pc) {
-        ZEND_REGISTER_RESOURCE((*return_value_ptr), pc, resource_pointcut);
+        //ZEND_REGISTER_RESOURCE((*return_value_ptr), pc, resource_pointcut);
     }
 }
 
