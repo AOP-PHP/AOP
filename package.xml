@@ -38,7 +38,11 @@ AOP aims to allow separation of cross-cutting concerns (cache, log, security, tr
    </stability>
  <license uri="http://www.php.net/license">PHP License</license>
    <notes>
-    - Cache on Write Properties
+AopTriggeredJoinPoint was renamed AopJoinPoint
+AopJoinPoint->getTriggering* was renamed AopJoinPoint->get*
+Updated error messages to be more explicit
+lots of bug fixes
+performances improvements
    </notes>
 
  <contents>
