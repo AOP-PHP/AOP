@@ -1264,6 +1264,8 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     } else {
         if (!*EG(return_value_ptr_ptr)) {
             MAKE_STD_ZVAL(*EG(return_value_ptr_ptr));
+            Z_TYPE_P(*EG(return_value_ptr_ptr)) = IS_NULL;
+
         }
     }
     
