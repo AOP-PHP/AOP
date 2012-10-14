@@ -5,7 +5,7 @@ Issue 37 on GitHub
 
 class Form {
 
-    public function render(array $aParams = []) {
+    public function render(array $aParams = array()) {
         return 'foo';
     }
 }
