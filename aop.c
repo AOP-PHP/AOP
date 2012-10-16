@@ -1506,7 +1506,7 @@ static void execute_context (zend_execute_data *ex, zval *object, zend_class_ent
         if (object) {
             Z_OBJ_HT_P(object)->call_method(EX(function_state).function->common.function_name, arg_count, *to_return_ptr_ptr, to_return_ptr_ptr, object, 1 TSRMLS_CC);
         } else {
-            zend_error_noreturn(E_ERROR, "Cannot call overloaded function for non-object");
+            zend_error(E_ERROR, "Cannot call overloaded function for non-object");
         }
 
         if (EX(function_state).function->type == ZEND_OVERLOADED_FUNCTION_TEMPORARY) {
