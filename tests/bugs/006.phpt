@@ -11,5 +11,5 @@ class mytest {
 $test = new mytest();
 echo $test->test()->file(__FILE__);
 ?>
---EXPECT--
-text/x-php
+--EXPECTF--
+text/x-%s
