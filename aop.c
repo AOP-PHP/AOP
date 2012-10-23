@@ -1283,7 +1283,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (curr_func == NULL || curr_func->common.function_name == NULL || !strcmp(curr_func->common.function_name, "extract") || aop_g(overloaded) || EG(exception)) {
+    if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
         if (_zend_execute_internal) {
             _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
         } else {
@@ -1298,7 +1298,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.u.var)).var.ptr;
 #endif
     aop_g(overloaded) = 1;
-    test_func_pointcut_and_execute(0, current_execute_data, current_execute_data->object, EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr);
+    test_func_pointcut_and_execute(0, EG(current_execute_data), current_execute_data->object, EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr);
     aop_g(overloaded) = 0;
     // SegFault
     /*
@@ -1320,8 +1320,8 @@ static void execute_context (zend_execute_data *ex, zval *object, zend_class_ent
     zend_class_entry *current_called_scope;
 //    zend_class_entry *calling_scope = NULL;
     zval *current_this;
-    zend_execute_data execute_data;
     zend_execute_data *original_execute_data;
+    zend_execute_data execute_data;
     zval *original_object;
 	HashPosition pos;
     zval ** temp = NULL;
@@ -1337,7 +1337,6 @@ static void execute_context (zend_execute_data *ex, zval *object, zend_class_ent
         //TODO ERROR
         return ;
     }
-
     execute_data = *ex;
 
     //EX(function_state).function = fci_cache->function_handler;
@@ -1350,7 +1349,7 @@ static void execute_context (zend_execute_data *ex, zval *object, zend_class_ent
         return ;
     }
     original_execute_data = EG(current_execute_data);
-    EG(current_execute_data) = &execute_data;
+    EG(current_execute_data) = ex;
 
     if (args_overloaded) {
         if (args && Z_TYPE_P(args) == IS_ARRAY) {
