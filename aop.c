@@ -140,7 +140,8 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(cache_write_properties) = ecalloc(1024, sizeof(handled_ht *));
     aop_g(cache_read_size) = 1024;
     aop_g(cache_read_properties) = ecalloc(1024, sizeof(handled_ht *));
-
+    ALLOC_HASHTABLE(aop_g(aop_functions));
+    zend_hash_init(aop_g(aop_functions), 16, NULL, NULL,0);
     return SUCCESS;
 }
 
@@ -933,6 +934,9 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
         pc->kind_of_advice = type;
         parse_pointcut(&pc);
         aop_g(pcs)[count] = pc;
+
+        zend_hash_index_update(aop_g(aop_functions), count, pc, sizeof(pc),NULL);
+
         
     }
     if (pc) {

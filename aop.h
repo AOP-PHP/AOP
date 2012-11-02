@@ -170,6 +170,8 @@ int cache_read_size;
 handled_ht **cache_write_properties;
 int cache_write_size;
 
+HashTable * aop_functions;
+
 ZEND_END_MODULE_GLOBALS(aop)
 
 #ifdef ZTS
