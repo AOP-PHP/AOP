@@ -104,6 +104,7 @@ typedef struct {
 typedef struct {
     int count;
     pointcut **pointcuts_cache;
+    HashTable *ht;
     int declare_count;
     zend_class_entry *ce;
 } pointcut_cache;
@@ -127,6 +128,8 @@ typedef struct {
     //Here because we want it different from pointcut resource
     int kind_of_advice;
     int current_pointcut_index;
+    HashTable *advice;
+    HashPosition pos;
     zval *object;
     zval *member;
     zval *value;
@@ -148,7 +151,6 @@ typedef struct {
 #endif
 
 ZEND_BEGIN_MODULE_GLOBALS(aop)
-pointcut **pcs;
 int count_pcs;
 int overloaded;
 
@@ -163,6 +165,8 @@ pointcut **property_pointcuts_read;
 int count_aopJoinpoint_cache;
 zval **aopJoinpoint_cache;
 
+HashTable **cache_func;
+int cache_func_size;
 
 handled_ht **cache_read_properties;
 int cache_read_size;
