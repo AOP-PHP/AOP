@@ -136,6 +136,8 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(count_read_property) = 0;
     aop_g(lock_read_property) = 0;
     aop_g(count_aopJoinpoint_cache) = 0;
+    aop_g(cache_func_size) = 1024;
+    aop_g(cache_func) = ecalloc(1024, sizeof(HashTable *));
     aop_g(cache_write_size) = 1024;
     aop_g(cache_write_properties) = ecalloc(1024, sizeof(handled_ht *));
     aop_g(cache_read_size) = 1024;
@@ -242,6 +244,7 @@ static int get_pointcuts_read_properties(zval *object, zval *member, pointcut **
 }
 
 static HashTable *make_matching_ht (zend_execute_data *ex) {
+    TSRMLS_FETCH();
     zend_function *curr_func;
     HashTable *ht = NULL;
     HashPosition pos;
@@ -265,6 +268,7 @@ static HashTable *make_matching_ht (zend_execute_data *ex) {
 }
 
 static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
+    TSRMLS_FETCH();
     zend_function *curr_func;
     char *func_name; 
     pointcut_cache *cache = NULL;
@@ -312,6 +316,7 @@ static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
 
 static void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
     zval *aop_object, *exception;
+    TSRMLS_FETCH();
     AopJoinpoint_object *obj;
     pointcut *current_pc;
     pointcut **temp;
