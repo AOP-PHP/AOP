@@ -1433,7 +1433,11 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
 }
 
+#if ZEND_MODULE_API_NO < 20121113
 void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
+#else
+void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC) {
+#endif
     zend_execute_data *data;
     zend_function *curr_func = NULL;
 
@@ -1447,9 +1451,17 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     }
     if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
         if (_zend_execute_internal) {
+#if ZEND_MODULE_API_NO < 20121113
             _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
+#else
+            _zend_execute_internal(current_execute_data, fci, return_value_used TSRMLS_CC);
+#endif
         } else {
+#if ZEND_MODULE_API_NO < 20121113
             execute_internal(current_execute_data, return_value_used TSRMLS_CC);
+#else
+            execute_internal(current_execute_data, fci, return_value_used TSRMLS_CC);
+#endif
         }
         return;
     }   
