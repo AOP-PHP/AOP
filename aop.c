@@ -297,8 +297,7 @@ static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
     }
     if (cache == NULL || cache->declare_count < aop_g(count_pcs) || cache->ce != Z_OBJCE_P(object)) {
         if (cache != NULL) {
-            //efree(cache->pointcuts_cache);
-            efree(cache);
+            zend_hash_del(aop_g(cache_func)[handle],func_name, strlen(func_name));
         }
         cache = emalloc (sizeof (pointcut_cache));
         cache->ht = (HashTable *)make_matching_ht (ex);
@@ -517,8 +516,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
     }
     if (cache == NULL || cache->declare_count < aop_g(count_read_property) || cache->ce != Z_OBJCE_P(object)) {
         if (cache != NULL) {
-            //efree(cache->pointcuts_cache);
-            efree(cache);
+            zend_hash_del(aop_g(cache_read_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member));
         }
         cache = emalloc (sizeof (pointcut_cache));
         cache->count = get_pointcuts_read_properties(object, member, &cache->pointcuts_cache AOP_KEY_C);
@@ -687,8 +685,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
 
     if (cache == NULL || cache->declare_count<aop_g(count_write_property) || cache->ce != Z_OBJCE_P(object)) {
         if (cache != NULL) {
-            //efree(cache->pointcuts_cache);
-            efree(cache);
+            zend_hash_del(aop_g(cache_write_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member));
         }
         cache = emalloc (sizeof (pointcut_cache));
         cache->count = get_pointcuts_write_properties(object, member, &cache->pointcuts_cache AOP_KEY_C);
