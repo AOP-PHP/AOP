@@ -130,7 +130,8 @@ PHP_RSHUTDOWN_FUNCTION(aop)
 PHP_RINIT_FUNCTION(aop)
 {
     aop_g(count_pcs) = 0;
-    aop_g(overloaded) = 0;
+    aop_g(recurse_num)=0;
+    aop_g(lock_function)=0;
     aop_g(count_write_property) = 0;
     aop_g(lock_write_property) = 0;
     aop_g(count_read_property) = 0;
@@ -322,9 +323,9 @@ static void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zen
     if (ht==NULL) {
         ht = get_matching_ht (object, ex); 
         if (ht==NULL) {
-            aop_g(overloaded) = 0;
+            aop_g(recurse_num)--;
             execute_context (ex, object, scope, called_scope,args_overloaded, args, to_return_ptr_ptr);
-            aop_g(overloaded) = 1;
+            aop_g(recurse_num)++;
             return;
         }
         zend_hash_internal_pointer_reset_ex(ht, &pos);
@@ -333,9 +334,9 @@ static void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zen
     }
     
     if (zend_hash_get_current_data_ex(aop_g(aop_functions), (void **)&temp, &pos) != SUCCESS) {
-        aop_g(overloaded) = 0;
+        aop_g(recurse_num)--;
         execute_context (ex, object, scope, called_scope,args_overloaded, args, to_return_ptr_ptr);
-        aop_g(overloaded) = 1;
+        aop_g(recurse_num)++;
         return;
     }
 
@@ -405,9 +406,9 @@ static void test_func_pointcut_and_execute(int current_pointcut_index, zend_exec
     HashTable *test;
     TSRMLS_FETCH();
     if (current_pointcut_index == aop_g(count_pcs)) {
-        aop_g(overloaded) = 0;
+        aop_g(recurse_num)--;
         execute_context (ex, object, scope, called_scope,args_overloaded, args, to_return_ptr_ptr);
-        aop_g(overloaded) = 1;
+        aop_g(recurse_num)++;
         return;
     }
 
@@ -1396,7 +1397,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (ops->type==ZEND_EVAL_CODE || curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
+    if (ops->type==ZEND_EVAL_CODE || curr_func == NULL || curr_func->common.function_name == NULL || aop_g(recurse_num)>25 || aop_g(lock_function) || EG(exception)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
@@ -1404,9 +1405,9 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         EG(return_value_ptr_ptr) = emalloc(sizeof(zval *));
         *(EG(return_value_ptr_ptr)) = NULL;
     }
-    aop_g(overloaded) = 1;
+    aop_g(recurse_num)++;
     _test_func_pointcut_and_execute(NULL, NULL, EG(current_execute_data), EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
-    aop_g(overloaded) = 0;
+    aop_g(recurse_num)--;
     if (!must_return 
 #if ZEND_MODULE_API_NO >= 20100525
             && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)
@@ -1446,7 +1447,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
+    if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(recurse_num)>25 || aop_g(lock_function) || EG(exception)) {
         if (_zend_execute_internal) {
 #if ZEND_MODULE_API_NO < 20121113
             _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
@@ -1468,9 +1469,9 @@ void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend
 #else
     to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.u.var)).var.ptr;
 #endif
-    aop_g(overloaded) = 1;
+    aop_g(recurse_num)++;
     _test_func_pointcut_and_execute(NULL,NULL, EG(current_execute_data), current_execute_data->object, EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr);
-    aop_g(overloaded) = 0;
+    aop_g(recurse_num)--;
     // SegFault
     /*
        if (!return_value_used && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)) {

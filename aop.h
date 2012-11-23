@@ -152,7 +152,8 @@ typedef struct {
 
 ZEND_BEGIN_MODULE_GLOBALS(aop)
 int count_pcs;
-int overloaded;
+int lock_function;
+int recurse_num;
 
 int count_write_property;
 int lock_write_property;
