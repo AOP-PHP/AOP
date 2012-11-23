@@ -1,0 +1,5 @@
+AopTriggeredJoinPoint was renamed AopJoinPoint
+AopJoinPoint->getTriggering* was renamed AopJoinPoint->get*
+Updated error messages to be more explicit
+lots of bug fixes
+performances improvements
