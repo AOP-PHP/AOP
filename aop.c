@@ -1397,10 +1397,15 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (ops->type==ZEND_EVAL_CODE || curr_func == NULL || curr_func->common.function_name == NULL || aop_g(recurse_num)>25 || aop_g(lock_function) || EG(exception)) {
+    if (ops->type==ZEND_EVAL_CODE || curr_func == NULL || curr_func->common.function_name == NULL || aop_g(lock_function) || EG(exception)) {
         _zend_execute(ops TSRMLS_CC);
         return;
     }
+	if (aop_g(recurse_num) > 25) {
+        zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
+		_zend_execute(ops TSRMLS_CC);
+		return;
+	}
     if (!EG(return_value_ptr_ptr)) {
         EG(return_value_ptr_ptr) = emalloc(sizeof(zval *));
         *(EG(return_value_ptr_ptr)) = NULL;
@@ -1447,7 +1452,24 @@ void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend
     if (data) {
         curr_func = data->function_state.function;
     }
-    if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(recurse_num)>25 || aop_g(lock_function) || EG(exception)) {
+    if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(lock_function) || EG(exception)) {
+        if (_zend_execute_internal) {
+#if ZEND_MODULE_API_NO < 20121113
+            _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
+#else
+            _zend_execute_internal(current_execute_data, fci, return_value_used TSRMLS_CC);
+#endif
+        } else {
+#if ZEND_MODULE_API_NO < 20121113
+            execute_internal(current_execute_data, return_value_used TSRMLS_CC);
+#else
+            execute_internal(current_execute_data, fci, return_value_used TSRMLS_CC);
+#endif
+        }
+        return;
+    }
+    if (aop_g(recurse_num) > 25) {
+        zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
         if (_zend_execute_internal) {
 #if ZEND_MODULE_API_NO < 20121113
             _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
