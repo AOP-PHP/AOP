@@ -34,37 +34,53 @@
  <para>
   <example><title>Function calls</title>
    <para>
-    The following example shows several syntax for describing a function call.
+    The following example shows several syntax for describing a function call using namespaces or not.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
-//will match foo(), Foo() and fOo(), but NOT bar\foo(), foo\bar(), bar\foo(), foo\foo() or $object->foo()
-$pointcut = 'foo()';
+namespace Foo {
+   function foo(){}
+   function bar(){}
+}
 
-//will match foo(), fooo(), fooBar() and so on, but not foo\bar() or bar\foo()
-$pointcut = 'foo*()';
+namespace Bar {
+   function foo(){}
+   function bar(){}
+}
 
-//will match foobar(), foooBar(), someBar() and so on, but not foo\bar() or bar\fooBar()
-$pointcut = '*bar()';
 
-//will match foo\bar(), but NOT foo\foo\bar();
-$pointcut = 'foo\\bar()';
+namespace {
+   function foo() {}
+   function fooBar() {}
+   function someBar(){}
+   class Foo {
+      public function foo() {
+      }
+   }
 
-//will match foo\bar(), foo\bigbar(), foo\barfoobar() but NOT foo\bar\bar()
-$pointcut = 'foo\\b*()';
+   $showMatch = function (AopJoinPoint $jp) {
+      echo "The pointcut [".$jp->getPointCut()."] match with ".$jp->getFunctionName()."\n";
+   };
 
-//will match foobar\anything(), foobarAnything\anything() but NOT foobar\foo\bar();
-$pointcut = 'foobar*\\*()';
+   aop_add_before('foo()', $showMatch);
+   aop_add_before('foo*()', $showMatch);
+   aop_add_before('*bar()', $showMatch);
+   aop_add_before('foo\\bar()', $showMatch);
+   aop_add_before('foo\\b*()', $showMatch);
+   aop_add_before('f*\\bar()', $showMatch);
+   aop_add_before('**\\*()', $showMatch);
 
-//will match some\foo\bar(), some\other\bar() but NOT foo\bar() of some\longer\foo\bar()
-$pointcut = '*\\*\\bar()';
+   foo();
+   fooBar();
+   someBar();
 
-//will match any\namespace\where\is\foo() including foo()
-$pointcut = '**\\foo()';
+   foo\bar();
+   foo\foo();
 
-//will match startWithFooSomething\anything\anything_else\bar() including startWithFoo\bar();
-$pointcut = 'StartWithFoo*\\**\\bar()'; //same as 'StartWithFoo**\\bar()';
+   bar\foo();
+   bar\bar();
+}
 ?>
 ]]>
    </programlisting>
@@ -153,6 +169,12 @@ class Foo
    protected function foo () {
    }
 }
+
+$showMatch = function (AopJoinPoint $jp) {
+   echo "The pointcut [".$jp->getPointCut()."] match with ".$jp->getClassName()."->".$jp->getFunctionName()."\n";
+};
+
+aop_add_before('protected Foo->foo()', $showMatch);
 ?>
 ]]>
    </programlisting>
