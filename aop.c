@@ -36,6 +36,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add, 0, 0, 2)
     ZEND_ARG_INFO(0,advice)
 ZEND_END_ARG_INFO()
 
+
 static zend_function_entry aop_functions[] =
 {
     PHP_FE(aop_add_around, arginfo_aop_add)
@@ -54,7 +55,7 @@ zend_module_entry aop_module_entry =
     PHP_AOP_EXTNAME,
     aop_functions,
     PHP_MINIT(aop),
-    NULL,
+    PHP_MSHUTDOWN(aop),
     PHP_RINIT(aop),
     PHP_RSHUTDOWN(aop),
     NULL,
@@ -778,10 +779,16 @@ ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, 
 
 static int resource_pointcut;
 
+PHP_INI_BEGIN()
+    STD_PHP_INI_BOOLEAN("aop.enable","1",PHP_INI_ALL,OnUpdateBool, aop_enable, zend_aop_globals, aop_globals)
+PHP_INI_END()
+
 PHP_MINIT_FUNCTION(aop)
 {
     zend_class_entry ce;
     ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals, NULL);
+    REGISTER_INI_ENTRIES();
+
     INIT_CLASS_ENTRY(ce, "AopJoinpoint", aop_methods);
     aop_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
     aop_class_entry->create_object = aop_create_handler;
@@ -826,7 +833,6 @@ PHP_MINIT_FUNCTION(aop)
 
     //Resources
     resource_pointcut = zend_register_list_destructors_ex(NULL, NULL, PHP_POINTCUT_RES_NAME, module_number);
-
 
     return SUCCESS;
 }
@@ -1401,6 +1407,12 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     zend_execute_data *data;
     zend_function *curr_func = NULL;
     int must_return = (EG(return_value_ptr_ptr)!=NULL);
+
+    if (!aop_g(aop_enable)) {
+        _zend_execute(ops TSRMLS_CC);
+        return;
+    }
+
     data = EG(current_execute_data);
 
     if (data) {
@@ -1449,6 +1461,25 @@ void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend
     zend_function *curr_func = NULL;
 
     zval ** to_return_ptr_ptr;
+
+
+    if (!aop_g(aop_enable)) {
+        if (_zend_execute_internal) {
+#if ZEND_MODULE_API_NO < 20121113
+            _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
+#else
+            _zend_execute_internal(current_execute_data, fci, return_value_used TSRMLS_CC);
+#endif
+        } else {
+#if ZEND_MODULE_API_NO < 20121113
+            execute_internal(current_execute_data, return_value_used TSRMLS_CC);
+#else
+            execute_internal(current_execute_data, fci, return_value_used TSRMLS_CC);
+#endif
+        }
+        return;
+    }
+
 
     data = EG(current_execute_data);
 
@@ -1939,4 +1970,10 @@ static zval *get_current_args (zend_execute_data *ex TSRMLS_DC) {
         zend_hash_next_index_insert(return_value->value.ht, &element, sizeof(zval *), NULL);
     }
     return return_value;
+}
+
+PHP_MSHUTDOWN_FUNCTION(aop)
+{
+    UNREGISTER_INI_ENTRIES();
+    return SUCCESS;
 }

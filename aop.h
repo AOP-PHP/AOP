@@ -175,6 +175,7 @@ handled_ht **cache_write_properties;
 int cache_write_size;
 
 HashTable * aop_functions;
+zend_bool aop_enable;
 
 ZEND_END_MODULE_GLOBALS(aop)
 
@@ -187,6 +188,7 @@ ZEND_END_MODULE_GLOBALS(aop)
 PHP_MINIT_FUNCTION(aop);
 PHP_RINIT_FUNCTION(aop);
 PHP_RSHUTDOWN_FUNCTION(aop);
+PHP_MSHUTDOWN_FUNCTION(aop);
 
 PHP_FUNCTION(aop_add_around);
 PHP_FUNCTION(aop_get_previous_joinpoint);
