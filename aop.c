@@ -125,6 +125,10 @@ PHP_RSHUTDOWN_FUNCTION(aop)
 {
     efree(aop_g(cache_write_properties));
     efree(aop_g(cache_read_properties));
+    efree(aop_g(cache_func));
+    zend_hash_destroy(aop_g(aop_functions));
+    FREE_HASHTABLE(aop_g(aop_functions));
+
     return SUCCESS;
 }
 PHP_RINIT_FUNCTION(aop)
@@ -143,8 +147,14 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(cache_read_size) = 1024;
     aop_g(cache_read_properties) = ecalloc(1024, sizeof(handled_ht *));
     ALLOC_HASHTABLE(aop_g(aop_functions));
-    zend_hash_init(aop_g(aop_functions), 16, NULL, NULL,0);
+    zend_hash_init(aop_g(aop_functions), 16, NULL, free_pointcut,0);
     return SUCCESS;
+}
+
+static void free_pointcut(void *pc)
+{
+    pointcut *_pc = (pointcut *)pc;
+    /* Need to free members */
 }
 
 static zval *get_aopJoinpoint () {
