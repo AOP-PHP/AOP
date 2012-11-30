@@ -223,6 +223,7 @@ static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, 
 #endif
 static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type, zval **return_value_ptr TSRMLS_DC);
 static void parse_pointcut (pointcut **pc);
+static void free_pointcut(void *);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
 #if ZEND_MODULE_API_NO < 20121113
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
