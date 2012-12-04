@@ -124,11 +124,26 @@ static const zend_function_entry aop_methods[] = {
 
 PHP_RSHUTDOWN_FUNCTION(aop)
 {
+    int i;
     efree(aop_g(cache_write_properties));
     efree(aop_g(cache_read_properties));
+    /*
+    for (i=0;i<aop_g(cache_func_size);i++) {
+        if (aop_g(cache_func)[i]!=NULL) {
+            zend_hash_destroy(aop_g(cache_func)[i]);
+            FREE_HASHTABLE(aop_g(cache_func)[i]);
+            //free_pointcut_cache(aop_g(cache_func)[i]);
+        }
+    }
+    */
     efree(aop_g(cache_func));
     zend_hash_destroy(aop_g(aop_functions));
     FREE_HASHTABLE(aop_g(aop_functions));
+    for (i = 0; i < aop_g(count_aopJoinpoint_cache); i++) {
+        zval *aop_object = aop_g(aopJoinpoint_cache)[i];
+        FREE_ZVAL(aop_object);
+    }
+
 
     return SUCCESS;
 }
@@ -152,9 +167,41 @@ PHP_RINIT_FUNCTION(aop)
     return SUCCESS;
 }
 
+static void free_pointcut_cache (void * cache) {
+    pointcut_cache *_cache = ((pointcut_cache *)cache);
+    //Loop on pointcuts_cache
+
+
+    if (_cache->ht!=NULL) {
+        zend_hash_destroy(_cache->ht);
+        FREE_HASHTABLE(_cache->ht);
+    }
+
+
+}
+
 static void free_pointcut(void *pc)
 {
-    pointcut *_pc = (pointcut *)pc;
+    pointcut *_pc = *((pointcut **)pc);
+    if (_pc->class_name!=NULL) {
+        efree(_pc->class_name);
+    }
+    
+    if (_pc->method!=NULL) {
+        efree(_pc->method);
+    }
+    if (_pc->selector!=NULL) {
+        efree(_pc->selector);
+    }
+    /* Seems to be free by the engine (pce cache are in a hashtable)
+    if (_pc->re_method!=NULL) {
+        pcre_free(_pc->re_method);
+    }
+    if (_pc->re_class!=NULL) {
+        php_printf("FREE PCRE CLASS\n");
+        pcre_free(_pc->re_class);
+    }
+    //*/
     /* Need to free members */
 }
 
@@ -268,7 +315,7 @@ static HashTable *make_matching_ht (zend_execute_data *ex) {
         if (pointcut_match_zend_function(*temp, curr_func, ex)) {
             if (ht==NULL) {
                 ALLOC_HASHTABLE(ht);
-                zend_hash_init(ht, 16, NULL, NULL,0);
+                zend_hash_init(ht, 16, NULL, free,0);
             }
             zend_hash_next_index_insert (ht, temp, sizeof(pointcut **), NULL);
         }
@@ -277,6 +324,8 @@ static HashTable *make_matching_ht (zend_execute_data *ex) {
     return ht;
 
 }
+
+
 
 static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
     TSRMLS_FETCH();
@@ -302,7 +351,7 @@ static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
     }
     if (aop_g(cache_func)[handle] == NULL) {
         ALLOC_HASHTABLE(aop_g(cache_func)[handle]);
-        zend_hash_init(aop_g(cache_func)[handle], 16, NULL, NULL,0);
+        zend_hash_init(aop_g(cache_func)[handle], 16, NULL, free_pointcut_cache ,0);
     } else {
         zend_hash_find(aop_g(cache_func)[handle],func_name, strlen(func_name), (void **)&cache);
     }
@@ -321,6 +370,7 @@ static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
         cache->ce = Z_OBJCE_P(object);
         zend_hash_add(aop_g(cache_func)[handle], func_name, strlen(func_name), cache, sizeof(pointcut_cache), NULL);
     }
+    efree(func_name);
     return cache->ht;
 }
 
@@ -780,7 +830,7 @@ ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, 
 static int resource_pointcut;
 
 PHP_INI_BEGIN()
-    STD_PHP_INI_BOOLEAN("aop.enable","1",PHP_INI_ALL,OnUpdateBool, aop_enable, zend_aop_globals, aop_globals)
+    STD_PHP_INI_BOOLEAN("aop.enable","1",PHP_INI_ALL, OnUpdateBool, aop_enable, zend_aop_globals, aop_globals)
 PHP_INI_END()
 
 PHP_MINIT_FUNCTION(aop)
@@ -1087,6 +1137,27 @@ static pointcut *add_pointcut_property (zend_fcall_info fci, zend_fcall_info_cac
     }
 }
 
+
+
+static pointcut * alloc_pointcut () {
+    pointcut *pc = emalloc(sizeof(pointcut));
+
+
+     pc->scope = 0;
+     pc->static_state = 2;
+     pc->method_jok = 0;
+     pc->class_jok = 0;
+     pc->class_name = NULL;
+     pc->method = NULL;
+     pc->selector = NULL;
+     pc->kind_of_advice = 0;
+     //pc->fci = NULL;
+     //pc->fcic = NULL;
+     pc->re_method = NULL;
+     pc->re_class = NULL;
+     return pc;
+}
+
 static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type , zval **return_value_ptr TSRMLS_DC) {
     pointcut *pc = NULL;
     if (selector_len < 2) {
@@ -1098,7 +1169,7 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
         int count;
         aop_g(count_pcs)++;
         count = aop_g(count_pcs)-1;
-        pc = emalloc(sizeof(pointcut));
+        pc = alloc_pointcut();
         pc->selector = estrdup(selector);
         pc->fci = fci;
         pc->fcic = fcic;
@@ -1134,7 +1205,6 @@ void make_regexp_on_pointcut (pointcut **pc) {
     regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#]", 4, ".*", 2, new_length, 0, replace_count);
     regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
     sprintf((char *)tempregexp, "/^%s$/i", regexp);
-    (*pc)->regexp_method = estrdup(tempregexp);
     (*pc)->re_method = pcre_get_compiled_regex(estrdup(tempregexp), &pcre_extra, &preg_options TSRMLS_CC);
     if (!(*pc)->re_method) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
@@ -1147,25 +1217,21 @@ void make_regexp_on_pointcut (pointcut **pc) {
         regexp = php_str_to_str_ex(regexp, strlen(regexp), "*", 1, "[^\\\\]*", 6, new_length, 0, replace_count);
         regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#]", 4, ".*", 2, new_length, 0, replace_count);
         regexp = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
-        sprintf(tempregexp, "/^%s$/i", regexp);
-        (*pc)->regexp_class = estrdup(tempregexp);
+        sprintf(tempregexp, "/^%s$/i", estrdup(regexp));
         (*pc)->re_class = pcre_get_compiled_regex(estrdup(tempregexp), &pcre_extra, &preg_options TSRMLS_CC);
         if (!(*pc)->re_class) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
         }
     }
+    efree(regexp);
+    efree(replace_count);
+    efree(new_length);
 }
 
 static void parse_pointcut (pointcut **pc) {
     char *strval;
     char *space;
     char *temp;
-    (*pc)->method = NULL;
-    (*pc)->class_name = NULL;
-    (*pc)->scope = 0;
-    (*pc)->static_state = 2;
-    (*pc)->method_jok = 0;
-    (*pc)->class_jok = 0;
     strval = estrndup ((*pc)->selector, strlen((*pc)->selector)-2);
     php_strtolower(strval, strlen(strval));
     (*pc)->scope = get_scope(strval);
@@ -1174,16 +1240,18 @@ static void parse_pointcut (pointcut **pc) {
     if (space != NULL) {
         strval = space+1;
     }
+    // Class and method separate by :: 
     temp = strstr(strval, "::");
     if (temp == NULL) {
+    // Class and method separate by ->
         temp = strstr(strval, "->");
     }
+    // No class
     if (temp == NULL) {
-        (*pc)->method = strval;
+        (*pc)->method = estrdup(strval);
     } else {
         (*pc)->method = estrdup(temp+2);
-        temp[0] = '\0';
-        (*pc)->class_name = strval;
+        (*pc)->class_name = estrndup(strval, temp-strval);
     }
     if ((*pc)->class_name != NULL) {
         (*pc)->kind_of_advice = (*pc)->kind_of_advice|AOP_KIND_METHOD;
