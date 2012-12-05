@@ -25,7 +25,6 @@
 #include "aop.h"
 #include "Zend/zend_operators.h"
 
-ZEND_DECLARE_MODULE_GLOBALS(aop)
 
 static void php_aop_init_globals(zend_aop_globals *aop_globals)
 {
@@ -125,8 +124,6 @@ static const zend_function_entry aop_methods[] = {
 PHP_RSHUTDOWN_FUNCTION(aop)
 {
     int i;
-    efree(aop_g(cache_write_properties));
-    efree(aop_g(cache_read_properties));
     /*
     for (i=0;i<aop_g(cache_func_size);i++) {
         if (aop_g(cache_func)[i]!=NULL) {
@@ -136,7 +133,6 @@ PHP_RSHUTDOWN_FUNCTION(aop)
         }
     }
     */
-    efree(aop_g(cache_func));
     zend_hash_destroy(aop_g(aop_functions));
     FREE_HASHTABLE(aop_g(aop_functions));
     for (i = 0; i < aop_g(count_aopJoinpoint_cache); i++) {
@@ -156,14 +152,19 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(count_read_property) = 0;
     aop_g(lock_read_property) = 0;
     aop_g(count_aopJoinpoint_cache) = 0;
-    aop_g(cache_func_size) = 1024;
-    aop_g(cache_func) = ecalloc(1024, sizeof(HashTable *));
-    aop_g(cache_write_size) = 1024;
-    aop_g(cache_write_properties) = ecalloc(1024, sizeof(handled_ht *));
-    aop_g(cache_read_size) = 1024;
-    aop_g(cache_read_properties) = ecalloc(1024, sizeof(handled_ht *));
+
     ALLOC_HASHTABLE(aop_g(aop_functions));
     zend_hash_init(aop_g(aop_functions), 16, NULL, free_pointcut,0);
+
+
+
+    aop_g(object_cache_write_size) = 1024;
+    aop_g(object_cache_write) = ecalloc(1024, sizeof(HashTable *));
+    aop_g(object_cache_read_size) = 1024;
+    aop_g(object_cache_read) = ecalloc(1024, sizeof(HashTable *));
+    aop_g(object_cache_func_size) = 1024;
+    aop_g(object_cache_func) = ecalloc(1024, sizeof(HashTable *));
+
     return SUCCESS;
 }
 
@@ -332,32 +333,25 @@ static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
     zend_function *curr_func;
     char *func_name; 
     pointcut_cache *cache = NULL;
-    int i;
-    zend_object_handle handle;
+    HashTable *object_cache;
     if (object==NULL) {
         return make_matching_ht(ex);
     }
-    handle = Z_OBJ_HANDLE_P(object);
     if (ex) {
         curr_func = ex->function_state.function;
     }
     func_name = estrdup(curr_func->common.function_name);
-    if (handle>=aop_g(cache_func_size)) {
-        aop_g(cache_func) = erealloc(aop_g(cache_func), sizeof (HashTable *)*handle+1);
-        for (i = aop_g(cache_func_size); i <= handle; i++) {
-            aop_g(cache_func)[i] = NULL;
-        }
-        aop_g(cache_func_size) = handle+1;
-    }
-    if (aop_g(cache_func)[handle] == NULL) {
-        ALLOC_HASHTABLE(aop_g(cache_func)[handle]);
-        zend_hash_init(aop_g(cache_func)[handle], 16, NULL, free_pointcut_cache ,0);
+    object_cache = get_object_cache_func(object);
+    if (object_cache == NULL) {
+        ALLOC_HASHTABLE(object_cache);
+        zend_hash_init(object_cache, 16, NULL, free_pointcut_cache ,0);
+        store_object_cache_func(object, object_cache);
     } else {
-        zend_hash_find(aop_g(cache_func)[handle],func_name, strlen(func_name), (void **)&cache);
+        zend_hash_find(object_cache,func_name, strlen(func_name), (void **)&cache);
     }
     if (cache == NULL || cache->declare_count < aop_g(count_pcs) || cache->ce != Z_OBJCE_P(object)) {
         if (cache != NULL) {
-            zend_hash_del(aop_g(cache_func)[handle],func_name, strlen(func_name));
+            zend_hash_del(object_cache,func_name, strlen(func_name));
         }
         cache = emalloc (sizeof (pointcut_cache));
         cache->ht = (HashTable *)make_matching_ht (ex);
@@ -368,7 +362,7 @@ static HashTable *get_matching_ht (zval *object, zend_execute_data *ex) {
         }
         cache->declare_count = aop_g(count_pcs);
         cache->ce = Z_OBJCE_P(object);
-        zend_hash_add(aop_g(cache_func)[handle], func_name, strlen(func_name), cache, sizeof(pointcut_cache), NULL);
+        zend_hash_add(object_cache, func_name, strlen(func_name), cache, sizeof(pointcut_cache), NULL);
     }
     efree(func_name);
     return cache->ht;
@@ -548,6 +542,7 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
     zval *aop_object;
     int i;
     pointcut_cache *cache = NULL;
+    HashTable *object_cache;
     TSRMLS_FETCH();
     if (Z_TYPE_P(member) != IS_STRING ) {
         ALLOC_ZVAL(tmp_member);
@@ -561,29 +556,25 @@ static zval *test_read_pointcut_and_execute(int current_pointcut_index, zval *ob
 #endif
     }
 
-    if (handle>=aop_g(cache_read_size)) {
-        aop_g(cache_read_properties) = erealloc(aop_g(cache_read_properties), sizeof (handled_ht *)*handle+1);
-        for (i = aop_g(cache_read_size); i <= handle; i++) {
-            aop_g(cache_read_properties)[i] = NULL;
-        }
-        aop_g(cache_read_size) = handle+1;
-    }
-    if (aop_g(cache_read_properties)[handle] == NULL) {
-        aop_g(cache_read_properties)[handle] = emalloc(sizeof(handled_ht *));
-        ALLOC_HASHTABLE(aop_g(cache_read_properties)[handle]->ht);
-        zend_hash_init(aop_g(cache_read_properties)[handle]->ht, 16, NULL, NULL,0);
+
+    object_cache = get_object_cache_read(object);
+    if (object_cache == NULL) {
+        ALLOC_HASHTABLE(object_cache);
+        zend_hash_init(object_cache, 16, NULL, free_pointcut_cache ,0);
+        store_object_cache_read(object, object_cache);
     } else {
-        zend_hash_find(aop_g(cache_read_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member), (void **)&cache);
+        zend_hash_find(object_cache, Z_STRVAL_P(member), Z_STRLEN_P(member), (void **)&cache);
     }
     if (cache == NULL || cache->declare_count < aop_g(count_read_property) || cache->ce != Z_OBJCE_P(object)) {
         if (cache != NULL) {
-            zend_hash_del(aop_g(cache_read_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member));
+            zend_hash_del(object_cache, Z_STRVAL_P(member), Z_STRLEN_P(member));
         }
         cache = emalloc (sizeof (pointcut_cache));
         cache->count = get_pointcuts_read_properties(object, member, &cache->pointcuts_cache AOP_KEY_C);
         cache->declare_count = aop_g(count_read_property);
         cache->ce = Z_OBJCE_P(object);
-        zend_hash_add(aop_g(cache_read_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member), cache, sizeof(pointcut_cache), NULL);
+        cache->ht = NULL;
+        zend_hash_add(object_cache, Z_STRVAL_P(member), Z_STRLEN_P(member), cache, sizeof(pointcut_cache), NULL);
     } else {
     }
 
@@ -714,6 +705,7 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
     zval *aop_object;
     int i;
     pointcut_cache *cache = NULL;
+    HashTable *object_cache;
     TSRMLS_FETCH();
 
     if (Z_TYPE_P(member) != IS_STRING ) {
@@ -728,31 +720,26 @@ static void test_write_pointcut_and_execute(int current_pointcut_index, zval *ob
 #endif
     }
 
-    if (handle >= aop_g(cache_write_size)) {
-        aop_g(cache_write_properties) = erealloc(aop_g(cache_write_properties), sizeof(handled_ht *)*handle+1);
-        for (i = aop_g(cache_write_size); i <= handle; i++) {
-            aop_g(cache_write_properties)[i] = NULL;
-        }
-        aop_g(cache_write_size) = handle+1;
-    }
 
-    if (aop_g(cache_write_properties)[handle] == NULL) {
-        aop_g(cache_write_properties)[handle] = emalloc(sizeof(handled_ht *));
-        ALLOC_HASHTABLE(aop_g(cache_write_properties)[handle]->ht);
-        zend_hash_init(aop_g(cache_write_properties)[handle]->ht, 16, NULL, NULL, 0);
+    object_cache = get_object_cache_write(object);
+    if (object_cache == NULL) {
+        ALLOC_HASHTABLE(object_cache);
+        zend_hash_init(object_cache, 16, NULL, free_pointcut_cache ,0);
+        store_object_cache_write(object, object_cache);
     } else {
-        zend_hash_find(aop_g(cache_write_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member), (void **)&cache);
+        zend_hash_find(object_cache, Z_STRVAL_P(member), Z_STRLEN_P(member), (void **)&cache);
     }
 
     if (cache == NULL || cache->declare_count<aop_g(count_write_property) || cache->ce != Z_OBJCE_P(object)) {
         if (cache != NULL) {
-            zend_hash_del(aop_g(cache_write_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member));
+            zend_hash_del(object_cache, Z_STRVAL_P(member), Z_STRLEN_P(member));
         }
         cache = emalloc (sizeof (pointcut_cache));
         cache->count = get_pointcuts_write_properties(object, member, &cache->pointcuts_cache AOP_KEY_C);
         cache->declare_count = aop_g(count_write_property);
         cache->ce = Z_OBJCE_P(object);
-        zend_hash_add(aop_g(cache_write_properties)[handle]->ht, Z_STRVAL_P(member), Z_STRLEN_P(member), cache, sizeof(pointcut_cache), NULL);
+        cache->ht = NULL;
+        zend_hash_add(object_cache, Z_STRVAL_P(member), Z_STRLEN_P(member), cache, sizeof(pointcut_cache), NULL);
     } 
 
     if (current_pointcut_index == cache->count) {
@@ -2044,4 +2031,99 @@ PHP_MSHUTDOWN_FUNCTION(aop)
 {
     UNREGISTER_INI_ENTRIES();
     return SUCCESS;
+}
+
+//Cache on object (zval)
+//pointcut's HashTable
+HashTable *get_object_cache_write (zval *object) //aop_g(object_cache_write)
+{
+    return get_object_cache(object, aop_g(object_cache_write), &aop_g(object_cache_write_size));
+
+}
+HashTable *get_object_cache_read (zval *object) //aop_g(object_cache_read)
+{
+    return get_object_cache(object, aop_g(object_cache_read), &aop_g(object_cache_read_size));
+
+}
+HashTable *get_object_cache_func (zval *object)
+{
+    return get_object_cache(object, aop_g(object_cache_func), &aop_g(object_cache_func_size));
+
+}
+HashTable *get_object_cache (zval *object, HashTable **ht, int *size)
+{
+    int i;
+    zend_object_handle handle;
+    handle = Z_OBJ_HANDLE_P(object);
+    if (handle>=(*size)) {
+        ht = erealloc(ht, sizeof (HashTable *)*handle+1);
+        for (i = (*size); i <= handle; i++) {
+            ht[i] = NULL;
+        }
+        (*size) = handle+1;
+    }
+    return ht[handle];
+}
+
+void store_object_cache_write(zval *object, HashTable *cache_ht)
+{
+    store_object_cache(object, cache_ht, aop_g(object_cache_write));
+}
+void store_object_cache_read(zval *object, HashTable *cache_ht)
+{
+    store_object_cache(object, cache_ht, aop_g(object_cache_read));
+}
+void store_object_cache_func(zval *object, HashTable *cache_ht)
+{
+    store_object_cache(object, cache_ht, aop_g(object_cache_func));
+
+}
+void store_object_cache(zval *object, HashTable *cache_ht, HashTable **ht)
+{
+    zend_object_handle handle;
+    handle = Z_OBJ_HANDLE_P(object);
+    ht[handle] = cache_ht;
+}
+
+
+// Cache on ZCE
+//pointcut's HashTable
+HashTable *get_zce_cache_write (zend_class_entry ce) //aop_g(zce_cache_write)
+{
+
+}
+HashTable *get_zce_cache_read (zend_class_entry ce) //aop_g(zce_cache_read)
+{
+
+}
+HashTable *get_zce_cache_func (zend_class_entry ce) //aop_g(zce_cache_func)
+{
+
+}
+HashTable *get_zce_cache (zend_class_entry ce, HashTable *ht) 
+{
+
+}
+
+void store_zce_cache_write(zend_class_entry ce, HashTable *cache_ht)
+{
+
+}
+void store_zce_cache_read(zend_class_entry ce, HashTable *cache_ht)
+{
+
+}
+void store_zce_cache_func(zend_class_entry ce, HashTable *cache_ht)
+{
+
+}
+void store_zce_cache(zend_class_entry ce, HashTable *cache_ht, HashTable *ht)
+{
+
+}
+
+
+HashTable *make_zce_cache(zend_class_entry ce, HashTable *ht)
+{
+
 }
