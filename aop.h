@@ -98,6 +98,11 @@ typedef struct {
     pcre *re_class;
 } pointcut;
 
+typedef struct {
+    HashTable *reads;
+    HashTable *writes;
+    HashTable *funcs;
+} object_cache;
 
 typedef struct {
     int count;
@@ -170,8 +175,9 @@ int object_cache_read_size;
 HashTable **object_cache_func;
 int object_cache_func_size;
 
-HashTable * aop_functions;
 zend_bool aop_enable;
+
+HashTable * pointcuts;
 
 ZEND_END_MODULE_GLOBALS(aop)
 
@@ -247,8 +253,7 @@ static void (*zend_std_write_property)(zval *object, zval *member, zval *value T
 #endif
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
-static zval * test_read_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
-static void test_write_pointcut_and_execute(int current_pointcut_index, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
+static void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
 static pointcut *aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static pointcut *aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
@@ -257,31 +262,6 @@ static void execute_context (zend_execute_data *ex, zval *object, zend_class_ent
 
 ZEND_DECLARE_MODULE_GLOBALS(aop)
 
-//Cache on object (zval)
-//pointcut's HashTable
-HashTable *get_object_cache_write (zval *object); //aop_g(object_cache_write)
-HashTable *get_object_cache_read (zval *object); //aop_g(object_cache_read)
-HashTable* get_object_cache_func (zval *object); //aop_g(object_cache_func)
-HashTable *get_object_cache (zval *object, HashTable **ht, int *size);
-
-void store_object_cache_write(zval *object, HashTable *cache_ht);
-void store_object_cache_read(zval *object, HashTable *cache_ht);
-void store_object_cache_func(zval *object, HashTable *cache_ht);
-void store_object_cache(zval *object, HashTable *cache_ht, HashTable **ht);
-
-
-// Cache on ZCE
-//pointcut's HashTable
-HashTable *get_zce_cache_write (zend_class_entry ce); //aop_g(zce_cache_write);
-HashTable *get_zce_cache_read (zend_class_entry ce); //aop_g(zce_cache_read);
-HashTable *get_zce_cache_func (zend_class_entry ce); //aop_g(zce_cache_func);
-HashTable *get_zce_cache (zend_class_entry ce, HashTable *ht); 
-
-void store_zce_cache_write(zend_class_entry ce, HashTable *cache_ht);
-void store_zce_cache_read(zend_class_entry ce, HashTable *cache_ht);
-void store_zce_cache_func(zend_class_entry ce, HashTable *cache_ht);
-void store_zce_cache(zend_class_entry ce, HashTable *cache_ht, HashTable *ht);
-
-
-HashTable *make_zce_cache(zend_class_entry ce, HashTable *ht);
-
+HashTable *calculate_function_pointcuts (zval *object, zend_execute_data *ex);
+HashTable *calculate_property_pointcuts (zval *object, zval *member, int kind AOP_KEY_D);
+static zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
