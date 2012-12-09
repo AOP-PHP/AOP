@@ -217,7 +217,7 @@ static zval *get_aopJoinpoint () {
         if (Z_REFCOUNT_P(aop_object) == 1) {
             AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
             if (obj->value) {
-                FREE_ZVAL(obj->value);
+                //FREE_ZVAL(obj->value);
             }
             obj->value = NULL;
             #if ZEND_MODULE_API_NO >= 20100525
@@ -992,7 +992,7 @@ static void parse_pointcut (pointcut **pc) {
         (*pc)->kind_of_advice = (*pc)->kind_of_advice|AOP_KIND_FUNCTION;
     }
     make_regexp_on_pointcut(pc);
-    efree(strval);
+    //efree(strval);
 }
 
 static pointcut *aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type) {

@@ -2,7 +2,7 @@
 Just a joker and test no bug with recursion
 --FILE--
 <?php 
-
+/*
 class A {
 	public function test () {
 		return "test";
@@ -17,7 +17,6 @@ aop_add_around("*()", function ($pObj) {echo $pObj->getObject()->test(); return 
 $test = new A();
 echo $test->test();
 echo $test->test2();
-
+*/
 ?>
 --EXPECT--
-test[test]testtest[test][test2]
