@@ -265,3 +265,4 @@ ZEND_DECLARE_MODULE_GLOBALS(aop)
 HashTable *calculate_function_pointcuts (zval *object, zend_execute_data *ex);
 HashTable *calculate_property_pointcuts (zval *object, zval *member, int kind AOP_KEY_D);
 static zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
+void make_regexp_on_pointcut (pointcut **pc); 

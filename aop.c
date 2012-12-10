@@ -22,6 +22,7 @@
 #include "php.h"
 #include "ext/standard/php_string.h"
 #include "ext/pcre/php_pcre.h"
+#include "Lexer.h"
 #include "aop.h"
 #include "Zend/zend_operators.h"
 
@@ -864,31 +865,65 @@ static pointcut * alloc_pointcut () {
 
 static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type , zval **return_value_ptr TSRMLS_DC) {
     pointcut *pc = NULL;
+    char *temp_str;
+    int is_class = 0;
     if (selector_len < 2) {
         zend_error(E_ERROR, "The given pointcut is invalid. You must specify a function call, a method call or a property operation"); 
     }
-    if (selector_len > 2 && (selector[selector_len-2] != '(' || selector[selector_len-1] != ')')) {
-        pc = add_pointcut_property(fci, fcic, selector, selector_len, type TSRMLS_CC);
-    } else {
-        int count;
-        aop_g(count_pcs)++;
-        count = aop_g(count_pcs)-1;
-        pc = alloc_pointcut();
-        pc->selector = estrdup(selector);
-        pc->fci = fci;
-        pc->fcic = fcic;
-        pc->kind_of_advice = type;
-        parse_pointcut(&pc);
 
-        zend_hash_next_index_insert(aop_g(pointcuts), &pc, sizeof(pointcut **),NULL);
+    pc = alloc_pointcut();
+    aop_g(count_pcs)++;
+    pc->selector = estrdup(selector);
+    pc->fci = fci;
+    pc->fcic = fcic;
+    pc->kind_of_advice = type;
 
-
-
-
+    scanner_state *state = emalloc(sizeof(scanner_state)); 
+    scanner_token *token = emalloc(sizeof(scanner_token));
+    state->start = selector;
+    state->end = state->start;
+    while(0 <= scan(state, token)) {
+    //    php_printf("TOKEN %d \n", token->TOKEN);
+        switch (token->TOKEN) {
+            case TOKEN_STATIC:
+                pc->static_state=token->int_val;
+                break;
+            case TOKEN_SCOPE:
+                pc->scope |= token->int_val;
+                break;
+            case TOKEN_CLASS:
+                pc->class_name=temp_str;
+                is_class=1;
+                break;
+            case TOKEN_PROPERTY:
+                pc->kind_of_advice |= AOP_KIND_PROPERTY | token->int_val;
+                break;
+            case TOKEN_FUNCTION:
+                if (is_class) {
+                    pc->kind_of_advice |= AOP_KIND_METHOD;
+                } else {
+                    pc->kind_of_advice |= AOP_KIND_FUNCTION;
+                }
+                break;
+            case TOKEN_TEXT:
+                temp_str=estrdup(token->str_val);
+    //            php_printf("[%s]\n",temp_str);
+                break;
+            default:
+                break;
+        }
     }
-    if (pc) {
-        //ZEND_REGISTER_RESOURCE((*return_value_ptr), pc, resource_pointcut);
+    pc->method = temp_str;
+    if (pc->kind_of_advice==type) {
+        pc->kind_of_advice |= AOP_KIND_READ | AOP_KIND_WRITE | AOP_KIND_PROPERTY;
     }
+    make_regexp_on_pointcut(&pc);
+
+    zend_hash_next_index_insert(aop_g(pointcuts), &pc, sizeof(pointcut **),NULL);
+
+
+
+
 }
 
 void make_regexp_on_pointcut (pointcut **pc) { 
