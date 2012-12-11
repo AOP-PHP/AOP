@@ -188,21 +188,6 @@ PHP_FUNCTION(aop_add_after);
 PHP_FUNCTION(aop_add_after_returning);
 PHP_FUNCTION(aop_add_after_throwing);
 
-PHP_METHOD(AopJoinpoint, getArguments);
-PHP_METHOD(AopJoinpoint, getPropertyName);
-PHP_METHOD(AopJoinpoint, setArguments);
-PHP_METHOD(AopJoinpoint, getKindOfAdvice);
-PHP_METHOD(AopJoinpoint, getReturnedValue);
-PHP_METHOD(AopJoinpoint, getAssignedValue);
-PHP_METHOD(AopJoinpoint, setReturnedValue);
-PHP_METHOD(AopJoinpoint, setAssignedValue);
-PHP_METHOD(AopJoinpoint, getPointcut);
-PHP_METHOD(AopJoinpoint, getObject);
-PHP_METHOD(AopJoinpoint, getClassName);
-PHP_METHOD(AopJoinpoint, getMethodName);
-PHP_METHOD(AopJoinpoint, getFunctionName);
-PHP_METHOD(AopJoinpoint, getException);
-PHP_METHOD(AopJoinpoint, process);
 
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
@@ -222,7 +207,7 @@ ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data
 #else
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC);
 #endif
-static zval *get_current_args (zend_execute_data *ex TSRMLS_DC);
+zval *get_current_args (zend_execute_data *ex TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
 static int strcmp_with_joker_case (char *str_with_jok, char *str, int case_sensitive);
 
@@ -233,7 +218,7 @@ static void (*zend_std_write_property)(zval *object, zval *member, zval *value T
 #endif
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
-static void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
+void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
 static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr);
@@ -241,7 +226,7 @@ static void execute_context (zend_execute_data *ex, zval *object, zend_class_ent
 
 HashTable *calculate_function_pointcuts (zval *object, zend_execute_data *ex);
 HashTable *calculate_property_pointcuts (zval *object, zval *member, int kind AOP_KEY_D);
-static zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
+zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
 void make_regexp_on_pointcut (pointcut **pc); 
 
 ZEND_DECLARE_MODULE_GLOBALS(aop)
