@@ -556,7 +556,7 @@ such as the pointcut who triggered the joinpoint, the arguments, the returned va
 
 ### getKindOfAdvice ###
 
-This will tell in wich condition your advice was launched
+This will tell in which condition your advice was launched
 
 *    AOP_KIND_BEFORE before a given call, may it be function, method or property access (read / write)
 *    AOP_KIND_BEFORE_METHOD before a method call (method of an object)
@@ -882,8 +882,8 @@ Of course you may not want to list for the AOP extension every functions of ever
   are wildcards.
 
 *    *()  will accept any function call in the root namespace
-*    admin*() will accept any function call in the root namespace wich name starts with admin
-*    *admin() will accept any function call in the root namespace wich name ends with admin
+*    admin*() will accept any function call in the root namespace which name starts with admin
+*    *admin() will accept any function call in the root namespace which name ends with admin
 *    namespaceOne/*() will accept any function call in the namespace namespaceOne, but not in subnamespaces of namespaceOne
 *    namespaceOne/namespaceTwo/*() will accept any function call in the namespace namespaceOne/namespaceTwo only
 *    */*() will accept any function call in any single level namespace (eg namespaceOne/functionName or namespaceTwo/otherFunctionName
