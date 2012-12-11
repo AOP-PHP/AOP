@@ -186,7 +186,7 @@ will output
 
 ### An advice that knows what happened on the hooked properties ###
 
-If you want to, you can accept in your advice an AopTriggeringJoinPoint object that will gives your advice more informations
+If you want to, you can accept in your advice an AopJoinPoint object that will gives your advice more informations
 on what exactly happened.
 
     [php]
@@ -788,33 +788,33 @@ The process method will only be available for advices of kind around. Any call t
 
 getPointcut returns the pointcut (as a string) that triggered the joinpoint.
 
-### getTriggeringObject ###
+### getObject ###
 
-getTriggeringObject returns the object of the triggered joinppoint. If the joinpoint does not belongs to an object,
-getTriggeringObject returns null.
+getObject returns the object of the triggered joinppoint. If the joinpoint does not belongs to an object,
+getObject returns null.
 
-### getTriggeringClassName ###
+### getClassName ###
 
-getTriggeringClassName returns the object's class name of the triggered joinpoint. If the joinpoint does not belongs to
-a class, getTriggeringClassName returns null.
+getClassName returns the object's class name of the triggered joinpoint. If the joinpoint does not belongs to
+a class, getClassName returns null.
 
-If the class is declared in a namespace, getTriggeringClassName indicates the full name of the class (with the namespace).
+If the class is declared in a namespace, getClassName indicates the full name of the class (with the namespace).
 
-### getTriggeringMethodName ###
+### getMethodName ###
 
-getTriggeringMethodName returns the name of the method of the triggered joinpoint. If the joinpoint was
+getMethodName returns the name of the method of the triggered joinpoint. If the joinpoint was
 triggered by a property operation, will raise an error. If the joinpoint was triggered by a function operation, will
 raise an error.
 
-### getTriggeringFunctionName ###
+### getFunctionName ###
 
-getTriggeringFunctionName returns the name of the function of the triggered joinpoint. If the joinpoint was
+getFunctionName returns the name of the function of the triggered joinpoint. If the joinpoint was
 triggered by a property operation, will raise an error. If the joinpoint was triggered by a method operation, will
 raise an error.
 
-### getTriggeringPropertyName ###
+### getPropertyName ###
 
-getTriggeringPropertyName returns the name of the property of the triggered joinpoint. If the joinpoint was triggered by a
+getPropertyName returns the name of the property of the triggered joinpoint. If the joinpoint was triggered by a
 method operation, will raise an error.
 
 ### getAssignedValue ###
