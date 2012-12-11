@@ -226,7 +226,6 @@ static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, 
 static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC);
 #endif
 static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type, zval **return_value_ptr TSRMLS_DC);
-static void parse_pointcut (pointcut **pc);
 static void free_pointcut(void *);
 static void free_pointcut_cache (void *);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
@@ -240,11 +239,6 @@ static zval *get_current_args (zend_execute_data *ex TSRMLS_DC);
 void exec(AopJoinpoint_object *obj TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
 static int strcmp_with_joker_case (char *str_with_jok, char *str, int case_sensitive);
-static int is_static (char *str);
-static int explode_scope_by_pipe (char *partial);
-static int get_scope (char *str);
-static char* get_class_part (char *str);
-static char * get_method_part (char *str);
 void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce);
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func, zend_execute_data *data);
