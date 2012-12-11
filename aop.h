@@ -29,9 +29,6 @@
 #define PHP_AOP_VERSION "0.2.0"
 #define PHP_AOP_EXTNAME "aop"
 
-//Resource
-#define PHP_POINTCUT_RES_NAME "AOP Pointcut"
-
 #define AOP_KIND_AROUND 1
 #define AOP_KIND_BEFORE 2
 #define AOP_KIND_AFTER  4
@@ -119,10 +116,6 @@ typedef struct {
 } instance_of_pointcut;
 
 typedef struct {
-    HashTable *ht;
-} handled_ht;
-
-typedef struct {
     zend_object std;
     joinpoint_context *context;
     instance_of_pointcut *pc;
@@ -154,26 +147,23 @@ typedef struct {
 #endif
 
 ZEND_BEGIN_MODULE_GLOBALS(aop)
-int count_pcs;
 int overloaded;
 
-int count_write_property;
 int lock_write_property;
-pointcut **property_pointcuts_write;
 
-int count_read_property;
 int lock_read_property;
-pointcut **property_pointcuts_read;
 
 int count_aopJoinpoint_cache;
 zval **aopJoinpoint_cache;
 
+/*
 HashTable **object_cache_write;
 int object_cache_write_size;
 HashTable **object_cache_read;
 int object_cache_read_size;
 HashTable **object_cache_func;
 int object_cache_func_size;
+*/
 
 zend_bool aop_enable;
 
@@ -193,7 +183,6 @@ PHP_RSHUTDOWN_FUNCTION(aop);
 PHP_MSHUTDOWN_FUNCTION(aop);
 
 PHP_FUNCTION(aop_add_around);
-PHP_FUNCTION(aop_get_previous_joinpoint);
 PHP_FUNCTION(aop_add_before);
 PHP_FUNCTION(aop_add_after);
 PHP_FUNCTION(aop_add_after_returning);
@@ -218,7 +207,6 @@ PHP_METHOD(AopJoinpoint, process);
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
 
-#endif
 static void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
 #if ZEND_MODULE_API_NO < 20121113
 static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
@@ -234,12 +222,10 @@ ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data
 #else
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC);
 #endif
-void joinpoint_execute (instance_of_pointcut *pc);
 static zval *get_current_args (zend_execute_data *ex TSRMLS_DC);
-void exec(AopJoinpoint_object *obj TSRMLS_DC);
 static int strcmp_with_joker (char *str_with_jok, char *str);
 static int strcmp_with_joker_case (char *str_with_jok, char *str, int case_sensitive);
-void aop_execute_global (int internal, zend_op_array *ops,zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
+
 static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce);
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func, zend_execute_data *data);
 #if ZEND_MODULE_API_NO < 20100525
@@ -248,15 +234,16 @@ static void (*zend_std_write_property)(zval *object, zval *member, zval *value T
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
 static void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
-static pointcut *aop_add_read (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
-static pointcut *aop_add_write (char *selector, zend_fcall_info fci, zend_fcall_info_cache fcic, int type);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
 static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr);
 
-ZEND_DECLARE_MODULE_GLOBALS(aop)
 
 HashTable *calculate_function_pointcuts (zval *object, zend_execute_data *ex);
 HashTable *calculate_property_pointcuts (zval *object, zval *member, int kind AOP_KEY_D);
 static zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
 void make_regexp_on_pointcut (pointcut **pc); 
+
+ZEND_DECLARE_MODULE_GLOBALS(aop)
+
+#endif

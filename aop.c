@@ -148,13 +148,9 @@ PHP_RSHUTDOWN_FUNCTION(aop)
 }
 PHP_RINIT_FUNCTION(aop)
 {
-    aop_g(count_pcs) = 0;
     aop_g(overloaded) = 0;
-    aop_g(count_write_property) = 0;
     aop_g(lock_write_property) = 0;
-    aop_g(count_read_property) = 0;
     aop_g(lock_read_property) = 0;
-    aop_g(count_aopJoinpoint_cache) = 0;
 
 
     ALLOC_HASHTABLE(aop_g(pointcuts));
@@ -538,8 +534,6 @@ ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, 
         aop_g(lock_write_property)--;
 }
 
-static int resource_pointcut;
-
 PHP_INI_BEGIN()
     STD_PHP_INI_BOOLEAN("aop.enable","1",PHP_INI_ALL, OnUpdateBool, aop_enable, zend_aop_globals, aop_globals)
 PHP_INI_END()
@@ -591,9 +585,6 @@ PHP_MINIT_FUNCTION(aop)
     zend_execute  = aop_execute;
     _zend_execute_internal = zend_execute_internal;
     zend_execute_internal  = aop_execute_internal;
-
-    //Resources
-    resource_pointcut = zend_register_list_destructors_ex(NULL, NULL, PHP_POINTCUT_RES_NAME, module_number);
 
     return SUCCESS;
 }
@@ -853,7 +844,6 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
     }
 
     pc = alloc_pointcut();
-    aop_g(count_pcs)++;
     pc->selector = estrdup(selector);
     pc->fci = fci;
     pc->fcic = fcic;
