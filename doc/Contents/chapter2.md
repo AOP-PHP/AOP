@@ -2,12 +2,12 @@
 
 ## aop_add_before ##
 
-before kind of advices enables you to
+Before kind of advice enables you to
 
-*    launch advices before the execution of a given function, without interrupting anything
-*    launch advices before the execution of a given function, and to interrupt its execution while raising an exception
-*    launch advices before the execution of a given function, and to update the targeted function's arguments
-*    launch advices before reading and / or writing an object's property
+*    launch advice before the execution of a given function, without interrupting anything
+*    launch advice before the execution of a given function, and to interrupt its execution while raising an exception
+*    launch advice before the execution of a given function, and to update the targeted function's arguments
+*    launch advice before reading and / or writing an object's property
 
 ### A simple advice execution ###
 
@@ -68,7 +68,7 @@ will output
     [screen]
     I will never do that with someone I don't know
 
-### An advice that can update the adviced function's arguments ###
+### An advice that can update the advice function's arguments ###
 
     [php]
     class MyServices
@@ -186,7 +186,7 @@ will output
 
 ### An advice that knows what happened on the hooked properties ###
 
-If you want to, you can accept in your advice an AopJoinPoint object that will gives your advice more informations
+If you want to, you can accept in your advice an AopJoinPoint object that will gives your advice more information
 on what exactly happened.
 
     [php]
@@ -280,7 +280,7 @@ will output
 
 ## aop_add_after ##
 
-after kind of advices enables you to
+After kind of advice enables you to
 
 *    do stuff after the matched joinpoint
 *    replace the return of the adviced function
@@ -346,8 +346,8 @@ will output
 
 ### launching an exception in case of unwanted / incorrect returned value ###
 
-Here we will ask PHP's AOP extension to raise exception if a call to file_get_contents returns FALSE (error).
-This may not be a best practice as it could add overhead to native PHP functions, but such a practice can be usefull
+Here we will ask PHP's AOP extension to raise an exception if a call to file_get_contents returns FALSE (error).
+This may not be a best practice as it could add overhead to native PHP functions, but such a practice can be useful
 if you're using an old PHP library that is not using exceptions as a mean to raise errors.
 
     [php]
@@ -374,12 +374,12 @@ will output
 
 ## aop_add_around ##
 
-around kind of advices enables you to
+Around kind of advice enables you to
 
 *    completely replace the matched joinpoint (including raising exceptions)
 *    do stuff around (before and / or) after the joinpoint, including catching exceptions
-*    replacing arguments of the matching joinpoint (as of the before kind of advices)
-*    replacing the return of the matching joinpoint (as of the after kind of advices)
+*    replacing arguments of the matching joinpoint (as of the before kind of advice)
+*    replacing the return of the matching joinpoint (as of the after kind of advice)
 *    and of course a mix of all of the above
 
 ### Replace the matching join point ###
@@ -487,7 +487,7 @@ will output
     [screen]
      4 by 2 equals [2] 4 by 0 equals [Infinity]
 
-### An advice that can update the adviced function's arguments ###
+### An advice that can update the advice function's arguments ###
 
     [php]
     class MyServices
@@ -550,9 +550,9 @@ will output
 
 ## AopJoinPoint complete reference ##
 
-An instance of AopJoinPoint will always be passed to your advices. This object contains several informations,
-such as the pointcut who triggered the joinpoint, the arguments, the returned value (if available), the raised exception
-(if available), and will enables you to run the expected method in case you are "around" it.
+An instance of AopJoinPoint will always be passed to your advice. This object contains several information,
+such as the pointcut which triggered the joinpoint, the arguments, the returned value (if available), the raised exception
+(if available), and will enable you to run the expected method in case you are "around" it.
 
 ### getKindOfAdvice ###
 
@@ -609,7 +609,7 @@ will output
 ### setArguments ###
 
 setArguments enables you to replace all the arguments the triggering method will receive. Beware that if you want to keep
-references, you will have to explicitely pass them back to setArguments.
+references you will have to explicitly pass them back to setArguments.
 
     [php]
     function callMe ($name, & $reference, & $reference2)
@@ -682,16 +682,16 @@ will output
     NEW name, NEW reference and NEW reference2. After the method execution, value of name is name, reference is M - NEW reference and reference2 is M - NEW reference2
 
 
-NOTE : you should only use setArguments while proceeding to advice of kind *before* and *around*, else, it might be
+NOTE : you should only use setArguments while processing advice of kind *before* and *around*, otherwise it might be
 confusing to update values of the arguments *after* the execution of the trigering method.
 
 ### getReturnedValue ###
 
 getReturnedValue will give you the returned value of the triggering method. getReturnedValue will only be populated
-in advices of the kind "after". In every other kind of advices, getReturnedValue will be null.
+in advice of the kind "after". In every other kind of advice getReturnedValue will be null.
 
-If the triggering method returns a reference and you want to update the given reference, you will have to explicitely
-asks for the reference while calling getReturnedValue.
+If the triggering method returns a reference and you want to update the given reference you will have to explicitly
+ask for the reference while calling getReturnedValue.
 
     [php]
     class Writer
@@ -765,23 +765,23 @@ will output
     [screen]
     some text
 
-NOTE : Of course if the triggering method doesn't return a reference, asking or not for the reference won't make
+NOTE : Of course if the triggering method doesn't return a reference asking or not for the reference won't make
 any difference.
 
 ### setReturnedValue ###
 
-setReturnedValue enables you to define the resulting value of the triggering method. This function makes sense for advices
+setReturnedValue enables you to define the resulting value of the triggering method. This function makes sense for advice
 of kind after, around, exception and final.
 
-If you are assigning a returned value to a method that was expected to return a reference, the original reference will
-be lost and won't be replaced. To replace the content of an original reference, just proceed as explained in the getReturnedValue
+If you are assigning a returned value to a method that was expected to return a reference the original reference will
+be lost and won't be replaced. To replace the content of an original reference just proceed as explained in the getReturnedValue
 documentation.
 
 ### process ###
 
-The process method allow you to explicitely launch the triggering method or property operation (read / write).
+The process method allows you to explicitly launch the triggering method or property operation (read / write).
 
-The process method will only be available for advices of kind around. Any call to process in advices of other kinds will
+The process method will only be available for advice of kind around. Any call to process in advice of other kinds will
  launch an AopException with a message like "Cannot launch the process method in an advice of kind XXX".
 
 ### getPointcut ###
@@ -798,29 +798,29 @@ getObject returns null.
 getClassName returns the object's class name of the triggered joinpoint. If the joinpoint does not belongs to
 a class, getClassName returns null.
 
-If the class is declared in a namespace, getClassName indicates the full name of the class (with the namespace).
+If the class is declared in a namespace getClassName indicates the full name of the class (with the namespace).
 
 ### getMethodName ###
 
 getMethodName returns the name of the method of the triggered joinpoint. If the joinpoint was
-triggered by a property operation, will raise an error. If the joinpoint was triggered by a function operation, will
+triggered by a property operation it will raise an error. If the joinpoint was triggered by a function operation it will
 raise an error.
 
 ### getFunctionName ###
 
 getFunctionName returns the name of the function of the triggered joinpoint. If the joinpoint was
-triggered by a property operation, will raise an error. If the joinpoint was triggered by a method operation, will
+triggered by a property operation it will raise an error. If the joinpoint was triggered by a method operation it will
 raise an error.
 
 ### getPropertyName ###
 
 getPropertyName returns the name of the property of the triggered joinpoint. If the joinpoint was triggered by a
-method operation, will raise an error.
+method operation it will raise an error.
 
 ### getAssignedValue ###
 
 getAssignedValue returns the value assigned to the property of the triggered joinpoint. If the joinpoint was triggered by
-a method operation, will raise an error. If the joinpoint was triggered by a read operation, will also raise an error.
+a method operation it will raise an error. If the joinpoint was triggered by a read operation it will also raise an error.
 
 ## Pointcuts syntax ##
 
@@ -829,17 +829,17 @@ a method operation, will raise an error. If the joinpoint was triggered by a rea
 Selectors will enables you to describe with a very simple syntax functions, methods and properties that should be considered for
 raising the execution of a given advice.
 
-At their simpliest form, selectors will be given the name of the function itself, including its namespace, followed by
+At their simpliest form selectors will be given the name of the function itself including its namespace, followed by
 parenthesis.
 
 eg :
 
-*    functionName() will raise advices for every call of the function functionName
-*    namespaceOne\namespaceTwo\functionName() will raise advices for every call of the function functionName in
+*    functionName() will raise advice for every call of the function functionName
+*    namespaceOne\namespaceTwo\functionName() will raise advice for every call of the function functionName in
 the namespace namespaceOne\namespaceTwo, but won't be triggered if you're calling only a method named functionName in an
 another namespace.
 
-Of course you can specify a method of an object of a given class name, by separating the class name and the method name
+Of course you can specify a method of an object of a given class name by separating the class name and the method name
 by "->".
 
 eg :
@@ -848,7 +848,7 @@ eg :
 *    \namespaceOne\namespaceTwo\MyClass->myMethod() will be triggered while calling the method myMethod of any instance of
 the class MyClass in the namespace \namespaceOne\namespaceTwo.
 
-If you want to work on properties, the syntax for methods is to be considered, you simply have to ommit the final parenthesis.
+If you want to work on properties the syntax for methods is to be considered, you simply have to omit the final parenthesis.
 
 eg :
 
@@ -858,7 +858,7 @@ the class MyClass in the namespace \namespaceOne\namespaceTwo.
 
 ### public / protected / private ###
 
-There is a specitic keyword you can use to tell AOP to consider only methods / properties that are public, protected or private.
+There is a specific keyword you can use to tell AOP to consider only methods / properties that are public, protected or private.
 
 eg :
 
@@ -878,7 +878,7 @@ eg :
 ### Wildcards ###
 
 Of course you may not want to list for the AOP extension every functions of every class you're interested in having
- pointcuts for. There are case where you would prefer to tell AOP the format of those elements, and that's why there
+ pointcuts for. There are cases where you would prefer to tell AOP the format of those elements, and that's why there
   are wildcards.
 
 *    *()  will accept any function call in the root namespace
@@ -917,7 +917,7 @@ End the selector with parenthesis ()
 Start your selector with a Classname (Interface or Traits will also work, inheritance is taken into account)
 
 *    'ClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a class ClassName in the root namespace
-*    'namespaceName\\ClassName->methodName()' represent any call of a method called methodName from an instance (or not) of a class
+*    'namespaceName\\ClassName->methodName()' represents any call of a method called methodName from an instance (or not) of a class
 ClassName located in the namespace namespaceName
 
 #### Properties ####
