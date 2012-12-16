@@ -1363,7 +1363,9 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         while (zend_hash_get_current_data_ex(aop_g(pointcuts), (void **)&pc, &pos) == SUCCESS) {
             if (!((*pc)->kind_of_advice & kind_of_advice)) {
                 zend_hash_move_forward_ex (aop_g(pointcuts), &pos);
-            } else if (ce==NULL || pointcut_match_zend_class_entry (*pc, ce)) {
+            } else if ((ce==NULL 
+                        && ((*pc)->kind_of_advice & AOP_KIND_FUNCTION)) 
+                    || (ce!=NULL && pointcut_match_zend_class_entry (*pc, ce))) {
                 zend_hash_next_index_insert(ht, pc, sizeof(pointcut **), NULL);
                 zend_hash_move_forward_ex (aop_g(pointcuts), &pos);
             } else {
@@ -1387,6 +1389,9 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         }
         if (ex) {
             curr_func = ex->function_state.function;
+        }
+        if (ce==NULL && curr_func->common.fn_flags & ZEND_ACC_STATIC) {
+            ce = curr_func->common.scope;
         }
         ALLOC_HASHTABLE(ht);
         //No free because pointcuts are free in the aop_g(pointcuts)
