@@ -96,18 +96,18 @@ typedef struct {
 } pointcut;
 
 typedef struct {
-    HashTable *reads;
-    HashTable *writes;
-    HashTable *funcs;
+    HashTable *read;
+    HashTable *write;
+    HashTable *func;
 } object_cache;
 
 typedef struct {
-    int count;
-    pointcut **pointcuts_cache;
     HashTable *ht;
-    int declare_count;
+    int version;
     zend_class_entry *ce;
 } pointcut_cache;
+
+
 
 typedef struct {
     pointcut *pc;
@@ -169,6 +169,12 @@ zend_bool aop_enable;
 
 HashTable * pointcuts;
 
+object_cache **object_cache;
+int object_cache_size;
+
+int pointcut_version;
+
+
 ZEND_END_MODULE_GLOBALS(aop)
 
 #ifdef ZTS
@@ -228,6 +234,9 @@ HashTable *calculate_function_pointcuts (zval *object, zend_execute_data *ex);
 HashTable *calculate_property_pointcuts (zval *object, zval *member, int kind AOP_KEY_D);
 zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D);
 void make_regexp_on_pointcut (pointcut **pc); 
+object_cache *get_object_cache (zval *object);
+HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D);
+HashTable * get_cache_func (zval *object, zend_execute_data *ex);
 
 ZEND_DECLARE_MODULE_GLOBALS(aop)
 
