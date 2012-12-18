@@ -61,6 +61,9 @@ PHP_METHOD(AopJoinpoint, setArguments){
         zend_error(E_ERROR, "setArguments expects an array as its first argument");
         return;
     }
+    if (obj->args != NULL) {
+        zval_ptr_dtor(&obj->args);
+    }
     obj->args = params;
     obj->args_overloaded = 1;
     Z_ADDREF_P(params);
@@ -118,6 +121,9 @@ PHP_METHOD(AopJoinpoint, setAssignedValue){
         zend_error(E_ERROR, "Error");
         return;
     } 
+    if (obj->value!=NULL) {
+        zval_ptr_dtor(&obj->value);
+    }
     obj->value = ret;
     Z_ADDREF_P(ret);
     RETURN_NULL();
@@ -133,7 +139,10 @@ PHP_METHOD(AopJoinpoint, setReturnedValue){
         zend_error(E_ERROR, "Error");
         return;
     }
-
+    if (!(obj->kind_of_advice & AOP_KIND_PROPERTY) && *obj->to_return_ptr_ptr!=NULL) {
+        zval_ptr_dtor(obj->to_return_ptr_ptr);
+    }
+    
     obj->value = ret;
     Z_ADDREF_P(ret);
     RETURN_NULL();

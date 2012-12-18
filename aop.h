@@ -156,14 +156,7 @@ int lock_read_property;
 int count_aopJoinpoint_cache;
 zval **aopJoinpoint_cache;
 
-/*
-HashTable **object_cache_write;
-int object_cache_write_size;
-HashTable **object_cache_read;
-int object_cache_read_size;
-HashTable **object_cache_func;
-int object_cache_func_size;
-*/
+HashTable *function_cache;
 
 zend_bool aop_enable;
 
@@ -237,6 +230,7 @@ void make_regexp_on_pointcut (pointcut **pc);
 object_cache *get_object_cache (zval *object);
 HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D);
 HashTable * get_cache_func (zval *object, zend_execute_data *ex);
+static void free_object_cache (void * cache);
 
 ZEND_DECLARE_MODULE_GLOBALS(aop)
 
