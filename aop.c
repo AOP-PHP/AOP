@@ -488,6 +488,7 @@ void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *obj
     obj->object = object;
     obj->member = member;
     obj->value = value;
+    Z_SET_ISREF_P(value);
     Z_ADDREF_P(value);
     obj->scope = current_scope;
 #if ZEND_MODULE_API_NO >= 20100525
