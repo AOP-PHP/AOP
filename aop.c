@@ -349,6 +349,7 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
     obj->scope = scope;
     obj->called_scope = called_scope;
     if ( args_overloaded) {
+        Z_ADDREF_P(args);
         obj->args = args;
     }
     obj->args_overloaded = args_overloaded;
