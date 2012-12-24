@@ -158,6 +158,7 @@ PHP_RSHUTDOWN_FUNCTION(aop)
 PHP_RINIT_FUNCTION(aop)
 {
     aop_g(aopJoinpoint_cache) = NULL;
+    aop_g(count_aopJoinpoint_cache) = 0;
     aop_g(overloaded) = 0;
     aop_g(lock_write_property) = 0;
     aop_g(lock_read_property) = 0;
@@ -244,9 +245,9 @@ static void free_pointcut(void *pc)
 }
 
 static zval *get_aopJoinpoint () {
+    TSRMLS_FETCH();
     int i;
     zval *aop_object;
-	TSRMLS_FETCH();
     for (i = 0; i < aop_g(count_aopJoinpoint_cache); i++) {
         zval *aop_object = aop_g(aopJoinpoint_cache)[i];
         if (Z_REFCOUNT_P(aop_object) == 1) {
@@ -393,6 +394,7 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
 }
     
 zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, int type, zend_class_entry *current_scope AOP_KEY_D) {
+    TSRMLS_FETCH();
     zval *temp_this, *to_return;
     zend_class_entry *scope;
     pointcut **temp;
@@ -453,6 +455,7 @@ zval *_test_read_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *obj
 }
 
 void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D) {
+    TSRMLS_FETCH();
     zval *temp_this, *to_return;
     zend_class_entry *scope;
     pointcut **temp;
@@ -1401,6 +1404,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
 
     HashTable *calculate_class_pointcuts (zend_class_entry *ce, int kind_of_advice) {
+        TSRMLS_FETCH();
         pointcut **pc;
         HashPosition pos;
         HashTable *ht;
@@ -1551,6 +1555,7 @@ HashTable *get_object_cache_func (zval *object)
 
 object_cache *get_object_cache (zval *object)
 {
+    TSRMLS_FETCH();
     int i;
     zend_object_handle handle;
     handle = Z_OBJ_HANDLE_P(object);
@@ -1571,6 +1576,7 @@ object_cache *get_object_cache (zval *object)
 }
 
 HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D) {
+    TSRMLS_FETCH();
     HashTable *ht_object_cache;
     pointcut_cache *cache = NULL;
     pointcut_cache *_cache = NULL;
@@ -1627,6 +1633,7 @@ HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D) 
 }
 
 HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
+    TSRMLS_FETCH();
     HashTable *ht_object_cache;
     zend_function *curr_func;
     pointcut_cache *cache = NULL;
