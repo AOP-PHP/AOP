@@ -27,6 +27,7 @@
 #include "aop.h"
 #include "Zend/zend_operators.h"
 
+#define DEBUG_OBJECT_HANDLERS 1
 
 static void php_aop_init_globals(zend_aop_globals *aop_globals)
 {
@@ -78,8 +79,6 @@ zend_object_handlers AopJoinpoint_object_handlers;
 void aop_free_storage(void *object TSRMLS_DC)
 {
     AopJoinpoint_object *obj = (AopJoinpoint_object *)object;
-//    zend_hash_destroy(obj->std.properties);
-//    FREE_HASHTABLE(obj->std.properties);
     if (obj->value!=NULL) {
         zval_ptr_dtor(&obj->value);
     }
@@ -99,9 +98,6 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
     memset(obj, 0, sizeof(AopJoinpoint_object));
     obj->std.ce = type;
 
-//    ALLOC_HASHTABLE(obj->std.properties);
-//    zend_hash_init(obj->std.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-
     retval.handle = zend_objects_store_put(obj, NULL,
                                            aop_free_storage, NULL TSRMLS_CC);
     retval.handlers = &AopJoinpoint_object_handlers;
@@ -115,6 +111,7 @@ ZEND_END_ARG_INFO()
 static const zend_function_entry aop_methods[] = {
     PHP_ME(AopJoinpoint, getArguments, arginfo_aop_args_returnbyref, 0)
     PHP_ME(AopJoinpoint, getPropertyName, NULL, 0)
+    PHP_ME(AopJoinpoint, getPropertyValue, NULL, 0)
     PHP_ME(AopJoinpoint, setArguments, NULL, 0)
     PHP_ME(AopJoinpoint, getKindOfAdvice, NULL, 0)
     PHP_ME(AopJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
@@ -175,14 +172,6 @@ PHP_RINIT_FUNCTION(aop)
     ALLOC_HASHTABLE(aop_g(function_cache));
     zend_hash_init(aop_g(function_cache), 16, NULL, free_pointcut_cache,0);
 
-/*
-    aop_g(object_cache_write_size) = 1024;
-    aop_g(object_cache_write) = ecalloc(1024, sizeof(HashTable *));
-    aop_g(object_cache_read_size) = 1024;
-    aop_g(object_cache_read) = ecalloc(1024, sizeof(HashTable *));
-    aop_g(object_cache_func_size) = 1024;
-    aop_g(object_cache_func) = ecalloc(1024, sizeof(HashTable *));
-*/
     return SUCCESS;
 }
 
@@ -241,7 +230,6 @@ static void free_pointcut(void *pc)
     }
     //*/
     efree(_pc);
-    /* Need to free members */
 }
 
 static zval *get_aopJoinpoint () {
@@ -285,15 +273,17 @@ static zval *get_aopJoinpoint () {
 }
 
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
+    zval **try_return;
     zend_execute_data *ex = EG(current_execute_data);
     //Test if ++
     if (ex->opline->opcode != ZEND_PRE_INC_OBJ && ex->opline->opcode != ZEND_POST_INC_OBJ && ex->opline->opcode != ZEND_PRE_DEC_OBJ && ex->opline->opcode != ZEND_POST_DEC_OBJ) {
-        return zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
+        try_return = zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
     } else {
         // Call original to not have a notice
         zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
         return NULL;
     }
+    return try_return;
 }
 
 ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {

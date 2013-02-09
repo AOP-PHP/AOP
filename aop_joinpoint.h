@@ -20,6 +20,7 @@
 
 PHP_METHOD(AopJoinpoint, getArguments);
 PHP_METHOD(AopJoinpoint, getPropertyName);
+PHP_METHOD(AopJoinpoint, getPropertyValue);
 PHP_METHOD(AopJoinpoint, setArguments);
 PHP_METHOD(AopJoinpoint, getKindOfAdvice);
 PHP_METHOD(AopJoinpoint, getReturnedValue);
