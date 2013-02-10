@@ -1662,7 +1662,7 @@ HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
         cache = NULL;
     }
     if (cache == NULL) {
-		cache = (pointcut_cache *)(sizeof(pointcut_cache));
+		cache = (pointcut_cache *)emalloc(sizeof(pointcut_cache));
         cache->ht = calculate_function_pointcuts (object, ex);
         cache->version = aop_g(pointcut_version);
         if (object==NULL) {
