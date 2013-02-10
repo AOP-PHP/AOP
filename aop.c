@@ -215,10 +215,10 @@ static void free_pointcut(void *pc)
         efree(_pc->selector);
     }
     if (_pc->fci.function_name) {
-        zval_ptr_dtor((void *)&_pc->fci.function_name);
+        zval_ptr_dtor((zval **)&_pc->fci.function_name);
     }
     if (_pc->fci.object_ptr) {
-        zval_ptr_dtor((void *)&_pc->fci.object_ptr);
+        zval_ptr_dtor((zval **)&_pc->fci.object_ptr);
     }
     /* Seems to be free by the engine (pce cache are in a hashtable)
     if (_pc->re_method!=NULL) {
@@ -643,7 +643,7 @@ PHP_MINIT_FUNCTION(aop)
 
 
 static pointcut * alloc_pointcut () {
-    pointcut *pc = emalloc(sizeof(pointcut));
+    pointcut *pc = (pointcut *)emalloc(sizeof(pointcut));
 
 
     pc->scope = 0;
@@ -665,6 +665,9 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
     pointcut *pc = NULL;
     char *temp_str = NULL;
     int is_class = 0;
+	scanner_state *state = (scanner_state *)emalloc(sizeof(scanner_state)); 
+    scanner_token *token = (scanner_token *)emalloc(sizeof(scanner_token));
+    
     if (selector_len < 2) {
         zend_error(E_ERROR, "The given pointcut is invalid. You must specify a function call, a method call or a property operation"); 
     }
@@ -675,8 +678,6 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
     pc->fcic = fcic;
     pc->kind_of_advice = type;
 
-    scanner_state *state = emalloc(sizeof(scanner_state)); 
-    scanner_token *token = emalloc(sizeof(scanner_token));
     state->start = selector;
     state->end = state->start;
     while(0 <= scan(state, token)) {
@@ -734,7 +735,7 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
 
 void make_regexp_on_pointcut (pointcut **pc) { 
     pcre_extra *pcre_extra = NULL;
-    int preg_options = 0, i;
+    int preg_options = 0;
     int *replace_count, *new_length;
     char *regexp;
     char *regexp_buffer;
@@ -1570,16 +1571,19 @@ HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D) 
     HashTable *ht_object_cache;
     pointcut_cache *cache = NULL;
     pointcut_cache *_cache = NULL;
+
+	char *key_str;
+    int key_len;
+    zval *tmp_member = NULL;
+    int member_need_free = 0;
+    ulong h;
+
     if (type & AOP_KIND_READ) {
         ht_object_cache = get_object_cache_read(object);
     } else {
         ht_object_cache = get_object_cache_write(object);
     }
-    char *key_str;
-    int key_len;
-    zval *tmp_member = NULL;
-    int member_need_free = 0;
-    ulong h;
+    
     if (Z_TYPE_P(member) != IS_STRING ) {
         ALLOC_ZVAL(tmp_member);
         *tmp_member = *member;
@@ -1636,7 +1640,7 @@ HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
     if (object == NULL) {
         ht_object_cache = aop_g(function_cache);
         if (curr_func->common.fn_flags & ZEND_ACC_STATIC) {
-            key_str = emalloc (strlen (curr_func->common.scope->name) + strlen(curr_func->common.function_name) + 3);
+            key_str = (char *)emalloc (strlen (curr_func->common.scope->name) + strlen(curr_func->common.function_name) + 3);
             sprintf((char *)key_str, "%s::%s", curr_func->common.scope->name, curr_func->common.function_name);
             key_len = strlen (key_str);
         } else {
@@ -1658,7 +1662,7 @@ HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
         cache = NULL;
     }
     if (cache == NULL) {
-        cache = emalloc(sizeof(pointcut_cache));
+		cache = (pointcut_cache *)(sizeof(pointcut_cache));
         cache->ht = calculate_function_pointcuts (object, ex);
         cache->version = aop_g(pointcut_version);
         if (object==NULL) {

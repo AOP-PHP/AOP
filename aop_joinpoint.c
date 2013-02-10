@@ -41,12 +41,13 @@ PHP_METHOD(AopJoinpoint, getPropertyName){
 PHP_METHOD(AopJoinpoint, getPropertyValue){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zval **to_return;
-    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY)) {
-        zend_error(E_ERROR, "getPropertyValue is only available when the JoinPoint is a property operation (read or write)"); 
-    }
 #if ZEND_MODULE_API_NO >= 20100525
     zend_literal *key = NULL;
 #endif
+
+    if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY)) {
+        zend_error(E_ERROR, "getPropertyValue is only available when the JoinPoint is a property operation (read or write)"); 
+    }
     if (obj->object!=NULL && obj->member!=NULL) {
        to_return = zend_std_get_property_ptr_ptr_overload(obj->object, obj->member AOP_KEY_C TSRMLS_CC);
     }
