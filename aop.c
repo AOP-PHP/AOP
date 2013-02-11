@@ -107,6 +107,18 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
     return retval;
 }
 
+ZEND_BEGIN_ARG_INFO(arginfo_aop_args_setArguments, 0)
+    ZEND_ARG_ARRAY_INFO(0, arguments, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_aop_args_setReturnedValue, 0)
+    ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_aop_args_setAssignedValue, 0)
+    ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_args_returnbyref, 0, ZEND_RETURN_REFERENCE, -1)
 ZEND_END_ARG_INFO()
 
@@ -114,12 +126,12 @@ static const zend_function_entry aop_methods[] = {
     PHP_ME(AopJoinpoint, getArguments, arginfo_aop_args_returnbyref, 0)
     PHP_ME(AopJoinpoint, getPropertyName, NULL, 0)
     PHP_ME(AopJoinpoint, getPropertyValue, NULL, 0)
-    PHP_ME(AopJoinpoint, setArguments, NULL, 0)
+    PHP_ME(AopJoinpoint, setArguments, arginfo_aop_args_setArguments, 0)
     PHP_ME(AopJoinpoint, getKindOfAdvice, NULL, 0)
     PHP_ME(AopJoinpoint, getReturnedValue, arginfo_aop_args_returnbyref, 0)
     PHP_ME(AopJoinpoint, getAssignedValue, arginfo_aop_args_returnbyref, 0)
-    PHP_ME(AopJoinpoint, setReturnedValue, NULL, 0)
-    PHP_ME(AopJoinpoint, setAssignedValue, NULL, 0)
+    PHP_ME(AopJoinpoint, setReturnedValue, arginfo_aop_args_setReturnedValue, 0)
+    PHP_ME(AopJoinpoint, setAssignedValue, arginfo_aop_args_setAssignedValue, 0)
     PHP_ME(AopJoinpoint, getPointcut, NULL, 0)
     PHP_ME(AopJoinpoint, getObject, NULL, 0)
     PHP_ME(AopJoinpoint, getClassName, NULL, 0)
