@@ -27,6 +27,8 @@
 #include "aop.h"
 #include "Zend/zend_operators.h"
 
+ZEND_DECLARE_MODULE_GLOBALS(aop)
+
 #define DEBUG_OBJECT_HANDLERS 1
 
 static void php_aop_init_globals(zend_aop_globals *aop_globals)
