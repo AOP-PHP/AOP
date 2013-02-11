@@ -27,6 +27,9 @@
 #include "aop.h"
 #include "Zend/zend_operators.h"
 
+zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
+zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
+
 ZEND_DECLARE_MODULE_GLOBALS(aop)
 
 #define DEBUG_OBJECT_HANDLERS 1
