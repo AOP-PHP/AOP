@@ -234,6 +234,4 @@ HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D);
 HashTable * get_cache_func (zval *object, zend_execute_data *ex);
 static void free_object_cache (void * cache);
 
-ZEND_DECLARE_MODULE_GLOBALS(aop)
-
 #endif
