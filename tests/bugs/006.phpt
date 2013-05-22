@@ -1,5 +1,11 @@
 --TEST--
 Try using new finfo()
+--SKIPIF--
+<?php
+if (!class_exists('finfo')) {
+    die('You need finfo');
+}
+?>
 --FILE--
 <?php
 class mytest {
