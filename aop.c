@@ -778,7 +778,7 @@ void make_regexp_on_pointcut (pointcut **pc) {
     regexp_buffer = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
     efree(regexp);
     regexp = regexp_buffer;
-    sprintf((char *)tempregexp, "/^%s$/i", regexp);
+    sprintf(tempregexp, "/^%s$/i", regexp);
     efree(regexp);
     (*pc)->re_method = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
     //efree(tempregexp);
@@ -805,7 +805,11 @@ void make_regexp_on_pointcut (pointcut **pc) {
         regexp_buffer = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
         efree(regexp);
         regexp = regexp_buffer;
-        sprintf(tempregexp, "/^%s$/i", regexp);
+        if (regexp[0]!='\\') {
+            sprintf((char *)tempregexp, "/^%s$/i", regexp);
+        } else {
+            sprintf((char *)tempregexp, "/^%s$/i", regexp+1);
+        }
         efree(regexp);
         (*pc)->re_class = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
         if (!(*pc)->re_class) {

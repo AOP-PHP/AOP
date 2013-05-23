@@ -10,7 +10,7 @@ namespace Mon\Plugin {
    }
 }
 namespace {
-   aop_add_before ('Mon\Plugin\Config->get()', function(){echo "no root"; });
+   aop_add_before ('Mon\Plugin\Config->get()', function(){echo "not root"; });
    aop_add_before ('\Mon\Plugin\Config->get()', function(){echo "root";});
    $config = new Mon\Plugin\Config();
    $config->get();
