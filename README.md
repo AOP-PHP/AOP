@@ -9,18 +9,6 @@ AOP aims to allow separation of cross-cutting concerns (cache, log, security, tr
 
 [![Build Status](https://secure.travis-ci.org/AOP-PHP/AOP.png?branch=master)](http://travis-ci.org/AOP-PHP/AOP)
 
-## PHP's AOP extension history ##
-
-The AOP extension is a project which started a while ago even if its development is quite very new (early 2012). It was
-first expected to be a fully PHP developed library, as part of a dependency injection framework. The Aspect Oriented
-Programming implementation would have taken the form of auto generated proxies.
-
-That was before Julien Salleyron, the lead developer of the project, wanted to take it to the next level while writing
-the AOP core features as a PHP's extension.
-
-Gérald Croës also belongs to the initial team, mainly in charge of the documentation and discussions around
-the extension's API.
-
 ## Installation ##
 
 You can use pecl
