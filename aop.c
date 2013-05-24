@@ -778,7 +778,11 @@ void make_regexp_on_pointcut (pointcut **pc) {
     regexp_buffer = php_str_to_str_ex(regexp, strlen(regexp), "[.#}", 4, "(.*\\\\)?", 7, new_length, 0, replace_count);
     efree(regexp);
     regexp = regexp_buffer;
-    sprintf(tempregexp, "/^%s$/i", regexp);
+    if (regexp[0]!='\\') {
+        sprintf((char *)tempregexp, "/^%s$/i", regexp);
+    } else {
+        sprintf((char *)tempregexp, "/^%s$/i", regexp+2);
+    }
     efree(regexp);
     (*pc)->re_method = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
     //efree(tempregexp);
@@ -808,7 +812,7 @@ void make_regexp_on_pointcut (pointcut **pc) {
         if (regexp[0]!='\\') {
             sprintf((char *)tempregexp, "/^%s$/i", regexp);
         } else {
-            sprintf((char *)tempregexp, "/^%s$/i", regexp+1);
+            sprintf((char *)tempregexp, "/^%s$/i", regexp+2);
         }
         efree(regexp);
         (*pc)->re_class = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
@@ -1328,9 +1332,8 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
     }
 
     static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func, zend_execute_data *data) {
-        zend_class_entry *ce = NULL;
+        int comp_start = 0;
         TSRMLS_FETCH();
-
         if (pc->static_state != 2) {
             if (pc->static_state) {
                 if (!(curr_func->common.fn_flags & ZEND_ACC_STATIC)) {
@@ -1358,15 +1361,11 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
                 return 0;
             }
         } else {
-            if (strcasecmp(pc->method, curr_func->common.function_name)) {
-                return 0;
+            if (pc->method[0]=='\\') {
+                comp_start=1;
             }
-        }
-        if (data != NULL) {
-            if (curr_func->common.fn_flags & ZEND_ACC_STATIC) {
-                ce = curr_func->common.scope;
-            } else if (data->object != NULL && Z_OBJCE(*data->object) != NULL) {
-                ce = Z_OBJCE(*data->object);
+            if (strcasecmp(pc->method+comp_start, curr_func->common.function_name)) {
+                return 0;
             }
         }
         return 1;
