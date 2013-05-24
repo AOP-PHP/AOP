@@ -286,6 +286,8 @@ After kind of advice enables you to
 *    replace the return of the adviced function
 *    launch an exception in case of an incorrect / unwanted return
 
+aop_add_after is a superset of aop_add_after_throwing and aop_add_after_returning.
+
 ### doing stuff after the triggered joinpoint ###
 
     [php]
@@ -371,6 +373,14 @@ will output
 
     [screen]
     Cannot read from file 'foo file that does not exists'
+
+## aop_add_after_returning ##
+
+aop_add_after_returning links advices that becomes active after the target normally returns from execution (no exception).
+
+## aop_add_after_throwing ##
+
+aop_add_after_returning links advices that becomes active if the target raise an (uncaught) exception.
 
 ## aop_add_around ##
 
