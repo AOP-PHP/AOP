@@ -169,3 +169,23 @@ a given user, a given context, a given procedure. A world where you can hunt wei
 trying to update multiple and sparse PHP files, but just by adding advices on given conditions.
 
 We are sure that this extension will soon be part of your future development workflow !
+
+## Example of project based on aop ## 
+
+*  php-full-power
+   Use aop for hack possibility of php for inovate alternative more possibility with structurate code and debug more performant
+   https://github.com/onetest/php-full-power
+
+    class myclass
+    {
+        public function implode(arrayCast $tableau)
+    	{
+    		echo implode(",", $tableau->getArrayCopy());
+    	}
+    }
+    
+    $non = new myclass();
+    $non->implode("sdqd");
+    
+    arrayCast implement Cast interface call by aop for transform input parameter 
+
