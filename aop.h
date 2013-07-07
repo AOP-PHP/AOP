@@ -140,6 +140,8 @@ typedef struct {
     zval *exception;
     int args_overloaded;
     zval **to_return_ptr_ptr;
+    int internal;
+    struct _zend_fcall_info *fci
 }  AopJoinpoint_object;
 
 #ifdef ZTS
@@ -191,7 +193,12 @@ PHP_FUNCTION(aop_add_after_throwing);
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
 
+#if ZEND_MODULE_API_NO >= 20121212
+static void (*_zend_execute)(zend_execute_data *execute_data TSRMLS_DC);
+#else
 static void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
+#endif
+
 #if ZEND_MODULE_API_NO < 20121113
 static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 #else
@@ -200,7 +207,14 @@ static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, 
 static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type, zval **return_value_ptr TSRMLS_DC);
 static void free_pointcut(void *);
 static void free_pointcut_cache (void *);
+
+#if ZEND_MODULE_API_NO >= 20121212
+ZEND_DLEXPORT void aop_execute (zend_execute_data *execute_data TSRMLS_DC);
+#else
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
+#endif
+
+
 #if ZEND_MODULE_API_NO < 20121113
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 #else
@@ -215,13 +229,13 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func,
 #if ZEND_MODULE_API_NO < 20100525
 static void (*zend_std_write_property)(zval *object, zval *member, zval *value TSRMLS_DC);
 #endif
-void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr);
+void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr, struct _zend_fcall_info *fci, int internal);
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
 void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
-static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr);
+static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr, struct _zend_fcall_info *fci, int internal);
 
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC); 
 

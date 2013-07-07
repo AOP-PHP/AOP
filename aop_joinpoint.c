@@ -60,7 +60,11 @@ PHP_METHOD(AopJoinpoint, getArguments){
         zend_error(E_ERROR, "getArguments is only available when the JoinPoint is a function or method call"); 
     }
     if (obj->args == NULL) {
-        obj->args = get_current_args(obj->ex TSRMLS_CC);
+        if (obj->internal) {
+            obj->args = get_current_args(obj->ex TSRMLS_CC);
+        } else {
+            obj->args = get_current_args(obj->ex->prev_execute_data);
+        }
     }
     if (obj->args != NULL) {
         RETURN_ZVAL(obj->args, 1, 0);
@@ -263,7 +267,7 @@ PHP_METHOD(AopJoinpoint, process){
             obj->value = _test_read_pointcut_and_execute(obj->pos, obj->advice, obj->object, obj->member, obj->type, obj->scope AOP_KEY_C);
         }
     } else {
-        _test_func_pointcut_and_execute(obj->pos, obj->advice, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
+        _test_func_pointcut_and_execute(obj->pos, obj->advice, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr, obj->fci, obj->internal);
         obj->value = (*obj->to_return_ptr_ptr);
         if (!EG(exception)) {
             if ((*obj->to_return_ptr_ptr) != NULL) {
