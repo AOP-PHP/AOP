@@ -63,7 +63,11 @@ PHP_METHOD(AopJoinpoint, getArguments){
         if (obj->internal) {
             obj->args = get_current_args(obj->ex TSRMLS_CC);
         } else {
-            obj->args = get_current_args(obj->ex->prev_execute_data);
+#if ZEND_MODULE_API_NO >= 20121212
+            obj->args = get_current_args(obj->ex->prev_execute_data TSRMLS_CC);
+#else
+            obj->args = get_current_args(obj->ex TSRMLS_CC);
+#endif
         }
     }
     if (obj->args != NULL) {
