@@ -1230,7 +1230,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 #if ZEND_MODULE_API_NO >= 20121212
             _zend_execute(ex TSRMLS_CC);
 #else
-            _zend_execute(EX(active_op_array) TSRMLS_CC);
+            _zend_execute(EG(active_op_array) TSRMLS_CC);
 #endif
 
             if (EG(symtable_cache_ptr)>=EG(symtable_cache_limit)) {
