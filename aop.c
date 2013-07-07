@@ -994,6 +994,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
 #if ZEND_MODULE_API_NO < 20121113
 void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC) {
+    struct _zend_fcall_info *fci = NULL;
 #else
     void aop_execute_internal (zend_execute_data *current_execute_data, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC) {
 #endif
