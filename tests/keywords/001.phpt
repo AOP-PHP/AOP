@@ -1,5 +1,7 @@
 --TEST--
 Testing if include, include_once, require and require_once are caught
+--SKIPIF--
+skip "Not Implemented Yet"
 --FILE--
 <?php
 aop_add_before('include()', function(AopJoinPoint $ajp){
