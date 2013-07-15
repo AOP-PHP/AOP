@@ -1188,7 +1188,11 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
                     }
                     zend_vm_stack_push(param TSRMLS_CC);
                 }
+#if ZEND_MODULE_API_NO >= 20121212
+                EG(current_execute_data)->prev_execute_data->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+#else
                 EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+#endif
                 zend_vm_stack_push((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
             }
         } else {
