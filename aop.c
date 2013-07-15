@@ -303,7 +303,7 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
     } else {
         // Call original to not have a notice
 #if ZEND_MODULE_API_NO>=20121212
-        zend_std_get_property_ptr_ptr(object, member, type AOP_KEY_C TSRMLS_CC);
+        zend_std_get_property_ptr_ptr(object, member, 1 AOP_KEY_C TSRMLS_CC);
 #else
         zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
 #endif
@@ -387,7 +387,9 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
             }
         }
     } else {
-        _test_func_pointcut_and_execute(pos, ht, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr, obj->fci, obj->internal);
+        if (!EG(exception)) {
+            _test_func_pointcut_and_execute(pos, ht, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr, obj->fci, obj->internal);
+        }
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
         if (current_pc->kind_of_advice & AOP_KIND_CATCH && EG(exception)) {
@@ -981,6 +983,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     aop_g(overloaded) = 1;
     _test_func_pointcut_and_execute(NULL, NULL, data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr), NULL, 0);
     aop_g(overloaded) = 0;
+
     if (!must_return 
 #if ZEND_MODULE_API_NO >= 20100525
             && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)
@@ -1000,6 +1003,10 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
             Z_TYPE_P(*EG(return_value_ptr_ptr)) = IS_NULL;
 
         }
+    }
+
+    if (EG(exception)) {
+        EG(current_execute_data) = EG(current_execute_data)->prev_execute_data;
     }
 
 }
@@ -1299,7 +1306,6 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         }
 
 
-        EG(current_execute_data) =  original_execute_data;
         if (args_overloaded) {
 #if ZEND_MODULE_API_NO >= 20121212
             zend_vm_stack_clear_multiple(0 TSRMLS_C);
