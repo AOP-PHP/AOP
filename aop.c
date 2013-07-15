@@ -286,15 +286,27 @@ static zval *get_aopJoinpoint () {
     return aop_object;
 }
 
+#if ZEND_MODULE_API_NO>=20121212
+ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
+#else
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
+#endif
     zval **try_return;
     zend_execute_data *ex = EG(current_execute_data);
     //Test if ++
     if (ex->opline->opcode != ZEND_PRE_INC_OBJ && ex->opline->opcode != ZEND_POST_INC_OBJ && ex->opline->opcode != ZEND_PRE_DEC_OBJ && ex->opline->opcode != ZEND_POST_DEC_OBJ) {
+#if ZEND_MODULE_API_NO>=20121212
+        try_return = zend_std_get_property_ptr_ptr(object, member, type AOP_KEY_C TSRMLS_CC);
+#else
         try_return = zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
+#endif
     } else {
         // Call original to not have a notice
+#if ZEND_MODULE_API_NO>=20121212
+        zend_std_get_property_ptr_ptr(object, member, type AOP_KEY_C TSRMLS_CC);
+#else
         zend_std_get_property_ptr_ptr(object, member AOP_KEY_C TSRMLS_CC);
+#endif
         return NULL;
     }
     return try_return;
