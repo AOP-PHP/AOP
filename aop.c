@@ -388,7 +388,8 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
         }
     } else {
         if (!EG(exception)) {
-            _test_func_pointcut_and_execute(pos, ht, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr, obj->fci, obj->internal);
+            //_test_func_pointcut_and_execute(pos, ht, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr, obj->fci, obj->internal);
+            _zend_execute(ex TSRMLS_CC);
         } else {
             //Z_DELREF_P(aop_object);
             //zend_vm_stack_push((void*)(zend_uintptr_t)0 TSRMLS_CC);
