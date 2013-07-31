@@ -389,6 +389,11 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
     } else {
         if (!EG(exception)) {
             _test_func_pointcut_and_execute(pos, ht, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr, obj->fci, obj->internal);
+        } else {
+            //Z_DELREF_P(aop_object);
+            //zend_vm_stack_push((void*)(zend_uintptr_t)0 TSRMLS_CC);
+            EG(current_execute_data) = EG(current_execute_data)->prev_execute_data;
+            return;
         }
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
@@ -1006,7 +1011,7 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     }
 
     if (EG(exception)) {
-        EG(current_execute_data) = EG(current_execute_data)->prev_execute_data;
+        //EG(current_execute_data) = EG(current_execute_data)->prev_execute_data;
     }
 
 }
@@ -1047,7 +1052,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         if (data) {
             curr_func = data->function_state.function;
         }
-        if (curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
+        if (curr_func == NULL || curr_func->common.function_name == NULL || strcmp(curr_func->common.function_name, "__toString") ||  aop_g(overloaded) || EG(exception)) {
             if (_zend_execute_internal) {
 #if ZEND_MODULE_API_NO < 20121113
                 _zend_execute_internal(current_execute_data, return_value_used TSRMLS_CC);
@@ -1064,8 +1069,13 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
             return;
         }   
 #if ZEND_MODULE_API_NO >= 20121212
-		to_return_ptr_ptr = &EX_TMP_VAR(current_execute_data, current_execute_data->opline->result.var)->var.ptr;
-        //TODO Regarder pour Ts
+        if (!EG(exception)) {
+            if (current_execute_data
+             && current_execute_data->opline
+             ) {
+                to_return_ptr_ptr = &EX_TMP_VAR(current_execute_data, current_execute_data->opline->result.var)->var.ptr;
+            }
+        }
 #elif ZEND_MODULE_API_NO >= 20100525
         to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.var)).var.ptr; 
 #else
@@ -1122,6 +1132,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
             php_printf("ERRRORR");
             return ;
         }
+
         original_execute_data = EG(current_execute_data);
         EG(current_execute_data) = ex;
 
