@@ -191,16 +191,24 @@ PHP_FUNCTION(aop_add_after_throwing);
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
 
-static void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
-#if ZEND_MODULE_API_NO < 20121113
-static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
+#if PHP_VERSION_ID >= 50500
+static void (*old_zend_execute_ex) (zend_execute_data *execute_data TSRMLS_DC);
 #else
-static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC);
+static void (*old_zend_execute) (zend_op_array *ops TSRMLS_DC);
+#endif
+#if ZEND_MODULE_API_NO < 20121113
+static void (*old_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
+#else
+static void (*old_zend_execute_internal) (zend_execute_data *current_execute_data, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC);
 #endif
 static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char *selector, int selector_len, int type, zval **return_value_ptr TSRMLS_DC);
 static void free_pointcut(void *);
 static void free_pointcut_cache (void *);
+#if PHP_VERSION_ID >= 50500
+ZEND_DLEXPORT void aop_execute_ex (zend_execute_data *execute_data TSRMLS_DC);
+#else
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
+#endif
 #if ZEND_MODULE_API_NO < 20121113
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 #else
@@ -217,13 +225,23 @@ static void (*zend_std_write_property)(zval *object, zval *member, zval *value T
 #endif
 void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr);
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
+
+#if PHP_VERSION_ID>=50500
+static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
+#else
 static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_KEY_D TSRMLS_DC);
+#endif
+
 void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
 static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr);
 
+#if PHP_VERSION_ID>=50500
+ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC); 
+#else
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC); 
+#endif
 
 HashTable *calculate_function_pointcuts (zval *object, zend_execute_data *ex);
 HashTable *calculate_property_pointcuts (zval *object, zval *member, int kind AOP_KEY_D);
