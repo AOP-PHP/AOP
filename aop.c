@@ -78,16 +78,16 @@ static zend_class_entry* aop_const_class_entry;
 
 zend_object_handlers AopJoinpoint_object_handlers;
 
-void aop_free_storage(void *object TSRMLS_DC)
+void aop_free_joinpoint_storage(void *object TSRMLS_DC)
 {
-    AopJoinpoint_object *obj = (AopJoinpoint_object *)object;
-    if (obj->value!=NULL) {
-        zval_ptr_dtor(&obj->value);
+    AopJoinpoint_object *joinpoint = (AopJoinpoint_object *)object;
+    if (joinpoint->value != NULL) {
+        zval_ptr_dtor(&joinpoint->value);
     }
-    if (obj->args!=NULL) {
-        zval_ptr_dtor(&obj->args);
+    if (joinpoint->args != NULL) {
+        zval_ptr_dtor(&joinpoint->args);
     }
-    efree(obj);
+    efree(joinpoint);
 }
 
 zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
@@ -101,7 +101,7 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
     obj->std.ce = type;
 
     retval.handle = zend_objects_store_put(obj, NULL,
-                                           aop_free_storage, NULL TSRMLS_CC);
+                                           aop_free_joinpoint_storage, NULL TSRMLS_CC);
     retval.handlers = &AopJoinpoint_object_handlers;
 
     return retval;
