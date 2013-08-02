@@ -94,13 +94,13 @@ zend_object_value aop_create_handler(zend_class_entry *type TSRMLS_DC)
 {
     zend_object_value retval;
 
-    AopJoinpoint_object *obj = (AopJoinpoint_object *)emalloc(sizeof(AopJoinpoint_object));
-    obj->value = NULL;
-    obj->args = NULL;
-    memset(obj, 0, sizeof(AopJoinpoint_object));
-    obj->std.ce = type;
+    AopJoinpoint_object *joinpoint = (AopJoinpoint_object *)emalloc(sizeof(AopJoinpoint_object));
+    joinpoint->value = NULL;
+    joinpoint->args = NULL;
+    memset(joinpoint, 0, sizeof(AopJoinpoint_object));
+    joinpoint->std.ce = type;
 
-    retval.handle = zend_objects_store_put(obj, NULL,
+    retval.handle = zend_objects_store_put(joinpoint, NULL,
                                            aop_free_joinpoint_storage, NULL TSRMLS_CC);
     retval.handlers = &AopJoinpoint_object_handlers;
 
