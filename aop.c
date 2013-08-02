@@ -316,7 +316,7 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 }
 
 
-void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execute_data *execute_data, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
+void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, zend_execute_data *execute_data, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
     zval *aop_object, *exception;
     TSRMLS_FETCH();
     AopJoinpoint_object *joinpoint;
@@ -384,7 +384,7 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
         }
     } else {
     //    php_printf("re-test");
-        _test_func_pointcut_and_execute(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr);
+        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr);
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
         if (current_pc->kind_of_advice & AOP_KIND_CATCH && EG(exception)) {
@@ -987,9 +987,9 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
     aop_g(overloaded) = 1;
     #if PHP_VERSION_ID >= 50500    
-    _test_func_pointcut_and_execute(NULL, NULL, execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
+    test_pointcut_and_execute_matching_advice(NULL, NULL, execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
     #else
-    _test_func_pointcut_and_execute(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));    
+    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));    
     #endif
     aop_g(overloaded) = 0;
     
