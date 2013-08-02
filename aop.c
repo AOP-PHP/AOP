@@ -279,11 +279,12 @@ static zval *get_aopJoinpoint () {
 
 #if PHP_VERSION_ID >= 50500
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
+    zend_execute_data *ex = EG(current_execute_data);
 #else 
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
+    zend_execute_data *ex = EG(current_execute_data);
 #endif
     zval **try_return;
-    zend_execute_data *ex = EG(current_execute_data);
     //Test if ++
     if (ex->opline->opcode != ZEND_PRE_INC_OBJ && ex->opline->opcode != ZEND_POST_INC_OBJ && ex->opline->opcode != ZEND_PRE_DEC_OBJ && ex->opline->opcode != ZEND_POST_DEC_OBJ) {
 #if PHP_VERSION_ID >= 50500
@@ -334,7 +335,6 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
         zend_hash_move_forward_ex (ht, &pos);
     }
     if (zend_hash_get_current_data_ex(ht, (void **)&temp, &pos) != SUCCESS) {
-        
         aop_g(overloaded) = 0;
         old_zend_execute_ex (ex TSRMLS_CC);
         aop_g(overloaded) = 1;
@@ -362,24 +362,29 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
     }
     obj->args_overloaded = args_overloaded;
     obj->exception = NULL;
+
+    //php_printf("je debute");
+
     if (current_pc->kind_of_advice & AOP_KIND_BEFORE) {
-//        if (!EG(exception)) {
+//	php_printf("before");
+        if (!EG(exception)) {
             execute_pointcut(current_pc, aop_object);
-//        }else{
-//		return;
-//	}
+	}
     }
     if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
-//        if (!EG(exception)) {
+//	php_printf("around");
+        if (!EG(exception)) {
             execute_pointcut(current_pc, aop_object);
             if (obj->value != NULL) {
                 Z_ADDREF_P(obj->value);
                 (*to_return_ptr_ptr) = obj->value;
             }
-//        }else{
-//		return;
-//	}
+        }else{
+		return;
+ //       php_printf("exception");
+        }
     } else {
+    //    php_printf("re-test");
         _test_func_pointcut_and_execute(pos, ht, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr);
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
@@ -574,14 +579,17 @@ static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg) {
     args[0] = (zval *)&(arg);
     zret_ptr = NULL;
 
+//php_printf("execute pointcut");
 
     pointcut_to_execute->fci.param_count = 1;
     pointcut_to_execute->fci.size = sizeof(pointcut_to_execute->fci);
     pointcut_to_execute->fci.retval_ptr_ptr = &zret_ptr;
     pointcut_to_execute->fci.params = (zval ***)args;
+//php_printf("va appeler");
     if (zend_call_function(&(pointcut_to_execute->fci), &(pointcut_to_execute->fcic) TSRMLS_CC) == FAILURE) {
         zend_error(E_ERROR, "Problem in AOP Callback");
     }
+//php_printf("fin appel");
     if (zret_ptr != NULL && Z_TYPE_P(zret_ptr) != IS_NULL) {
         AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(arg TSRMLS_CC);
         if (obj->value!=NULL) {
@@ -946,8 +954,8 @@ PHP_FUNCTION(aop_add_after)
 ZEND_DLEXPORT void aop_execute_ex (zend_execute_data *execute_data TSRMLS_DC) {
 #else
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
-   	zend_execute_data *execute_data;
-    execute_data = EG(current_execute_data);
+    zend_execute_data *to_execute_data;
+    to_execute_data = EG(current_execute_data);
 #endif
     zend_function *curr_func = NULL;
     int must_return = (EG(return_value_ptr_ptr) != NULL);
@@ -961,19 +969,22 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
         return;
     }
 
-#if PHP_VERSION_ID >= 50500
-    curr_func = execute_data->function_state.function; 
-#else
-    if (data) {
-        curr_func = execute_data->function_state.function;
-    }
-#endif
-
 #if PHP_VERSION_ID >= 50500    
-    if (execute_data->op_array->type==ZEND_EVAL_CODE || curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
+    if (execute_data->op_array->type==ZEND_EVAL_CODE 
+        || execute_data->function_state.function == NULL 
+        || execute_data->function_state.function->common.function_name == NULL 
+        || aop_g(overloaded) 
+        || EG(exception)) {
     	old_zend_execute_ex(execute_data TSRMLS_CC);
 #else
-    if (ops->type==ZEND_EVAL_CODE || curr_func == NULL || curr_func->common.function_name == NULL || aop_g(overloaded) || EG(exception)) {
+    if (data) {
+        curr_func = to_execute_data->function_state.function;
+    }
+    if (ops->type==ZEND_EVAL_CODE 
+        || curr_func == NULL 
+        || curr_func->common.function_name == NULL 
+        || aop_g(overloaded) 
+        || EG(exception)) {
         old_zend_execute(ops TSRMLS_CC);
 #endif    	
         return;
@@ -986,9 +997,9 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
     aop_g(overloaded) = 1;
 #if PHP_VERSION_ID >= 50500    
-    _test_func_pointcut_and_execute(NULL, NULL, EG(current_execute_data), EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
+    _test_func_pointcut_and_execute(NULL, NULL, execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
 #else
-    _test_func_pointcut_and_execute(NULL, NULL, execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));    
+    _test_func_pointcut_and_execute(NULL, NULL, EG(current_execute_data), EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));    
 #endif
     aop_g(overloaded) = 0;
     
@@ -1042,9 +1053,11 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
             return;
         }
 
-
+#if PHP_VERSION_ID >= 50500
         data = EG(current_execute_data);
-
+#else
+        data = EG(current_execute_data);
+#endif
 
         if (data) {
             curr_func = data->function_state.function;
@@ -1079,252 +1092,12 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.u.var)).var.ptr;
 #endif
         aop_g(overloaded) = 1;
+#if PHP_VERSION_ID >= 50500
         _test_func_pointcut_and_execute(NULL,NULL, EG(current_execute_data), current_execute_data->object, EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr );
+#else
+        _test_func_pointcut_and_execute(NULL,NULL, EG(current_execute_data), current_execute_data->object, EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr );
+#endif
         aop_g(overloaded) = 0;
-        // SegFault
-        /*
-           if (!return_value_used && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)) {
-           zval_ptr_dtor(to_return_ptr_ptr);
-           }
-        //*/
-    }
-    
-    static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
-        zval **return_value_ptr;
-        zval ***params;
-        zend_uint i;
-        zval **original_return_value;
-        HashTable *calling_symbol_table;
-        zend_op_array *original_op_array;
-        zend_op **original_opline_ptr;
-        zend_class_entry *current_scope;
-        zend_class_entry *current_called_scope;
-        //    zend_class_entry *calling_scope = NULL;
-        zval *current_this;
-        zend_execute_data *original_execute_data;
-        zend_execute_data execute_data;
-        zval *original_object;
-        HashPosition pos;
-        zval ** temp = NULL;
-        int arg_count = 0;
-        TSRMLS_FETCH();
-
-        if (!EG(active)) {
-            //TODO ERROR
-            return ;
-        }
-
-        if (EG(exception)) {
-            //TODO ERROR
-            return ;
-        }
-        execute_data = *ex;
-
-        //EX(function_state).function = fci_cache->function_handler;
-        original_object = EX(object);
-        EX(object) = object;
-        if (object && Z_TYPE_P(object) == IS_OBJECT &&
-                (!EG(objects_store).object_buckets || !EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(object)].valid)) {
-            //TODO ERROR
-            php_printf("ERRRORR");
-            return ;
-        }
-        original_execute_data = EG(current_execute_data);
-        EG(current_execute_data) = ex;
-
-        if (args_overloaded) {
-            if (args && Z_TYPE_P(args) == IS_ARRAY) {
-                args_overloaded = 1;
-                arg_count=0;
-                zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(args), &pos);
-                while (zend_hash_get_current_data_ex(Z_ARRVAL_P(args), (void **)&temp, &pos) == SUCCESS) {
-                    arg_count++;
-                    if (arg_count == 1) {
-                        params = emalloc(sizeof(zval **));
-                    } else {
-                        params = erealloc(params, arg_count*sizeof(zval **));
-                    }
-                    params[arg_count-1] = temp;
-                    zend_hash_move_forward_ex(Z_ARRVAL_P(args), &pos);
-                }
-            }
-
-            if (arg_count > 0) {
-                //Copy from zend_call_function
-                ZEND_VM_STACK_GROW_IF_NEEDED((int) arg_count + 1);
-                for (i=0; i < arg_count; i++) {
-                    zval *param;
-                    if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-                        if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
-                            zval *new_zval;
-
-                            if (!ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
-                                if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
-                                    zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
-#if PHP_VERSION_ID >= 50500
-                                    zend_vm_stack_clear_multiple(0 TSRMLS_C);
-#else
-                                    zend_vm_stack_clear_multiple(TSRMLS_C);                                    
-#endif
-                                }
-
-                                zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
-                                        i+1,
-                                        EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
-                                        EX(function_state).function->common.scope ? "::" : "",
-                                        EX(function_state).function->common.function_name
-                                        );
-                                return;
-                            }
-
-                            ALLOC_ZVAL(new_zval);
-                            *new_zval = **params[i];
-                            zval_copy_ctor(new_zval);
-                            Z_SET_REFCOUNT_P(new_zval, 1);
-                            Z_DELREF_PP(params[i]);
-                            *params[i] = new_zval;
-                        }
-                        Z_ADDREF_PP(params[i]);
-                        Z_SET_ISREF_PP(params[i]);
-                        param = *params[i];
-                    } else if (PZVAL_IS_REF(*params[i]) && (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
-                        ALLOC_ZVAL(param);
-                        *param = **(params[i]);
-                        INIT_PZVAL(param);
-                        zval_copy_ctor(param);
-                    } else if (*params[i] != &EG(uninitialized_zval)) {
-                        Z_ADDREF_PP(params[i]);
-                        param = *params[i];
-                    } else {
-                        ALLOC_ZVAL(param);
-                        *param = **(params[i]);
-                        INIT_PZVAL(param);
-                    }
-                    zend_vm_stack_push_nocheck(param TSRMLS_CC);
-                }
-                EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
-                zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
-            }
-        } else {
-            arg_count = (int)(zend_uintptr_t) *EX(function_state).arguments;
-        }
-
-        current_scope = EG(scope);
-        EG(scope) = calling_scope;
-        current_this = EG(This);
-        current_called_scope = EG(called_scope);
-        if (called_scope) {
-            EG(called_scope) = called_scope;
-        } else if (EX(function_state).function->type != ZEND_INTERNAL_FUNCTION) {
-            EG(called_scope) = NULL;
-        }
-
-        if (object) {
-            if ((EX(function_state).function->common.fn_flags & ZEND_ACC_STATIC)) {
-                EG(This) = NULL;
-            } else {
-                EG(This) = object;
-
-                if (!PZVAL_IS_REF(EG(This))) {
-                    Z_ADDREF_P(EG(This)); 
-                } else {
-                    zval *this_ptr;
-                    ALLOC_ZVAL(this_ptr);
-                    *this_ptr = *EG(This);
-                    INIT_PZVAL(this_ptr);
-                    zval_copy_ctor(this_ptr);
-                    EG(This) = this_ptr;
-                }
-            }
-        } else {
-            EG(This) = NULL;
-        }
-
-        //    EX(prev_execute_data) = EG(current_execute_data);
-        if (EX(function_state).function->type == ZEND_USER_FUNCTION) {
-            calling_symbol_table = EG(active_symbol_table);
-            EG(scope) = EX(function_state).function->common.scope;
-
-            original_return_value = EG(return_value_ptr_ptr);
-            original_op_array = EG(active_op_array);
-            EG(return_value_ptr_ptr) = to_return_ptr_ptr;
-            EG(active_op_array) = (zend_op_array *) EX(function_state).function;
-            original_opline_ptr = EG(opline_ptr);
-#if PHP_VERSION_ID >= 50500
-            old_zend_execute_ex(EG(current_execute_data) TSRMLS_CC);
-#else
-            old_zend_execute_ex(EG(active_op_array) TSRMLS_CC);
-#endif
-            if (EG(symtable_cache_ptr)>=EG(symtable_cache_limit)) {
-                zend_hash_destroy(EG(active_symbol_table));
-                FREE_HASHTABLE(EG(active_symbol_table));
-            } else {
-                /* clean before putting into the cache, since clean
-                   could call dtors, which could use cached hash */
-                if (EG(active_symbol_table)) {
-                    zend_hash_clean(EG(active_symbol_table));
-                    *(++EG(symtable_cache_ptr)) = EG(active_symbol_table);
-                }
-            }
-            EG(active_op_array) = original_op_array;
-            EG(return_value_ptr_ptr)=original_return_value;
-            EG(opline_ptr) = original_opline_ptr;
-            EG(active_symbol_table) = calling_symbol_table;
-        } else if (EX(function_state).function->type == ZEND_INTERNAL_FUNCTION) {
-            int call_via_handler = (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) != 0;
-            if ((*to_return_ptr_ptr)==NULL) {
-                ALLOC_INIT_ZVAL(*to_return_ptr_ptr);
-            }
-            if (EX(function_state).function->common.scope) {
-                EG(scope) = EX(function_state).function->common.scope;
-            }
-            ((zend_internal_function *) EX(function_state).function)->handler(arg_count, *to_return_ptr_ptr, to_return_ptr_ptr, object, 1 TSRMLS_CC);
-            /*  We shouldn't fix bad extensions here,
-                because it can break proper ones (Bug #34045)
-                if (!EX(function_state).function->common.return_reference)
-                {
-                INIT_PZVAL(*fci->retval_ptr_ptr);
-                }*/
-
-        } else { /* ZEND_OVERLOADED_FUNCTION */
-            if ((*to_return_ptr_ptr)==NULL) {
-                ALLOC_INIT_ZVAL(*to_return_ptr_ptr);
-            }
-            if (object) {
-                Z_OBJ_HT_P(object)->call_method(EX(function_state).function->common.function_name, arg_count, *to_return_ptr_ptr, to_return_ptr_ptr, object, 1 TSRMLS_CC);
-            } else {
-                zend_error(E_ERROR, "Cannot call overloaded function for non-object");
-            }
-
-            if (EX(function_state).function->type == ZEND_OVERLOADED_FUNCTION_TEMPORARY) {
-                efree((char*)EX(function_state).function->common.function_name);
-            }
-            efree(EX(function_state).function);
-
-        }
-
-
-        EG(current_execute_data) =  original_execute_data;
-        if (args_overloaded) {
-#if PHP_VERSION_ID >= 50500
-        	zend_vm_stack_clear_multiple(0 TSRMLS_C);
-#else
-        	zend_vm_stack_clear_multiple(TSRMLS_C);
-#endif
-        }
-
-        if (EG(This)) {
-            zval_ptr_dtor(&EG(This));
-        }
-        EG(called_scope) = current_called_scope;
-        EG(scope) = current_scope;
-        EG(This) = current_this;
-        //    EG(current_execute_data) = EX(prev_execute_data);
-        EX(object) = original_object;
-        if (args_overloaded) {
-            //zval_ptr_dtor(&args);
-            efree(params);
-        }
     }
 
     static int strcmp_with_joker_case(char *str_with_jok, char *str, int case_sensitive) {
