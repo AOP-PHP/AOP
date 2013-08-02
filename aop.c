@@ -316,17 +316,17 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 }
 
 
-void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
+void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execute_data *execute_data, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
     zval *aop_object, *exception;
     TSRMLS_FETCH();
-    AopJoinpoint_object *obj;
+    AopJoinpoint_object *joinpoint;
     pointcut *current_pc;
     pointcut **temp;
-    if (ht==NULL) {
-        ht = get_cache_func (object, ex); 
-        if (ht==NULL) {
+    if (ht == NULL) {
+        ht = get_cache_func (object, execute_data); 
+        if (ht == NULL) {
             aop_g(overloaded) = 0;
-            old_zend_execute_ex(ex TSRMLS_CC);
+            old_zend_execute_ex(execute_data TSRMLS_CC);
             aop_g(overloaded) = 1;
             return;
         }
@@ -336,32 +336,31 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
     }
     if (zend_hash_get_current_data_ex(ht, (void **)&temp, &pos) != SUCCESS) {
         aop_g(overloaded) = 0;
-        old_zend_execute_ex (ex TSRMLS_CC);
+        old_zend_execute_ex (execute_data TSRMLS_CC);
         aop_g(overloaded) = 1;
         return;
     }
     current_pc = *temp;
 
     aop_object = get_aopJoinpoint();
-    obj = (AopJoinpoint_object *) zend_object_store_get_object(aop_object TSRMLS_CC);
-    obj->current_pointcut = current_pc;
-    //obj->current_pointcut_index = current_pointcut_index; 
-    obj->pos = pos;
-    obj->advice = ht;
-    obj->kind_of_advice = current_pc->kind_of_advice;
-    obj->object = object;
-    obj->to_return_ptr_ptr = to_return_ptr_ptr;
-    obj->value = (*to_return_ptr_ptr);
-    obj->ex = ex;
-    obj->object = object;
-    obj->scope = scope;
-    obj->called_scope = called_scope;
+    joinpoint = (AopJoinpoint_object *) zend_object_store_get_object(aop_object TSRMLS_CC);
+    joinpoint->current_pointcut = current_pc;
+    joinpoint->pos = pos;
+    joinpoint->advice = ht;
+    joinpoint->kind_of_advice = current_pc->kind_of_advice;
+    joinpoint->object = object;
+    joinpoint->to_return_ptr_ptr = to_return_ptr_ptr;
+    joinpoint->value = (*to_return_ptr_ptr);
+    joinpoint->ex = execute_data;
+    joinpoint->object = object;
+    joinpoint->scope = scope;
+    joinpoint->called_scope = called_scope;
     if ( args_overloaded) {
         Z_ADDREF_P(args);
-        obj->args = args;
+        joinpoint->args = args;
     }
-    obj->args_overloaded = args_overloaded;
-    obj->exception = NULL;
+    joinpoint->args_overloaded = args_overloaded;
+    joinpoint->exception = NULL;
 
     //php_printf("je debute");
 
@@ -375,9 +374,9 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
 //	php_printf("around");
         if (!EG(exception)) {
             execute_pointcut(current_pc, aop_object);
-            if (obj->value != NULL) {
-                Z_ADDREF_P(obj->value);
-                (*to_return_ptr_ptr) = obj->value;
+            if (joinpoint->value != NULL) {
+                Z_ADDREF_P(joinpoint->value);
+                (*to_return_ptr_ptr) = joinpoint->value;
             }
         }else{
 		return;
@@ -385,23 +384,23 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
         }
     } else {
     //    php_printf("re-test");
-        _test_func_pointcut_and_execute(pos, ht, ex, object, scope, called_scope, obj->args_overloaded, obj->args, to_return_ptr_ptr);
+        _test_func_pointcut_and_execute(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr);
     }
     if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
         if (current_pc->kind_of_advice & AOP_KIND_CATCH && EG(exception)) {
             exception = EG(exception); 
-            obj->exception = exception;
+            joinpoint->exception = exception;
             EG(exception)=NULL;
             execute_pointcut(current_pc, aop_object);
             EG(exception) = exception;
-            if (obj->value != NULL) {
-                Z_ADDREF_P(obj->value);
-                (*to_return_ptr_ptr) = obj->value;
+            if (joinpoint->value != NULL) {
+                Z_ADDREF_P(joinpoint->value);
+                (*to_return_ptr_ptr) = joinpoint->value;
             }
         } else if (current_pc->kind_of_advice & AOP_KIND_RETURN && !EG(exception)) {
             execute_pointcut(current_pc, aop_object);
-            if (obj->value != NULL) {
-                (*to_return_ptr_ptr) = obj->value;
+            if (joinpoint->value != NULL) {
+                (*to_return_ptr_ptr) = joinpoint->value;
             }
         }
     }
