@@ -49,7 +49,11 @@ PHP_METHOD(AopJoinpoint, getPropertyValue){
         zend_error(E_ERROR, "getPropertyValue is only available when the JoinPoint is a property operation (read or write)"); 
     }
     if (obj->object!=NULL && obj->member!=NULL) {
+#if PHP_VERSION_ID >= 50500
+       to_return = zend_std_get_property_ptr_ptr_overload(obj->object, obj->member, 2 AOP_KEY_C TSRMLS_CC);
+#else
        to_return = zend_std_get_property_ptr_ptr_overload(obj->object, obj->member AOP_KEY_C TSRMLS_CC);
+#endif
     }
     RETURN_ZVAL (*to_return, 1, 0);
 }
@@ -263,7 +267,7 @@ PHP_METHOD(AopJoinpoint, process){
             obj->value = _test_read_pointcut_and_execute(obj->pos, obj->advice, obj->object, obj->member, obj->type, obj->scope AOP_KEY_C);
         }
     } else {
-        _test_func_pointcut_and_execute(obj->pos, obj->advice, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
+        test_pointcut_and_execute_matching_advice(obj->pos, obj->advice, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
         obj->value = (*obj->to_return_ptr_ptr);
         if (!EG(exception)) {
             if ((*obj->to_return_ptr_ptr) != NULL) {
