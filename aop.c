@@ -279,7 +279,7 @@ static zval *get_aopJoinpoint () {
 
 #if PHP_VERSION_ID >= 50500
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
-    zend_execute_data *ex = EG(current_execute_data);
+    zend_execute_data *ex = EG(current_execute_data)->prev_execute_data;
 #else 
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
     zend_execute_data *ex = EG(current_execute_data);
@@ -316,7 +316,7 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 }
 
 
-void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, zend_execute_data *execute_data, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr) {
+void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, zend_execute_data *execute_data, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr, int skip_around) {
     zval *aop_object, *exception;
     TSRMLS_FETCH();
     AopJoinpoint_object *joinpoint;
@@ -351,7 +351,7 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
     joinpoint->object = object;
     joinpoint->to_return_ptr_ptr = to_return_ptr_ptr;
     joinpoint->value = (*to_return_ptr_ptr);
-    joinpoint->ex = execute_data;
+    joinpoint->ex = execute_data->prev_execute_data;
     joinpoint->object = object;
     joinpoint->scope = scope;
     joinpoint->called_scope = called_scope;
@@ -362,15 +362,18 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
     joinpoint->args_overloaded = args_overloaded;
     joinpoint->exception = NULL;
 
-    //php_printf("je debute");
+//    php_printf("je debute");
 
-    if (current_pc->kind_of_advice & AOP_KIND_BEFORE) {
+    if (skip_around == 0 && (current_pc->kind_of_advice & AOP_KIND_BEFORE)) {
 //	php_printf("before");
         if (!EG(exception)) {
             execute_pointcut(current_pc, aop_object);
 	}
+        //next advice
+        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, skip_around);
     }
-    if (current_pc->kind_of_advice & AOP_KIND_AROUND) {
+
+    if (skip_around == 0 && (current_pc->kind_of_advice & AOP_KIND_AROUND)) {
 //	php_printf("around");
         if (!EG(exception)) {
             execute_pointcut(current_pc, aop_object);
@@ -379,14 +382,12 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
                 (*to_return_ptr_ptr) = joinpoint->value;
             }
         }else{
-		return;
- //       php_printf("exception");
+//            php_printf("exception");
+             test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, skip_around);
         }
-    } else {
-    //    php_printf("re-test");
-        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr);
     }
-    if (current_pc->kind_of_advice & AOP_KIND_AFTER) {
+
+    if (skip_around == 0 && (current_pc->kind_of_advice & AOP_KIND_AFTER)) {
         if (current_pc->kind_of_advice & AOP_KIND_CATCH && EG(exception)) {
             exception = EG(exception); 
             joinpoint->exception = exception;
@@ -404,6 +405,12 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
             }
         }
     }
+
+    if (skip_around != 0) {
+        //we want to go throught all the advices
+        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, skip_around);
+    }
+
     Z_DELREF_P(aop_object);
     return;
 }
@@ -938,35 +945,41 @@ PHP_FUNCTION(aop_add_after)
 
 #if PHP_VERSION_ID >= 50500
 ZEND_DLEXPORT void aop_execute_ex (zend_execute_data *execute_data TSRMLS_DC) {
+zend_execute_data *to_execute_data, *prev_execute_data;
+to_execute_data = execute_data;
+prev_execute_data = EG(current_execute_data)->prev_execute_data;
 #else
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
-    zend_execute_data *to_execute_data;
+    zend_execute_data *to_execute_data, *prev_execute_data;
     to_execute_data = EG(current_execute_data);
+    prev_execute_data = EG(current_execute_data);
 #endif
     zend_function *curr_func = NULL;
     int must_return = (EG(return_value_ptr_ptr) != NULL);
 
     if (!aop_g(aop_enable)) {
         #if PHP_VERSION_ID >= 50500
-    	old_zend_execute_ex(execute_data TSRMLS_CC);
+    	old_zend_execute_ex(to_execute_data TSRMLS_CC);
         #else
      	old_zend_execute(ops TSRMLS_CC);
         #endif
         return;
     }
 
-#if PHP_VERSION_ID >= 50500    
-    if (execute_data->op_array->type == ZEND_EVAL_CODE 
-        || execute_data->function_state.function == NULL 
-        || execute_data->function_state.function->common.function_name == NULL 
-        || aop_g(overloaded) 
-        || EG(exception)) {
-    	old_zend_execute_ex(execute_data TSRMLS_CC);
-#else
-    if (data) {
+    if (to_execute_data) {
         curr_func = to_execute_data->function_state.function;
     }
-    if (ops->type == ZEND_EVAL_CODE 
+#if PHP_VERSION_ID >= 50500    
+    if (! to_execute_data 
+        || to_execute_data->op_array->type == ZEND_EVAL_CODE 
+        || curr_func == NULL 
+        || curr_func->common.function_name == NULL 
+        || aop_g(overloaded) 
+        || EG(exception)) {
+    	old_zend_execute_ex(to_execute_data TSRMLS_CC);
+#else
+    if (! to_execute_data 
+        || ops->type == ZEND_EVAL_CODE 
         || curr_func == NULL 
         || curr_func->common.function_name == NULL 
         || aop_g(overloaded) 
@@ -983,9 +996,9 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
     aop_g(overloaded) = 1;
     #if PHP_VERSION_ID >= 50500    
-    test_pointcut_and_execute_matching_advice(NULL, NULL, execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));
+    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr), 0);
     #else
-    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr));    
+    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr), 0);    
     #endif
     aop_g(overloaded) = 0;
     

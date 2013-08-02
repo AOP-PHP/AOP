@@ -267,7 +267,8 @@ PHP_METHOD(AopJoinpoint, process){
             obj->value = _test_read_pointcut_and_execute(obj->pos, obj->advice, obj->object, obj->member, obj->type, obj->scope AOP_KEY_C);
         }
     } else {
-        test_pointcut_and_execute_matching_advice(obj->pos, obj->advice, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
+        test_pointcut_and_execute_matching_advice(obj->pos, obj->advice, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr, 0);
+//	old_zend_execute(obj->ex TSRMLS_CC);
         obj->value = (*obj->to_return_ptr_ptr);
         if (!EG(exception)) {
             if ((*obj->to_return_ptr_ptr) != NULL) {
