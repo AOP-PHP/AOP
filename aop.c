@@ -316,7 +316,7 @@ ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member,
 }
 
 
-void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, zend_execute_data *execute_data, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr, int skip_around) {
+void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, zend_execute_data *execute_data, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr, struct _zend_fcall_info *fci, int internal) {
     zval *aop_object, *exception;
     TSRMLS_FETCH();
     AopJoinpoint_object *joinpoint;
@@ -326,6 +326,7 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
         ht = get_cache_func (object, execute_data); 
         if (ht == NULL) {
             aop_g(overloaded) = 0;
+            //old_zend_execute_ex(i_create_execute_data_from_op_array(execute_data->op_array, 0 TSRMLS_CC) TSRMLS_CC);
             old_zend_execute_ex(execute_data TSRMLS_CC);
             aop_g(overloaded) = 1;
             return;
@@ -336,7 +337,8 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
     }
     if (zend_hash_get_current_data_ex(ht, (void **)&temp, &pos) != SUCCESS) {
         aop_g(overloaded) = 0;
-        old_zend_execute_ex (execute_data TSRMLS_CC);
+        //old_zend_execute_ex(i_create_execute_data_from_op_array(execute_data->op_array, 0 TSRMLS_CC) TSRMLS_CC);
+        old_zend_execute_ex(execute_data TSRMLS_CC);
         aop_g(overloaded) = 1;
         return;
     }
@@ -344,6 +346,8 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
     
     aop_object = get_aopJoinpoint();
     joinpoint = (AopJoinpoint_object *) zend_object_store_get_object(aop_object TSRMLS_CC);
+    joinpoint->fci = fci;
+    joinpoint->internal = internal;
     joinpoint->current_pointcut = current_pc;
     joinpoint->pos = pos;
     joinpoint->advice = ht;
@@ -351,7 +355,7 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
     joinpoint->object = object;
     joinpoint->to_return_ptr_ptr = to_return_ptr_ptr;
     joinpoint->value = (*to_return_ptr_ptr);
-    joinpoint->ex = execute_data->prev_execute_data;
+    joinpoint->ex = EG(current_execute_data)->prev_execute_data;
     joinpoint->object = object;
     joinpoint->scope = scope;
     joinpoint->called_scope = called_scope;
@@ -364,16 +368,14 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
 
 //    php_printf("je debute");
 
-    if (skip_around == 0 && (current_pc->kind_of_advice & AOP_KIND_BEFORE)) {
+    if ((current_pc->kind_of_advice & AOP_KIND_BEFORE)) {
 //	php_printf("before");
         if (!EG(exception)) {
             execute_pointcut(current_pc, aop_object);
 	}
         //next advice
-        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, skip_around);
-    }
-
-    if (skip_around == 0 && (current_pc->kind_of_advice & AOP_KIND_AROUND)) {
+        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, fci, internal);
+    }else if ((current_pc->kind_of_advice & AOP_KIND_AROUND)) {
 //	php_printf("around");
         if (!EG(exception)) {
             execute_pointcut(current_pc, aop_object);
@@ -383,15 +385,14 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
             }
         }else{
 //            php_printf("exception");
-             test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, skip_around);
+             test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, fci, internal);
         }
-    }
-
-    if (skip_around == 0 && (current_pc->kind_of_advice & AOP_KIND_AFTER)) {
+    } else if ((current_pc->kind_of_advice & AOP_KIND_AFTER)) {
+        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, fci, internal);
         if (current_pc->kind_of_advice & AOP_KIND_CATCH && EG(exception)) {
             exception = EG(exception); 
             joinpoint->exception = exception;
-            EG(exception)=NULL;
+            EG(exception) = NULL;
             execute_pointcut(current_pc, aop_object);
             EG(exception) = exception;
             if (joinpoint->value != NULL) {
@@ -404,11 +405,6 @@ void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, 
                 (*to_return_ptr_ptr) = joinpoint->value;
             }
         }
-    }
-
-    if (skip_around != 0) {
-        //we want to go throught all the advices
-        test_pointcut_and_execute_matching_advice(pos, ht, execute_data, object, scope, called_scope, joinpoint->args_overloaded, joinpoint->args, to_return_ptr_ptr, skip_around);
     }
 
     Z_DELREF_P(aop_object);
@@ -996,9 +992,9 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
     aop_g(overloaded) = 1;
     #if PHP_VERSION_ID >= 50500    
-    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr), 0);
+    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr), NULL, 0);
     #else
-    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr), 0);    
+    test_pointcut_and_execute_matching_advice(NULL, NULL, to_execute_data, EG(This), EG(scope),EG(called_scope), 0, NULL, EG(return_value_ptr_ptr), NULL, 0);
     #endif
     aop_g(overloaded) = 0;
     
@@ -1259,29 +1255,29 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     }
 
 
-        zend_hash_internal_pointer_reset_ex(class_pointcuts, &pos);
-        while (zend_hash_get_current_data_ex(class_pointcuts, (void **)&pc, &pos) == SUCCESS) {
-            if ((*pc)->method[0] != '*') {
-                if (!strcmp_with_joker_case((*pc)->method, Z_STRVAL_P(member), 1)) {
-                    zend_hash_move_forward_ex (class_pointcuts, &pos);
-                    continue;
-                }
+    zend_hash_internal_pointer_reset_ex(class_pointcuts, &pos);
+    while (zend_hash_get_current_data_ex(class_pointcuts, (void **)&pc, &pos) == SUCCESS) {
+        if ((*pc)->method[0] != '*') {
+            if (!strcmp_with_joker_case((*pc)->method, Z_STRVAL_P(member), 1)) {
+                zend_hash_move_forward_ex (class_pointcuts, &pos);
+                continue;
             }
-            //Scope
-            if ((*pc)->static_state != 2 || (*pc)->scope != 0) {
-                if (!test_property_scope(*pc, Z_OBJCE_P(object), member AOP_KEY_C)) {
-                    zend_hash_move_forward_ex (aop_g(pointcuts), &pos);
-                    continue;
-                }
-            }
-            zend_hash_next_index_insert(ht, pc, sizeof(pointcut *), NULL);
-            zend_hash_move_forward_ex (aop_g(pointcuts), &pos);
         }
-        zend_hash_destroy(class_pointcuts);
-        FREE_HASHTABLE(class_pointcuts);
-        return ht;
-
+        //Scope
+        if ((*pc)->static_state != 2 || (*pc)->scope != 0) {
+            if (!test_property_scope(*pc, Z_OBJCE_P(object), member AOP_KEY_C)) {
+                zend_hash_move_forward_ex (aop_g(pointcuts), &pos);
+                continue;
+            }
+        }
+        zend_hash_next_index_insert(ht, pc, sizeof(pointcut *), NULL);
+        zend_hash_move_forward_ex (aop_g(pointcuts), &pos);
     }
+    zend_hash_destroy(class_pointcuts);
+    FREE_HASHTABLE(class_pointcuts);
+    return ht;
+
+}
 
 //Cache on object (zval)
 //pointcut's HashTable
@@ -1453,3 +1449,252 @@ HashTable * get_cache_func (zval *object, zend_execute_data *execute_data) {
     efree(key_str);
     return cache->ht;
 }
+
+   static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr, struct _zend_fcall_info *fci, int internal ) {
+        zval **return_value_ptr;
+        zval ***params;
+        zend_uint i;
+        zval **original_return_value;
+        HashTable *calling_symbol_table;
+        zend_op_array *original_op_array;
+        zend_op **original_opline_ptr;
+        zend_class_entry *current_scope;
+        zend_class_entry *current_called_scope;
+        //    zend_class_entry *calling_scope = NULL;
+        zval *current_this;
+        zend_execute_data *original_execute_data;
+        zend_execute_data execute_data;
+        zval *original_object;
+        HashPosition pos;
+        zval ** temp = NULL;
+        int arg_count = 0;
+        TSRMLS_FETCH();
+
+        if (!EG(active)) {
+            //TODO ERROR
+            return ;
+        }
+
+        if (EG(exception)) {
+            //TODO ERROR
+            return ;
+        }
+        execute_data = *ex;
+
+        //EX(function_state).function = fci_cache->function_handler;
+        original_object = EX(object);
+        EX(object) = object;
+        if (object && Z_TYPE_P(object) == IS_OBJECT &&
+                (!EG(objects_store).object_buckets || !EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(object)].valid)) {
+            //TODO ERROR
+            php_printf("ERRRORR");
+            return ;
+        }
+
+        original_execute_data = EG(current_execute_data);
+        EG(current_execute_data) = ex;
+
+        if (args_overloaded) {
+            if (args && Z_TYPE_P(args) == IS_ARRAY) {
+                args_overloaded = 1;
+                arg_count=0;
+                zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(args), &pos);
+                while (zend_hash_get_current_data_ex(Z_ARRVAL_P(args), (void **)&temp, &pos) == SUCCESS) {
+                    arg_count++;
+                    if (arg_count == 1) {
+                        params = emalloc(sizeof(zval **));
+                    } else {
+                        params = erealloc(params, arg_count*sizeof(zval **));
+                    }
+                    params[arg_count-1] = temp;
+                    zend_hash_move_forward_ex(Z_ARRVAL_P(args), &pos);
+                }
+            }
+
+            if (arg_count > 0) {
+                //Copy from zend_call_function
+                ZEND_VM_STACK_GROW_IF_NEEDED((int) arg_count + 1);
+                for (i=0; i < arg_count; i++) {
+                    zval *param;
+                    if (ARG_SHOULD_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+                        if (!PZVAL_IS_REF(*params[i]) && Z_REFCOUNT_PP(params[i]) > 1) {
+                            zval *new_zval;
+
+                            if (!ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
+                                if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
+                                    zend_vm_stack_push((void *) (zend_uintptr_t)i TSRMLS_CC);
+#if ZEND_MODULE_API_NO >= 20121212
+                                    zend_vm_stack_clear_multiple(0 TSRMLS_C);
+#else
+                                    zend_vm_stack_clear_multiple(TSRMLS_C);
+#endif
+                                }
+
+                                zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
+                                        i+1,
+                                        EX(function_state).function->common.scope ? EX(function_state).function->common.scope->name : "",
+                                        EX(function_state).function->common.scope ? "::" : "",
+                                        EX(function_state).function->common.function_name
+                                        );
+                                return;
+                            }
+
+                            ALLOC_ZVAL(new_zval);
+                            *new_zval = **params[i];
+                            zval_copy_ctor(new_zval);
+                            Z_SET_REFCOUNT_P(new_zval, 1);
+                            Z_DELREF_PP(params[i]);
+                            *params[i] = new_zval;
+                        }
+                        Z_ADDREF_PP(params[i]);
+                        Z_SET_ISREF_PP(params[i]);
+                        param = *params[i];
+                    } else if (PZVAL_IS_REF(*params[i]) && (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) == 0 ) {
+                        ALLOC_ZVAL(param);
+                        *param = **(params[i]);
+                        INIT_PZVAL(param);
+                        zval_copy_ctor(param);
+                    } else if (*params[i] != &EG(uninitialized_zval)) {
+                        Z_ADDREF_PP(params[i]);
+                        param = *params[i];
+                    } else {
+                        ALLOC_ZVAL(param);
+                        *param = **(params[i]);
+                        INIT_PZVAL(param);
+                    }
+                    zend_vm_stack_push(param TSRMLS_CC);
+                }
+#if ZEND_MODULE_API_NO >= 20121212
+                EG(current_execute_data)->prev_execute_data->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+#else
+                EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+#endif
+                zend_vm_stack_push((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
+            }
+        } else {
+            if (EX(function_state).arguments) {
+                arg_count = (int)(zend_uintptr_t) *EX(function_state).arguments;
+            } else {
+                arg_count = 0;
+            }
+        }
+
+        current_scope = EG(scope);
+        EG(scope) = calling_scope;
+        current_this = EG(This);
+        current_called_scope = EG(called_scope);
+        if (called_scope) {
+            EG(called_scope) = called_scope;
+        } else if (EX(function_state).function->type != ZEND_INTERNAL_FUNCTION) {
+            EG(called_scope) = NULL;
+        }
+
+        if (object) {
+            if ((EX(function_state).function->common.fn_flags & ZEND_ACC_STATIC)) {
+                EG(This) = NULL;
+            } else {
+                EG(This) = object;
+
+                if (!PZVAL_IS_REF(EG(This))) {
+                    Z_ADDREF_P(EG(This)); 
+                } else {
+                    zval *this_ptr;
+                    ALLOC_ZVAL(this_ptr);
+                    *this_ptr = *EG(This);
+                    INIT_PZVAL(this_ptr);
+                    zval_copy_ctor(this_ptr);
+                    EG(This) = this_ptr;
+                }
+            }
+        } else {
+            EG(This) = NULL;
+        }
+
+        //    EX(prev_execute_data) = EG(current_execute_data);
+        if (EX(function_state).function->type == ZEND_USER_FUNCTION) {
+            calling_symbol_table = EG(active_symbol_table);
+            EG(scope) = EX(function_state).function->common.scope;
+
+            original_return_value = EG(return_value_ptr_ptr);
+            original_op_array = EG(active_op_array);
+            EG(return_value_ptr_ptr) = to_return_ptr_ptr;
+            EG(active_op_array) = (zend_op_array *) EX(function_state).function;
+            original_opline_ptr = EG(opline_ptr);
+#if ZEND_MODULE_API_NO >= 20121212
+            _zend_execute(ex TSRMLS_CC);
+#else
+            _zend_execute(EG(active_op_array) TSRMLS_CC);
+#endif
+
+            if (EG(symtable_cache_ptr)>=EG(symtable_cache_limit)) {
+                zend_hash_destroy(EG(active_symbol_table));
+                FREE_HASHTABLE(EG(active_symbol_table));
+            } else {
+                /* clean before putting into the cache, since clean
+                   could call dtors, which could use cached hash */
+                if (EG(active_symbol_table)) {
+                    zend_hash_clean(EG(active_symbol_table));
+                    *(++EG(symtable_cache_ptr)) = EG(active_symbol_table);
+                }
+            }
+            EG(active_op_array) = original_op_array;
+            EG(return_value_ptr_ptr)=original_return_value;
+            EG(opline_ptr) = original_opline_ptr;
+            EG(active_symbol_table) = calling_symbol_table;
+        } else if (EX(function_state).function->type == ZEND_INTERNAL_FUNCTION) {
+            int call_via_handler = (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) != 0;
+            if ((*to_return_ptr_ptr)==NULL) {
+                ALLOC_INIT_ZVAL(*to_return_ptr_ptr);
+            }
+            if (EX(function_state).function->common.scope) {
+                EG(scope) = EX(function_state).function->common.scope;
+            }
+            ((zend_internal_function *) EX(function_state).function)->handler(arg_count, *to_return_ptr_ptr, to_return_ptr_ptr, object, 1 TSRMLS_CC);
+            /*  We shouldn't fix bad extensions here,
+                because it can break proper ones (Bug #34045)
+                if (!EX(function_state).function->common.return_reference)
+                {
+                INIT_PZVAL(*fci->retval_ptr_ptr);
+                }*/
+
+        } else { /* ZEND_OVERLOADED_FUNCTION */
+            if ((*to_return_ptr_ptr)==NULL) {
+                ALLOC_INIT_ZVAL(*to_return_ptr_ptr);
+            }
+            if (object) {
+                Z_OBJ_HT_P(object)->call_method(EX(function_state).function->common.function_name, arg_count, *to_return_ptr_ptr, to_return_ptr_ptr, object, 1 TSRMLS_CC);
+            } else {
+                zend_error(E_ERROR, "Cannot call overloaded function for non-object");
+            }
+
+            if (EX(function_state).function->type == ZEND_OVERLOADED_FUNCTION_TEMPORARY) {
+                efree((char*)EX(function_state).function->common.function_name);
+            }
+            efree(EX(function_state).function);
+
+        }
+
+
+        if (args_overloaded) {
+#if ZEND_MODULE_API_NO >= 20121212
+            zend_vm_stack_clear_multiple(0 TSRMLS_C);
+#else
+            zend_vm_stack_clear_multiple(TSRMLS_C);
+#endif
+        }
+
+        if (EG(This)) {
+            zval_ptr_dtor(&EG(This));
+        }
+        EG(called_scope) = current_called_scope;
+        EG(scope) = current_scope;
+        EG(This) = current_this;
+        //    EG(current_execute_data) = EX(prev_execute_data);
+        EX(object) = original_object;
+        if (args_overloaded) {
+            //zval_ptr_dtor(&args);
+            efree(params);
+        }
+    }
+
+

@@ -140,6 +140,8 @@ typedef struct {
     zval *exception;
     int args_overloaded;
     zval **to_return_ptr_ptr;
+    int internal;
+    struct _zend_fcall_info *fci
 }  AopJoinpoint_object;
 
 #ifdef ZTS
@@ -223,7 +225,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func,
 #if ZEND_MODULE_API_NO < 20100525
 static void (*zend_std_write_property)(zval *object, zval *member, zval *value TSRMLS_DC);
 #endif
-void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr, int skip_around);
+void test_pointcut_and_execute_matching_advice(HashPosition pos, HashTable *ht, zend_execute_data *ex, zval *object, zend_class_entry *scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval **to_return_ptr_ptr, struct _zend_fcall_info *fci, int internal);
 static zval * (*zend_std_read_property)(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC);
 
 #if PHP_VERSION_ID>=50500
@@ -235,7 +237,7 @@ static zval ** (*zend_std_get_property_ptr_ptr)(zval *object, zval *member AOP_K
 void _test_write_pointcut_and_execute(HashPosition pos, HashTable *ht, zval *object, zval *member, zval *value, zend_class_entry *current_scope AOP_KEY_D);
 static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg);
 static int test_property_scope (pointcut *current_pc, zend_class_entry *ce, zval *member AOP_KEY_D);
-static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr);
+static void execute_context (zend_execute_data *ex, zval *object, zend_class_entry *calling_scope, zend_class_entry *called_scope, int args_overloaded, zval *args, zval ** to_return_ptr_ptr, struct _zend_fcall_info *fci, int internal);
 
 #if PHP_VERSION_ID>=50500
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC); 
