@@ -166,6 +166,7 @@ PHP_RSHUTDOWN_FUNCTION(aop)
     }
     return SUCCESS;
 }
+
 PHP_RINIT_FUNCTION(aop)
 {
     aop_g(aopJoinpoint_cache) = NULL;
@@ -181,7 +182,6 @@ PHP_RINIT_FUNCTION(aop)
 
     ALLOC_HASHTABLE(aop_g(pointcuts));
     zend_hash_init(aop_g(pointcuts), 16, NULL, free_pointcut,0);
-
 
     ALLOC_HASHTABLE(aop_g(function_cache));
     zend_hash_init(aop_g(function_cache), 16, NULL, free_pointcut_cache,0);
@@ -244,21 +244,21 @@ static zval *get_aopJoinpoint () {
     for (i = 0; i < aop_g(count_aopJoinpoint_cache); i++) {
         zval *aop_object = aop_g(aopJoinpoint_cache)[i];
         if (Z_REFCOUNT_P(aop_object) == 1) {
-            AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
-            if (obj->value) {
-                zval_ptr_dtor(&obj->value);
+            AopJoinpoint_object *joinpoint = (AopJoinpoint_object *)zend_object_store_get_object(aop_object TSRMLS_CC);
+            if (joinpoint->value) {
+                zval_ptr_dtor(&joinpoint->value);
             }
-            obj->value = NULL;
+            joinpoint->value = NULL;
             #if ZEND_MODULE_API_NO >= 20100525
-            obj->key = NULL;
+            joinpoint->key = NULL;
             #endif
-            obj->member = NULL;
-            obj->type = 0;
-            obj->object = NULL;
-            if (obj->args!=NULL) {
-                zval_ptr_dtor(&obj->args);
+            joinpoint->member = NULL;
+            joinpoint->type = 0;
+            joinpoint->object = NULL;
+            if (joinpoint->args != NULL) {
+                zval_ptr_dtor(&joinpoint->args);
             }
-            obj->args=NULL;
+            joinpoint->args = NULL;
             Z_ADDREF_P(aop_object);
             return aop_object;
         }
@@ -660,10 +660,6 @@ PHP_MINIT_FUNCTION(aop)
     old_zend_execute = zend_execute;
     zend_execute  = aop_execute;
 #endif
-
-//TODO restore hook for internals
-//    old_zend_execute_internal = zend_execute_internal;
-//    zend_execute_internal  = aop_execute_internal;
 
     return SUCCESS;
 }
@@ -1155,8 +1151,6 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 #else
     	zend_execute  = old_zend_execute;
 #endif
-//        zend_execute_internal  = old_zend_execute_internal;
-        
         UNREGISTER_INI_ENTRIES();
         return SUCCESS;
     }
