@@ -165,7 +165,7 @@ HashTable * pointcuts;
 object_cache **object_cache;
 int object_cache_size;
 
-int pointcut_version;
+int pointcut_catalog_version;
 
 
 ZEND_END_MODULE_GLOBALS(aop)

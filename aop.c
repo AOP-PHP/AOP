@@ -177,7 +177,7 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(object_cache_size) = 1024;
     aop_g(object_cache) = ecalloc(1024, sizeof (object_cache *));
 
-    aop_g(pointcut_version) = 0;
+    aop_g(pointcut_catalog_version) = 0;
 
     ALLOC_HASHTABLE(aop_g(pointcuts));
     zend_hash_init(aop_g(pointcuts), 16, NULL, free_pointcut,0);
@@ -341,7 +341,7 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
         return;
     }
     current_pc = *temp;
-
+    
     aop_object = get_aopJoinpoint();
     joinpoint = (AopJoinpoint_object *) zend_object_store_get_object(aop_object TSRMLS_CC);
     joinpoint->current_pointcut = current_pc;
@@ -749,7 +749,7 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
     make_regexp_on_pointcut(&pc);
 
     zend_hash_next_index_insert(aop_g(pointcuts), &pc, sizeof(pointcut **),NULL);
-    aop_g(pointcut_version)++;
+    aop_g(pointcut_catalog_version)++;
     efree(state);
     efree(token);
 }
@@ -1374,7 +1374,7 @@ HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D) 
 #endif
     zend_hash_find(ht_object_cache,key_str, key_len, (void **)&cache);
     if (cache!=NULL 
-    && (cache->version < aop_g(pointcut_version) 
+    && (cache->version < aop_g(pointcut_catalog_version) 
         || cache->ce != Z_OBJCE_P(object))) {
         zend_hash_del(ht_object_cache, key_str, key_len);
         cache = NULL;
@@ -1382,7 +1382,7 @@ HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D) 
     if (cache == NULL) {
         cache = emalloc(sizeof(pointcut_cache));
         cache->ht = calculate_property_pointcuts (object, member, type AOP_KEY_C);
-        cache->version = aop_g(pointcut_version);
+        cache->version = aop_g(pointcut_catalog_version);
         cache->ce = Z_OBJCE_P(object);
         zend_hash_add(ht_object_cache, key_str, key_len, cache, sizeof(pointcut_cache), (void **)&_cache);
         efree(cache);
@@ -1394,7 +1394,7 @@ HashTable * get_cache_property (zval *object, zval *member, int type AOP_KEY_D) 
     return cache->ht;
 }
 
-HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
+HashTable * get_cache_func (zval *object, zend_execute_data *execute_data) {
     TSRMLS_FETCH();
     HashTable *ht_object_cache;
     zend_function *curr_func;
@@ -1402,8 +1402,8 @@ HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
     pointcut_cache *_cache = NULL;
     char *key_str;
     int key_len;
-    if (ex) {
-        curr_func = ex->function_state.function;
+    if (execute_data) {
+        curr_func = execute_data->function_state.function;
     }
     if (object == NULL) {
         ht_object_cache = aop_g(function_cache);
@@ -1422,7 +1422,7 @@ HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
     }
     zend_hash_find(ht_object_cache,key_str, key_len, (void **)&cache);
     if (cache!=NULL 
-            && (cache->version < aop_g(pointcut_version) 
+            && (cache->version < aop_g(pointcut_catalog_version) 
                 || (object!=NULL && cache->ce != Z_OBJCE_P(object)))) {
         zend_hash_del(ht_object_cache, key_str, key_len);
         //free_pointcut_cache((void *)cache);
@@ -1431,8 +1431,8 @@ HashTable * get_cache_func (zval *object, zend_execute_data *ex) {
     }
     if (cache == NULL) {
 		cache = (pointcut_cache *)emalloc(sizeof(pointcut_cache));
-        cache->ht = calculate_function_pointcuts (object, ex);
-        cache->version = aop_g(pointcut_version);
+        cache->ht = calculate_function_pointcuts (object, execute_data);
+        cache->version = aop_g(pointcut_catalog_version);
         if (object==NULL) {
             cache->ce = NULL;
         } else {
