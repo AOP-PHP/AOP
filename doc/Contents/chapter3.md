@@ -1,6 +1,6 @@
 # Advanced topics #
 
-## In which orer will my pointcuts / advice will be resolved ? ##
+## In which order will my pointcuts / advice will be resolved ? ##
 
 The advices are executed in the registration order.
 
