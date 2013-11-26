@@ -286,6 +286,7 @@ static zval *get_aopJoinpoint () {
     return aop_object;
 }
 
+#if PHP_VERSION_ID < 50500
 ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member AOP_KEY_D TSRMLS_DC) {
     zval **try_return;
     zend_execute_data *ex = EG(current_execute_data);
@@ -299,6 +300,21 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
     }
     return try_return;
 }
+#else
+ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
+    zval **try_return;
+    zend_execute_data *ex = EG(current_execute_data);
+    //Test if ++
+    if (ex->opline->opcode != ZEND_PRE_INC_OBJ && ex->opline->opcode != ZEND_POST_INC_OBJ && ex->opline->opcode != ZEND_PRE_DEC_OBJ && ex->opline->opcode != ZEND_POST_DEC_OBJ) {
+        try_return = zend_std_get_property_ptr_ptr(object, member, type AOP_KEY_C TSRMLS_CC);
+    } else {
+        // Call original to not have a notice
+        zend_std_get_property_ptr_ptr(object, member, type AOP_KEY_C TSRMLS_CC);
+        return NULL;
+    }
+    return try_return;
+}
+#endif
 
 ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
     zval *to_return;
@@ -645,8 +661,10 @@ PHP_MINIT_FUNCTION(aop)
     zend_std_get_property_ptr_ptr = std_object_handlers.get_property_ptr_ptr;
     std_object_handlers.get_property_ptr_ptr = zend_std_get_property_ptr_ptr_overload;
 
+#if PHP_VERSION_ID < 50500
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
+#endif
     _zend_execute_internal = zend_execute_internal;
     zend_execute_internal  = aop_execute_internal;
 
@@ -1024,7 +1042,9 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
             return;
         }   
 
-#if ZEND_MODULE_API_NO >= 20100525
+#if ZEND_MODULE_API_NO >= 20121113
+        to_return_ptr_ptr = EX_TMP_VAR(current_execute_data, current_execute_data->opline->result.var)->var.ptr_ptr;
+#elif ZEND_MODULE_API_NO >= 20100525
         to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.var)).var.ptr; 
 #else
         to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.u.var)).var.ptr;
@@ -1111,8 +1131,13 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
                             if (!ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
                                 if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
+#if PHP_VERSION_ID < 50500
                                     zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
                                     zend_vm_stack_clear_multiple(TSRMLS_C);
+#else
+                                    zend_vm_stack_push((void *) (zend_uintptr_t)i TSRMLS_CC);
+                                    zend_vm_stack_clear_multiple(0 TSRMLS_CC);
+#endif
                                 }
 
                                 zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
@@ -1147,10 +1172,18 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
                         *param = **(params[i]);
                         INIT_PZVAL(param);
                     }
+#if PHP_VERSION_ID < 50500
                     zend_vm_stack_push_nocheck(param TSRMLS_CC);
+#else
+                    zend_vm_stack_push(param TSRMLS_CC);
+#endif
                 }
                 EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
+#if PHP_VERSION_ID < 50500
                 zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
+#else
+                zend_vm_stack_push((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
+#endif
             }
         } else {
             arg_count = (int)(zend_uintptr_t) *EX(function_state).arguments;
@@ -1250,7 +1283,11 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
         EG(current_execute_data) =  original_execute_data;
         if (args_overloaded) {
+#if PHP_VERSION_ID < 50500
             zend_vm_stack_clear_multiple(TSRMLS_C);
+#else
+            zend_vm_stack_clear_multiple(0 TSRMLS_CC);
+#endif
         }
 
         if (EG(This)) {
@@ -1403,8 +1440,10 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
     PHP_MSHUTDOWN_FUNCTION(aop)
     {
+#if PHP_VERSION_ID < 50500
         zend_execute  = _zend_execute;
         zend_execute_internal  = _zend_execute_internal;
+#endif
         
         UNREGISTER_INI_ENTRIES();
         return SUCCESS;

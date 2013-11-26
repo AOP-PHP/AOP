@@ -49,7 +49,11 @@ PHP_METHOD(AopJoinpoint, getPropertyValue){
         zend_error(E_ERROR, "getPropertyValue is only available when the JoinPoint is a property operation (read or write)"); 
     }
     if (obj->object!=NULL && obj->member!=NULL) {
+#if PHP_VERSION_ID < 50500
        to_return = zend_std_get_property_ptr_ptr_overload(obj->object, obj->member AOP_KEY_C TSRMLS_CC);
+#else
+       to_return = zend_std_get_property_ptr_ptr_overload(obj->object, obj->member, BP_VAR_R AOP_KEY_C TSRMLS_CC);
+#endif
     }
     RETURN_ZVAL (*to_return, 1, 0);
 }
