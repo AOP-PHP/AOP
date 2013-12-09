@@ -65,11 +65,11 @@ PHP_METHOD(AopJoinpoint, getArguments){
         zend_error(E_ERROR, "getArguments is only available when the JoinPoint is a function or method call"); 
     }
     if (obj->args == NULL) {
-        if (obj->internal) {
-            obj->args = get_current_args(obj->ex TSRMLS_CC);
+        if (obj->ctx->internal) {
+            obj->args = get_current_args(obj->ctx->original_execute_data TSRMLS_CC);
         } else {
 #if ZEND_MODULE_API_NO >= 20121212
-            obj->args = get_current_args(obj->ex->prev_execute_data TSRMLS_CC);
+            obj->args = get_current_args(obj->ctx->original_execute_data->prev_execute_data TSRMLS_CC);
 #else
             obj->args = get_current_args(obj->ex TSRMLS_CC);
 #endif
@@ -196,7 +196,7 @@ PHP_METHOD(AopJoinpoint, getClassName){
         }
     } else {
         zend_class_entry *ce;
-        zend_execute_data *data = obj->ex;
+        zend_execute_data *data = obj->ctx->original_execute_data;
         zend_function *curr_func;
         if (data == NULL) {
             RETURN_NULL();
@@ -212,7 +212,7 @@ PHP_METHOD(AopJoinpoint, getClassName){
 
 PHP_METHOD(AopJoinpoint, getFunctionName){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    zend_execute_data *data = obj->ex;
+    zend_execute_data *data = obj->ctx->original_execute_data;
     zend_function *curr_func;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY || obj->current_pointcut->kind_of_advice & AOP_KIND_METHOD) {
         zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is a function call"); 
@@ -239,7 +239,7 @@ PHP_METHOD(AopJoinpoint, getException){
 
 PHP_METHOD(AopJoinpoint, getMethodName){
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    zend_execute_data *data = obj->ex;
+    zend_execute_data *data = obj->ctx->original_execute_data;
     zend_function *curr_func;
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_PROPERTY || obj->current_pointcut->kind_of_advice & AOP_KIND_FUNCTION) {
         zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is a method call"); 
@@ -276,7 +276,12 @@ PHP_METHOD(AopJoinpoint, process){
             obj->value = _test_read_pointcut_and_execute(obj->pos, obj->advice, obj->object, obj->member, obj->type, obj->scope AOP_KEY_C);
         }
     } else {
-        _test_func_pointcut_and_execute(obj->pos, obj->advice, obj->ex, obj->object, obj->scope, obj->called_scope, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr, obj->fci, obj->internal);
+            obj->around_processed = 1;
+            context *ctx = save_current_context();
+            test_pointcut_and_execute_matching_advice(obj->pos, obj->advice, obj->ctx, obj->args_overloaded, obj->args, obj->to_return_ptr_ptr);
+            restore_context(ctx);
+            efree(ctx);
+
         obj->value = (*obj->to_return_ptr_ptr);
         if (!EG(exception)) {
             if ((*obj->to_return_ptr_ptr) != NULL) {
