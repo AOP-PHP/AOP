@@ -20,6 +20,7 @@
 #endif
 
 #include "php.h"
+#include "main/php_ini.h"
 #include "ext/standard/php_string.h"
 #include "ext/pcre/php_pcre.h"
 #include "Lexer.h"
