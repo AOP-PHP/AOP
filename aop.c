@@ -302,6 +302,9 @@ ZEND_DLEXPORT zval **zend_std_get_property_ptr_ptr_overload(zval *object, zval *
 
 ZEND_DLEXPORT zval * zend_std_read_property_overload(zval *object, zval *member, int type AOP_KEY_D TSRMLS_DC) {
     zval *to_return;
+    if (!aop_g(aop_enable)) {
+        return zend_std_read_property(object, member, type);
+    }
         if (aop_g(lock_read_property)>25) {
             zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
         }
@@ -590,6 +593,9 @@ static void execute_pointcut (pointcut *pointcut_to_execute, zval *arg) {
 }
 
 ZEND_DLEXPORT void zend_std_write_property_overload(zval *object, zval *member, zval *value AOP_KEY_D TSRMLS_DC) {
+        if (!aop_g(aop_enable)) {
+            return zend_std_write_property(object, member, value);
+        }
         if (aop_g(lock_write_property) > 25) {
             zend_error(E_ERROR, "Too many level of nested advices. Are there any recursive call ?");
         }
