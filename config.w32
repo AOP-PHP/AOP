@@ -2,4 +2,5 @@ ARG_ENABLE("aop", "Enable AOP support" , "no");
 
 if (PHP_AOP != "no") {
     EXTENSION("aop", "aop.c");
+    ADD_SOURCES("ext/aop", "aop_joinpoint.c Lexer.c", "aop");
 }

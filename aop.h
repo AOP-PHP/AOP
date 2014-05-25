@@ -63,6 +63,8 @@
 #define AOP_KEY_C    
 #endif
 
+#include "ext/pcre/php_pcre.h"
+
 typedef struct {
     zend_op_array *op;
     zend_execute_data *ex;
