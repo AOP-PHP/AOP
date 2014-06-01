@@ -651,7 +651,7 @@ PHP_MINIT_FUNCTION(aop)
     zend_execute_ex  = aop_execute_ex;
     _zend_execute = _zend_execute_overload;
 #else
-    _zend_execute = zend_execute_ex;
+    _zend_execute = zend_execute;
     zend_execute  = aop_execute;
 #endif
     _zend_execute_internal = zend_execute_internal;
