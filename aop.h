@@ -57,7 +57,7 @@
 
 #if ZEND_MODULE_API_NO >= 20100525
 #define AOP_KEY_D    , const zend_literal *key
-#define AOP_KEY_C    , key
+#define AOP_KEY_C    , NULL
 #else
 #define AOP_KEY_D    
 #define AOP_KEY_C    
