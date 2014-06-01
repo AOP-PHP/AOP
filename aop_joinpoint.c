@@ -161,6 +161,8 @@ PHP_METHOD(AopJoinpoint, setReturnedValue){
     }
     
     obj->value = ret;
+    //If returning getObject need 2 ref
+    Z_ADDREF_P(ret);
     Z_ADDREF_P(ret);
     RETURN_NULL();
 }
