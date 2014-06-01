@@ -1256,6 +1256,9 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
             EG(active_symbol_table) = calling_symbol_table;
         } else if (EX(function_state).function->type == ZEND_INTERNAL_FUNCTION) {
             int call_via_handler = (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) != 0;
+            if (to_return_ptr_ptr==NULL) {
+                to_return_ptr_ptr = emalloc(sizeof(zval *));
+            }
             if ((*to_return_ptr_ptr)==NULL) {
                 ALLOC_INIT_ZVAL(*to_return_ptr_ptr);
             }
