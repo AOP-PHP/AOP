@@ -1149,7 +1149,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
                                 if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
                                     zend_vm_stack_push((void *) (zend_uintptr_t)i TSRMLS_CC);
 #if ZEND_MODULE_API_NO >= 20121212
-                                    zend_vm_stack_clear_multiple(0 TSRMLS_C);
+                                    zend_vm_stack_clear_multiple(0 TSRMLS_CC);
 #else
                                     zend_vm_stack_clear_multiple(TSRMLS_C);
 #endif
@@ -1294,7 +1294,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         EG(current_execute_data) =  original_execute_data;
         if (args_overloaded) {
 #if ZEND_MODULE_API_NO >= 20121212
-                                    zend_vm_stack_clear_multiple(0 TSRMLS_C);
+                                    zend_vm_stack_clear_multiple(0 TSRMLS_CC);
 #else
                                     zend_vm_stack_clear_multiple(TSRMLS_C);
 #endif
