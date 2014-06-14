@@ -22,6 +22,6 @@ aop_add_around('Form->render()', array($oCsrf, 'aroundFormRender'));
 echo $oForm->render();
 echo 'bar';
 --EXPECTF--
-Fatal error: Uncaught exception 'Exception' with message 'bar' in %s010.php:12%sbar
+Fatal error: Uncaught exception 'Exception' with message 'bar' in %sbar
 
 

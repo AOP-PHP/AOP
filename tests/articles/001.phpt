@@ -46,11 +46,13 @@ $beFluent = new BeFluent();
 $result = $beFluent->setStuff('stuff')->setStuff('stuff2');
 echo $result === $beFluent ? "ok" : "ko";
 
+/*
 try {
    $willBeFluent->setStuff('stuff')->setStuff('stuff2')->setStuff('stuff3');
 } catch (Exception $e) {
    echo "Stopped being fluent...";
 }
+*/
 
 $notFluent = new NotFluent();
 $result = $notFluent->setStuff('stuff');

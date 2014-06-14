@@ -24,7 +24,7 @@ echo $foo->undefinied;
 --EXPECTF--
 Accessing undefinied
 
-Notice: Undefined property: Foo::$undefinied in %s/009.php on line 13
+Notice: Undefined property: Foo::$undefinied in %s on line 13
 after the PHP notice
 Accessing undefinied
 Accessing undefinied
