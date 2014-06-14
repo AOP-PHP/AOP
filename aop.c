@@ -394,6 +394,7 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
             }
         }
     }
+
     Z_DELREF_P(aop_object);
     return;
 }
@@ -997,7 +998,6 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
         }
     }
-
 }
 
 #if ZEND_MODULE_API_NO < 20121113
@@ -1053,13 +1053,16 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         }   
 
 #if ZEND_MODULE_API_NO >= 20121212
-        if (!EG(exception)) {
-            if (current_execute_data
-             && current_execute_data->opline
-             ) {
-                to_return_ptr_ptr = &EX_TMP_VAR(current_execute_data, current_execute_data->opline->result.var)->var.ptr;
+            if(fci != NULL) {
+                to_return_ptr_ptr = fci->retval_ptr_ptr;
+
+            } else {
+                if (current_execute_data
+                        && current_execute_data->opline
+                   ) {
+                    to_return_ptr_ptr = &EX_TMP_VAR(current_execute_data, current_execute_data->opline->result.var)->var.ptr;
+                }
             }
-        }
 #elif ZEND_MODULE_API_NO >= 20100525
         to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.var)).var.ptr; 
 #else
@@ -1068,6 +1071,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         aop_g(overloaded) = 1;
         _test_func_pointcut_and_execute(NULL,NULL, EG(current_execute_data), current_execute_data->object, EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr);
         aop_g(overloaded) = 0;
+
         // SegFault
         /*
            if (!return_value_used && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)) {
