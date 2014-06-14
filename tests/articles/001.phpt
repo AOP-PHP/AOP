@@ -1,5 +1,7 @@
 --TEST--
 Fluent interface fun with aop
+--SKIPIF--
+skip "Bad test, to be corrected"
 --FILE--
 <?php 
 interface Fluent {}
