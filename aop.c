@@ -172,6 +172,7 @@ PHP_RINIT_FUNCTION(aop)
     aop_g(aopJoinpoint_cache) = NULL;
     aop_g(count_aopJoinpoint_cache) = 0;
     aop_g(overloaded) = 0;
+    aop_g(in_ex) = 0;
     aop_g(lock_write_property) = 0;
     aop_g(lock_read_property) = 0;
 
@@ -332,7 +333,6 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
         zend_hash_move_forward_ex (ht, &pos);
     }
     if (zend_hash_get_current_data_ex(ht, (void **)&temp, &pos) != SUCCESS) {
-        
         aop_g(overloaded) = 0;
         execute_context (ex, object, scope, called_scope,args_overloaded, args, to_return_ptr_ptr);
         aop_g(overloaded) = 1;
@@ -394,6 +394,7 @@ void _test_func_pointcut_and_execute(HashPosition pos, HashTable *ht, zend_execu
             }
         }
     }
+
     Z_DELREF_P(aop_object);
     return;
 }
@@ -646,8 +647,14 @@ PHP_MINIT_FUNCTION(aop)
     zend_std_get_property_ptr_ptr = std_object_handlers.get_property_ptr_ptr;
     std_object_handlers.get_property_ptr_ptr = zend_std_get_property_ptr_ptr_overload;
 
+#if ZEND_MODULE_API_NO >= 20121212
+    _zend_execute_ex = zend_execute_ex;
+    zend_execute_ex  = aop_execute_ex;
+    _zend_execute = _zend_execute_overload;
+#else
     _zend_execute = zend_execute;
     zend_execute  = aop_execute;
+#endif
     _zend_execute_internal = zend_execute_internal;
     zend_execute_internal  = aop_execute_internal;
 
@@ -924,6 +931,27 @@ PHP_FUNCTION(aop_add_after)
     add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_CATCH|AOP_KIND_RETURN, return_value_ptr TSRMLS_CC);
 }
 
+
+ZEND_DLEXPORT void aop_execute_ex (zend_execute_data *execute_data TSRMLS_DC) {
+    zend_op_array *op_array = execute_data->op_array;
+    if (aop_g(in_ex)) {
+        aop_g(in_ex) = 0;
+        _zend_execute_ex(execute_data TSRMLS_CC);
+    } else {
+        zend_vm_stack_free((char *) execute_data - (ZEND_MM_ALIGNED_SIZE(sizeof(temp_variable)) * op_array->T) TSRMLS_CC);
+        if (EG(This)) {
+            //zval_ptr_dtor(&EG(This));
+        }
+        EG(current_execute_data) = execute_data->prev_execute_data;
+        aop_execute(op_array TSRMLS_CC);
+    }
+}
+
+ZEND_DLEXPORT void _zend_execute_overload (zend_op_array *ops TSRMLS_DC) {
+    aop_g(in_ex) = 1;
+    zend_execute(ops TSRMLS_CC);
+}
+
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
     zend_execute_data *data;
     zend_function *curr_func = NULL;
@@ -970,7 +998,6 @@ ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC) {
 
         }
     }
-
 }
 
 #if ZEND_MODULE_API_NO < 20121113
@@ -1025,7 +1052,18 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
             return;
         }   
 
-#if ZEND_MODULE_API_NO >= 20100525
+#if ZEND_MODULE_API_NO >= 20121212
+            if(fci != NULL) {
+                to_return_ptr_ptr = fci->retval_ptr_ptr;
+
+            } else {
+                if (current_execute_data
+                        && current_execute_data->opline
+                   ) {
+                    to_return_ptr_ptr = &EX_TMP_VAR(current_execute_data, current_execute_data->opline->result.var)->var.ptr;
+                }
+            }
+#elif ZEND_MODULE_API_NO >= 20100525
         to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.var)).var.ptr; 
 #else
         to_return_ptr_ptr = &(*(temp_variable *)((char *) current_execute_data->Ts + current_execute_data->opline->result.u.var)).var.ptr;
@@ -1033,6 +1071,7 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
         aop_g(overloaded) = 1;
         _test_func_pointcut_and_execute(NULL,NULL, EG(current_execute_data), current_execute_data->object, EG(scope), EG(called_scope), 0, NULL, to_return_ptr_ptr);
         aop_g(overloaded) = 0;
+
         // SegFault
         /*
            if (!return_value_used && !(EG(opline_ptr) && ((zend_op *)EG(opline_ptr))->result_type & EXT_TYPE_UNUSED)) {
@@ -1112,8 +1151,12 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
                             if (!ARG_MAY_BE_SENT_BY_REF(EX(function_state).function, i + 1)) {
                                 if (i || UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (EG(argument_stack)->top))) {
-                                    zend_vm_stack_push_nocheck((void *) (zend_uintptr_t)i TSRMLS_CC);
+                                    zend_vm_stack_push((void *) (zend_uintptr_t)i TSRMLS_CC);
+#if ZEND_MODULE_API_NO >= 20121212
+                                    zend_vm_stack_clear_multiple(0 TSRMLS_CC);
+#else
                                     zend_vm_stack_clear_multiple(TSRMLS_C);
+#endif
                                 }
 
                                 zend_error(E_WARNING, "Parameter %d to %s%s%s() expected to be a reference, value given",
@@ -1148,10 +1191,10 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
                         *param = **(params[i]);
                         INIT_PZVAL(param);
                     }
-                    zend_vm_stack_push_nocheck(param TSRMLS_CC);
+                    zend_vm_stack_push(param TSRMLS_CC);
                 }
                 EG(current_execute_data)->function_state.arguments = zend_vm_stack_top(TSRMLS_C);
-                zend_vm_stack_push_nocheck((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
+                zend_vm_stack_push((void*)(zend_uintptr_t)arg_count TSRMLS_CC);
             }
         } else {
             arg_count = (int)(zend_uintptr_t) *EX(function_state).arguments;
@@ -1217,6 +1260,9 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
             EG(active_symbol_table) = calling_symbol_table;
         } else if (EX(function_state).function->type == ZEND_INTERNAL_FUNCTION) {
             int call_via_handler = (EX(function_state).function->common.fn_flags & ZEND_ACC_CALL_VIA_HANDLER) != 0;
+            if (to_return_ptr_ptr==NULL) {
+                to_return_ptr_ptr = emalloc(sizeof(zval *));
+            }
             if ((*to_return_ptr_ptr)==NULL) {
                 ALLOC_INIT_ZVAL(*to_return_ptr_ptr);
             }
@@ -1251,7 +1297,11 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
         EG(current_execute_data) =  original_execute_data;
         if (args_overloaded) {
-            zend_vm_stack_clear_multiple(TSRMLS_C);
+#if ZEND_MODULE_API_NO >= 20121212
+                                    zend_vm_stack_clear_multiple(0 TSRMLS_CC);
+#else
+                                    zend_vm_stack_clear_multiple(TSRMLS_C);
+#endif
         }
 
         if (EG(This)) {
@@ -1404,7 +1454,11 @@ void aop_execute_internal (zend_execute_data *current_execute_data, int return_v
 
     PHP_MSHUTDOWN_FUNCTION(aop)
     {
+#if ZEND_MODULE_API_NO >= 20121212
+        zend_execute_ex  = _zend_execute;
+#else
         zend_execute  = _zend_execute;
+#endif
         zend_execute_internal  = _zend_execute_internal;
         
         UNREGISTER_INI_ENTRIES();

@@ -57,7 +57,7 @@
 
 #if ZEND_MODULE_API_NO >= 20100525
 #define AOP_KEY_D    , const zend_literal *key
-#define AOP_KEY_C    , key
+#define AOP_KEY_C    , NULL
 #else
 #define AOP_KEY_D    
 #define AOP_KEY_C    
@@ -149,6 +149,8 @@ typedef struct {
 ZEND_BEGIN_MODULE_GLOBALS(aop)
 int overloaded;
 
+int in_ex;
+
 int lock_write_property;
 
 int lock_read_property;
@@ -191,7 +193,9 @@ PHP_FUNCTION(aop_add_after_throwing);
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
 
+static void (*_zend_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
 static void (*_zend_execute) (zend_op_array *ops TSRMLS_DC);
+
 #if ZEND_MODULE_API_NO < 20121113
 static void (*_zend_execute_internal) (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 #else
@@ -201,6 +205,12 @@ static void add_pointcut (zend_fcall_info fci, zend_fcall_info_cache fcic, char 
 static void free_pointcut(void *);
 static void free_pointcut_cache (void *);
 ZEND_DLEXPORT void aop_execute (zend_op_array *ops TSRMLS_DC);
+
+#if ZEND_MODULE_API_NO >= 20121212
+ZEND_DLEXPORT void aop_execute_ex (zend_execute_data *execute_data TSRMLS_DC);
+ZEND_DLEXPORT void _zend_execute_overload(zend_op_array *ops TSRMLS_DC);
+#endif
+
 #if ZEND_MODULE_API_NO < 20121113
 ZEND_DLEXPORT void aop_execute_internal (zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 #else
