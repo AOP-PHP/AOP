@@ -51,11 +51,27 @@ typedef struct {
     zend_string *funcname;
 } aop_func_info;
 
+typedef struct {
+    int scope;
+    int static_state;
+    zend_string *class_name;
+    int class_jok;
+    zend_string *method;
+    int method_jok;
+    zend_string *selector;
+    int kind_of_advice;
+    pcre *re_method;
+    pcre *re_class;
+    aop_func_info *function_info;
+} pointcut;
+
+
+
 ZEND_BEGIN_MODULE_GLOBALS(aop)
     zend_bool aop_enable;
     aop_func_info alfi;
     zend_string *funcname;
-
+    pointcut *curr;
 ZEND_END_MODULE_GLOBALS(aop)
 
 #ifdef ZTS
@@ -76,6 +92,12 @@ PHP_FUNCTION(aop_add_after_returning);
 PHP_FUNCTION(aop_add_after_throwing);
 
 aop_joinpoint_object * php_aop_joinpoint_object_fetch_object(zend_object *obj); 
+
+void (*aop_old_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
+void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
+
+void (*aop_old_execute_internal)(zend_execute_data *current_execute_data, zval *return_value);
+void aop_execute_internal(zend_execute_data *current_execute_data, zval *return_value);
 
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry

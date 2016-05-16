@@ -35,16 +35,6 @@ int scan(scanner_state *s, scanner_token *t) {
                         t->TOKEN = TOKEN_CLASS;
 			return 0;
 		}
-                'read' {
-                        t->TOKEN = TOKEN_PROPERTY;
-                        t->int_val = AOP_KIND_READ;
-                        return 0;
-                }
-                'write' {
-                        t->TOKEN = TOKEN_PROPERTY;
-                        t->int_val = AOP_KIND_WRITE;
-                        return 0;
-                }
                 'public' {
                         t->TOKEN = TOKEN_SCOPE;
                         t->int_val = ZEND_ACC_PUBLIC;

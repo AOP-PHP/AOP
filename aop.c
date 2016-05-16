@@ -26,6 +26,7 @@
 #include "ext/spl/spl_exceptions.h"
 #include "aop_joinpoint.h"
 #include "aop.h"
+#include "Lexer.h"
 #include "Zend/zend_operators.h"
 #include "Zend/zend_exceptions.h"
 #include "Zend/zend_interfaces.h"
@@ -43,6 +44,90 @@ void aop_execute_internal(zend_execute_data *current_execute_data, zval *return_
 
 static void php_aop_init_globals(zend_aop_globals *aop_globals)
 {
+}
+
+static pointcut * alloc_pointcut () {
+    pointcut *pc = (pointcut *)emalloc(sizeof(pointcut));
+
+
+    pc->scope = 0;
+    pc->static_state = 2;
+    pc->method_jok = 0;
+    pc->class_jok = 0;
+    pc->class_name = NULL;
+    pc->method = NULL;
+    pc->selector = NULL;
+    pc->kind_of_advice = 0;
+    pc->re_method = NULL;
+    pc->re_class = NULL;
+    return pc;
+}
+
+static void add_pointcut (aop_func_info *function_info, zend_string *selector, int type TSRMLS_DC) {
+    pointcut *pc = NULL;
+	scanner_state *state = (scanner_state *)emalloc(sizeof(scanner_state)); 
+    scanner_token *token = (scanner_token *)emalloc(sizeof(scanner_token));
+
+    if (ZSTR_LEN(selector) < 2) {
+        zend_error(E_ERROR, "The given pointcut is invalid. You must specify a function call, a method call or a property operation"); 
+    }
+
+    char *temp_str = NULL;
+    int is_class = 0;
+    
+
+    pc = alloc_pointcut();
+    pc->selector = selector;
+    pc->kind_of_advice = type;
+    pc->selector = selector;
+    pc->function_info = function_info;
+    char *selector_str = ZSTR_VAL(selector);
+    state->start = selector_str;
+    state->end = state->start;
+    while(0 <= scan(state, token)) {
+        switch (token->TOKEN) {
+            case TOKEN_STATIC:
+                pc->static_state=token->int_val;
+                break;
+            case TOKEN_SCOPE:
+                pc->scope |= token->int_val;
+                break;
+            case TOKEN_CLASS:
+                pc->class_name = zend_string_init(temp_str, strlen(temp_str), 0);;
+                efree(temp_str);
+                temp_str=NULL;
+                is_class=1;
+                break;
+            case TOKEN_FUNCTION:
+                if (is_class) {
+                    pc->kind_of_advice |= AOP_KIND_METHOD;
+                } else {
+                    pc->kind_of_advice |= AOP_KIND_FUNCTION;
+                }
+                break;
+            case TOKEN_TEXT:
+                if (temp_str!=NULL) {
+                    efree(temp_str);
+                }
+                temp_str=estrdup(token->str_val);
+                efree(token->str_val);
+                break;
+            default:
+                break;
+        }
+    }
+
+    pc->method = zend_string_init(temp_str, strlen(temp_str), 0);;
+    
+    efree(state);
+    efree(token);
+    aop_g(curr) = pc;
+    /*
+    make_regexp_on_pointcut(&pc);
+
+    zend_hash_next_index_insert(aop_g(pointcuts), &pc, sizeof(pointcut **),NULL);
+    aop_g(pointcut_version)++;
+    */
 }
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aop_add, 0, 0, 2) 
@@ -219,25 +304,20 @@ PHP_MINIT_FUNCTION(aop)
 void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
 {
     if (execute_data->func && execute_data->func->common.function_name) {
-        if (aop_g(funcname)) {
-            
-            zval *retval = NULL;
-            if (zend_string_equals_ci(execute_data->func->common.function_name, aop_g(funcname))) {
-                zval arg;
-                ZVAL_OBJ(&arg, aop_joinpoint_object_new(aop_class_entry TSRMLS_CC));
-                aop_joinpoint_object *jp_object = Z_AOP_JOINPOINT_OBJ_P(&arg);
-                jp_object->funcname = zend_string_copy(execute_data->func->common.function_name);
-                zend_call_method(Z_ISUNDEF(aop_g(alfi).obj)? NULL : &(aop_g(alfi).obj), aop_g(alfi).ce, &(aop_g(alfi).func_ptr), ZSTR_VAL(aop_g(alfi).funcname), ZSTR_LEN(aop_g(alfi).funcname), retval, 1, &arg, NULL);
+        zval *retval = NULL;
+        if (zend_string_equals_ci(execute_data->func->common.function_name, aop_g(curr)->selector)) {
+            zval arg;
+            ZVAL_OBJ(&arg, aop_joinpoint_object_new(aop_class_entry TSRMLS_CC));
+            aop_joinpoint_object *jp_object = Z_AOP_JOINPOINT_OBJ_P(&arg);
+            jp_object->funcname = zend_string_copy(execute_data->func->common.function_name);
+            zend_call_method(Z_ISUNDEF(aop_g(curr)->function_info->obj)? NULL : &(aop_g(curr)->function_info->obj), aop_g(curr)->function_info->ce, &(aop_g(curr)->function_info->func_ptr), ZSTR_VAL(aop_g(curr)->function_info->funcname), ZSTR_LEN(aop_g(curr)->function_info->funcname), retval, 1, &arg, NULL);
 
-                zval_dtor(&arg);
-            } else {
-            aop_old_execute_ex(execute_data TSRMLS_CC);
-            }
+            zval_dtor(&arg);
         } else {
             aop_old_execute_ex(execute_data TSRMLS_CC);
         }
     } else {
-            aop_old_execute_ex(execute_data TSRMLS_CC);
+        aop_old_execute_ex(execute_data TSRMLS_CC);
     }
 }
 
@@ -250,186 +330,155 @@ void aop_execute_internal(zend_execute_data *current_execute_data, zval *return_
     }
 }
 
+aop_func_info *make_function_info(zend_execute_data *execute_data, zval *zcallable)
+{
+    zend_string *func_name;
+	char *error = NULL;
+	zend_string *lc_name;
+	zend_bool do_throw = 1;
+	zend_bool prepend  = 0;
+	zend_object *obj_ptr;
+	zend_fcall_info_cache fcc;
+
+    aop_func_info *to_return_ptr = emalloc(sizeof(aop_func_info));
+
+    if (!zend_is_callable_ex(zcallable, NULL, IS_CALLABLE_STRICT, &func_name, &fcc, &error)) {
+        to_return_ptr->ce = fcc.calling_scope;
+        to_return_ptr->func_ptr = fcc.function_handler;
+        obj_ptr = fcc.object;
+        if (Z_TYPE_P(zcallable) == IS_ARRAY) {
+            if (!obj_ptr && to_return_ptr->func_ptr && !(to_return_ptr->func_ptr->common.fn_flags & ZEND_ACC_STATIC)) {
+                if (do_throw) {
+                    zend_throw_exception_ex(spl_ce_LogicException, 0, "Passed array specifies a non static method but no object (%s)", error);
+                }
+                if (error) {
+                    efree(error);
+                }
+                zend_string_release(func_name);
+                return NULL;
+            } else if (do_throw) {
+                zend_throw_exception_ex(spl_ce_LogicException, 0, "Passed array does not specify %s %smethod (%s)", to_return_ptr->func_ptr ? "a callable" : "an existing", !obj_ptr ? "static " : "", error);
+            }
+            if (error) {
+                efree(error);
+            }
+            zend_string_release(func_name);
+            return NULL;
+        } else if (Z_TYPE_P(zcallable) == IS_STRING) {
+            if (do_throw) {
+                zend_throw_exception_ex(spl_ce_LogicException, 0, "Function '%s' not %s (%s)", ZSTR_VAL(func_name), to_return_ptr->func_ptr ? "callable" : "found", error);
+            }
+            if (error) {
+                efree(error);
+            }
+            zend_string_release(func_name);
+            return NULL;
+        } else {
+            if (do_throw) {
+                zend_throw_exception_ex(spl_ce_LogicException, 0, "Illegal value passed (%s)", error);
+            }
+            if (error) {
+                efree(error);
+            }
+            zend_string_release(func_name);
+            return NULL;
+        }
+    } 
+    to_return_ptr->funcname = zend_string_copy(func_name);
+    to_return_ptr->ce = fcc.calling_scope;
+    to_return_ptr->func_ptr = fcc.function_handler;
+    obj_ptr = fcc.object;
+    if (error) {
+        efree(error);
+    }
+
+    if (Z_TYPE_P(zcallable) == IS_OBJECT) {
+        ZVAL_COPY(&to_return_ptr->closure, zcallable);
+
+    } else {
+        ZVAL_UNDEF(&to_return_ptr->closure);
+    }
+    zend_string_release(func_name);
+
+    if (obj_ptr && !(to_return_ptr->func_ptr->common.fn_flags & ZEND_ACC_STATIC)) {
+        /* add object id to the hash to ensure uniqueness, for more reference look at bug #40091 */
+        ZVAL_OBJ(&to_return_ptr->obj, obj_ptr);
+        Z_ADDREF(to_return_ptr->obj);
+    } else {
+        ZVAL_UNDEF(&to_return_ptr->obj);
+    }
+    return to_return_ptr;
+}
 
 
 
 PHP_FUNCTION(aop_add_around)
 {	
-    zend_string *func_name;
-	char *error = NULL;
-	zend_string *lc_name;
+    zend_string *selector;
 	zval *zcallable = NULL;
-	zend_bool do_throw = 1;
-	zend_bool prepend  = 0;
-	zend_function *spl_func_ptr;
-	zend_object *obj_ptr;
-	zend_fcall_info_cache fcc;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &aop_g(funcname), &zcallable) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
 		return;
 	}
 
-	if (ZEND_NUM_ARGS()) {
-		if (!zend_is_callable_ex(zcallable, NULL, IS_CALLABLE_STRICT, &func_name, &fcc, &error)) {
-			aop_g(alfi).ce = fcc.calling_scope;
-			aop_g(alfi).func_ptr = fcc.function_handler;
-			obj_ptr = fcc.object;
-			if (Z_TYPE_P(zcallable) == IS_ARRAY) {
-				if (!obj_ptr && aop_g(alfi).func_ptr && !(aop_g(alfi).func_ptr->common.fn_flags & ZEND_ACC_STATIC)) {
-					if (do_throw) {
-						zend_throw_exception_ex(spl_ce_LogicException, 0, "Passed array specifies a non static method but no object (%s)", error);
-					}
-					if (error) {
-						efree(error);
-					}
-					zend_string_release(func_name);
-					RETURN_FALSE;
-				} else if (do_throw) {
-					zend_throw_exception_ex(spl_ce_LogicException, 0, "Passed array does not specify %s %smethod (%s)", aop_g(alfi).func_ptr ? "a callable" : "an existing", !obj_ptr ? "static " : "", error);
-				}
-				if (error) {
-					efree(error);
-				}
-				zend_string_release(func_name);
-				RETURN_FALSE;
-			} else if (Z_TYPE_P(zcallable) == IS_STRING) {
-				if (do_throw) {
-					zend_throw_exception_ex(spl_ce_LogicException, 0, "Function '%s' not %s (%s)", ZSTR_VAL(func_name), aop_g(alfi).func_ptr ? "callable" : "found", error);
-				}
-				if (error) {
-					efree(error);
-				}
-				zend_string_release(func_name);
-				RETURN_FALSE;
-			} else {
-				if (do_throw) {
-					zend_throw_exception_ex(spl_ce_LogicException, 0, "Illegal value passed (%s)", error);
-				}
-				if (error) {
-					efree(error);
-				}
-				zend_string_release(func_name);
-				RETURN_FALSE;
-			}
-		} 
-        aop_g(alfi).funcname = zend_string_copy(func_name);
-		aop_g(alfi).ce = fcc.calling_scope;
-		aop_g(alfi).func_ptr = fcc.function_handler;
-		obj_ptr = fcc.object;
-		if (error) {
-			efree(error);
-		}
+    add_pointcut(make_function_info(execute_data, zcallable), selector, AOP_KIND_AROUND TSRMLS_CC);
 
-		if (Z_TYPE_P(zcallable) == IS_OBJECT) {
-			ZVAL_COPY(&aop_g(alfi).closure, zcallable);
-
-		} else {
-			ZVAL_UNDEF(&aop_g(alfi).closure);
-		}
-		zend_string_release(func_name);
-
-		if (obj_ptr && !(aop_g(alfi).func_ptr->common.fn_flags & ZEND_ACC_STATIC)) {
-			/* add object id to the hash to ensure uniqueness, for more reference look at bug #40091 */
-			ZVAL_OBJ(&aop_g(alfi).obj, obj_ptr);
-			Z_ADDREF(aop_g(alfi).obj);
-		} else {
-			ZVAL_UNDEF(&aop_g(alfi).obj);
-		}
-	}
 }
 
 PHP_FUNCTION(aop_add_before)
 {
-    /*
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic = { 0, NULL, NULL, NULL, NULL };
-    char *selector;
-    int selector_len;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "aop_add_before() expects a string for the pointcut as a first argument and a callback as a second argument");
-        return;
-    }
-    if (fci.function_name) {
-        Z_ADDREF_P(fci.function_name);
-    }
-    if (fci.object_ptr) {
-        Z_ADDREF_P(fci.object_ptr);
-    }
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_BEFORE, return_value_ptr TSRMLS_CC);
-    */
+    zend_string *selector;
+	zval *zcallable = NULL;
+
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+		return;
+	}
+
+    add_pointcut(make_function_info(execute_data, zcallable), selector, AOP_KIND_BEFORE TSRMLS_CC);
 }
 
 PHP_FUNCTION(aop_add_after_throwing)
 {
-    /*
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
-    char *selector;
-    int selector_len;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "aop_add_after() expects a string for the pointcut as a first argument and a callback as a second argument");
-        return;
-    }
-    if (fci.function_name) {
-        Z_ADDREF_P(fci.function_name);
-    }
-    if (fci.object_ptr) {
-        Z_ADDREF_P(fci.object_ptr);
-    }
+    zend_string *selector;
+	zval *zcallable = NULL;
 
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_CATCH, return_value_ptr TSRMLS_CC);
-    */
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+		return;
+	}
+
+    add_pointcut(make_function_info(execute_data, zcallable), selector, AOP_KIND_AFTER|AOP_KIND_CATCH TSRMLS_CC);
 
 }
 
 PHP_FUNCTION(aop_add_after_returning)
 {
-    /*
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
-    char *selector;
-    int selector_len;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "aop_add_after() expects a string for the pointcut as a first argument and a callback as a second argument");
-        return;
-    }
-    if (fci.function_name) {
-        Z_ADDREF_P(fci.function_name);
-    }
-    if (fci.object_ptr) {
-        Z_ADDREF_P(fci.object_ptr);
-    }
+    zend_string *selector;
+	zval *zcallable = NULL;
 
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_RETURN, return_value_ptr TSRMLS_CC);
-    */
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+		return;
+	}
+
+    add_pointcut(make_function_info(execute_data, zcallable), selector, AOP_KIND_AFTER|AOP_KIND_RETURN TSRMLS_CC);
 }
 
 PHP_FUNCTION(aop_add_after)
 {
-    /*
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcic= { 0, NULL, NULL, NULL, NULL };
-    char *selector;
-    int selector_len;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sf", &selector, &selector_len, &fci, &fcic) == FAILURE) {
-        zend_error(E_ERROR, "aop_add_after() expects a string for the pointcut as a first argument and a callback as a second argument");
-        return;
-    }
-    if (fci.function_name) {
-        Z_ADDREF_P(fci.function_name);
-    }
-    if (fci.object_ptr) {
-        Z_ADDREF_P(fci.object_ptr);
-    }
-    add_pointcut(fci, fcic, selector, selector_len, AOP_KIND_AFTER|AOP_KIND_CATCH|AOP_KIND_RETURN, return_value_ptr TSRMLS_CC);
-    */
+    zend_string *selector;
+	zval *zcallable = NULL;
+
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+		return;
+	}
+
+    add_pointcut(make_function_info(execute_data, zcallable), selector, AOP_KIND_AFTER|AOP_KIND_CATCH|AOP_KIND_RETURN TSRMLS_CC);
 }
 
 
-    PHP_MSHUTDOWN_FUNCTION(aop)
-    {
-        zend_execute_ex = aop_old_execute_ex;
-        zend_execute_internal = aop_old_execute_internal;
+PHP_MSHUTDOWN_FUNCTION(aop)
+{
+    zend_execute_ex = aop_old_execute_ex;
+    zend_execute_internal = aop_old_execute_internal;
 
         //efree(aop_g(alfi));
         /*
