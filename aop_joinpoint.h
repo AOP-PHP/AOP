@@ -35,4 +35,5 @@ PHP_METHOD(AopJoinpoint, getFunctionName);
 PHP_METHOD(AopJoinpoint, getException);
 PHP_METHOD(AopJoinpoint, process);
 
+
 #endif

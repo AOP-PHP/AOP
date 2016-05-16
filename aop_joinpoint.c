@@ -25,9 +25,10 @@
 #include "aop.h"
 #include "aop_joinpoint.h"
 
-
+#define GET_THIS() (aop_joinpoint_object *)((char *)Z_OBJ_P(getThis()) - XtOffsetOf(aop_joinpoint_object, std));
 
 PHP_METHOD(AopJoinpoint, getArguments){
+    struct aop_joinpoint_object* obj = Z_AOP_JOINPOINT_OBJ_P(getThis());
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->args == NULL) {
@@ -136,19 +137,11 @@ PHP_METHOD(AopJoinpoint, getClassName){
 }
 
 PHP_METHOD(AopJoinpoint, getFunctionName){
-    /*
-    AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    zend_execute_data *data = obj->ex;
-    zend_function *curr_func;
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_METHOD) {
-        zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is a function call"); 
+    aop_joinpoint_object* this = GET_THIS();
+    if (this->funcname!=NULL) {
+        RETURN_STR(this->funcname);
     }
-    if (data == NULL) {
-        RETURN_NULL();
-    }
-    curr_func = data->function_state.function;
-    RETURN_STRING(curr_func->common.function_name, 1);
-    */
+    RETURN_NULL();
 }
 
 PHP_METHOD(AopJoinpoint, getException){
@@ -167,6 +160,7 @@ PHP_METHOD(AopJoinpoint, getException){
 
 
 PHP_METHOD(AopJoinpoint, getMethodName){
+    struct aop_joinpoint_object* obj = Z_AOP_JOINPOINT_OBJ_P(getThis());
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zend_execute_data *data = obj->ex;

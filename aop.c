@@ -27,10 +27,13 @@
 #include "aop_joinpoint.h"
 #include "aop.h"
 #include "Zend/zend_operators.h"
+#include "Zend/zend_exceptions.h"
+#include "Zend/zend_interfaces.h"
 
 ZEND_DECLARE_MODULE_GLOBALS(aop)
 
 #define DEBUG_OBJECT_HANDLERS 1
+#define Z_AOP_JOINPOINT_OBJ_P(zv) php_aop_joinpoint_object_fetch_object(Z_OBJ_P(zv));
 
 void (*aop_old_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
 void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
@@ -135,17 +138,63 @@ PHP_INI_BEGIN()
     STD_PHP_INI_BOOLEAN("aop.enable","1",PHP_INI_ALL, OnUpdateBool, aop_enable, zend_aop_globals, aop_globals)
 PHP_INI_END()
 
+
+static zend_object_handlers aop_joinpoint_object_handlers;
+
+aop_joinpoint_object * php_aop_joinpoint_object_fetch_object(zend_object *obj) {
+      return (aop_joinpoint_object *)((char *)obj - XtOffsetOf(aop_joinpoint_object, std));
+}
+
+static void aop_joinpoint_object_free_storage(zend_object *object TSRMLS_DC)
+{
+    aop_joinpoint_object *jp_object =  php_aop_joinpoint_object_fetch_object(object);
+    if (jp_object->funcname!=NULL) {
+        zend_string_release(jp_object->funcname);
+    }
+	zend_object_std_dtor(&jp_object->std);
+}
+
+
+zend_object * aop_joinpoint_object_new(zend_class_entry *ce TSRMLS_DC) {
+     //Allocate sizeof(custom) + sizeof(properties table requirements)
+     aop_joinpoint_object *intern = ecalloc(1, 
+         sizeof(aop_joinpoint_object) + 
+         zend_object_properties_size(ce));
+     intern->funcname = NULL;
+     // Allocating:
+     // struct custom_object {
+     //    void *custom_data;
+     //    zend_object std;
+     // }
+     // zval[ce->default_properties_count-1]
+     zend_object_std_init(&intern->std, ce TSRMLS_CC);
+     aop_joinpoint_object_handlers.offset = XtOffsetOf(aop_joinpoint_object, std);
+     aop_joinpoint_object_handlers.free_obj = aop_joinpoint_object_free_storage;
+ 
+     intern->std.handlers = &aop_joinpoint_object_handlers;
+ 
+     return &intern->std;
+}
+ 
+// Fetching the custom object:
+ 
+ 
+ 
+
+static zend_class_entry* aop_class_entry;
+static zend_class_entry* aop_const_class_entry;
+
 PHP_MINIT_FUNCTION(aop)
 {
     zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "aop_joinpoint", aop_methods);
+    aop_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
+    aop_class_entry->create_object = aop_joinpoint_object_new;
     ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals, NULL);
     REGISTER_INI_ENTRIES();
 
-    INIT_CLASS_ENTRY(ce, "AopJoinpoint", aop_methods);
-    //aop_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
-    //aop_class_entry->create_object = aop_create_handler;
-    //memcpy(&AopJoinpoint_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-    //AopJoinpoint_object_handlers.clone_obj = NULL;
+    memcpy(&aop_joinpoint_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	aop_joinpoint_object_handlers.offset = XtOffsetOf(aop_joinpoint_object, std);
 
     REGISTER_LONG_CONSTANT("AOP_KIND_BEFORE", AOP_KIND_BEFORE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("AOP_KIND_AFTER", AOP_KIND_AFTER, CONST_CS | CONST_PERSISTENT);
@@ -171,9 +220,16 @@ void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
 {
     if (execute_data->func && execute_data->func->common.function_name) {
         if (aop_g(funcname)) {
+            
             zval *retval = NULL;
             if (zend_string_equals_ci(execute_data->func->common.function_name, aop_g(funcname))) {
-                zend_call_method(Z_ISUNDEF(aop_g(alfi).obj)? NULL : &(aop_g(alfi).obj), aop_g(alfi).ce, &(aop_g(alfi).func_ptr), ZSTR_VAL(aop_g(alfi).funcname), ZSTR_LEN(aop_g(alfi).funcname), retval, 0, NULL, NULL);
+                zval arg;
+                ZVAL_OBJ(&arg, aop_joinpoint_object_new(aop_class_entry TSRMLS_CC));
+                aop_joinpoint_object *jp_object = Z_AOP_JOINPOINT_OBJ_P(&arg);
+                jp_object->funcname = zend_string_copy(execute_data->func->common.function_name);
+                zend_call_method(Z_ISUNDEF(aop_g(alfi).obj)? NULL : &(aop_g(alfi).obj), aop_g(alfi).ce, &(aop_g(alfi).func_ptr), ZSTR_VAL(aop_g(alfi).funcname), ZSTR_LEN(aop_g(alfi).funcname), retval, 1, &arg, NULL);
+
+                zval_dtor(&arg);
             } else {
             aop_old_execute_ex(execute_data TSRMLS_CC);
             }
