@@ -169,6 +169,40 @@ end_repl_str:
 	return ret;
 }
 
+static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce) {
+    int i, matches;
+    if (ce == NULL) {
+        return 0;
+    }
+    matches = pcre_exec(pc->re_class, NULL, ZSTR_VAL(ce->name), ZSTR_LEN(ce->name), 0, 0, NULL, 0);
+    if (matches >= 0) {
+        return 1;
+    }
+    for (i = 0; i < (int) ce->num_interfaces; i++) {
+        matches = pcre_exec(pc->re_class, NULL, ZSTR_VAL(ce->interfaces[i]->name), ZSTR_LEN(ce->interfaces[i]->name), 0, 0, NULL, 0);
+        if (matches >= 0) {
+            return 1;
+        }
+    }
+#if ZEND_MODULE_API_NO >= 20100525
+    for (i = 0; i < (int) ce->num_traits; i++) {
+        matches = pcre_exec(pc->re_class, NULL, ZSTR_VAL(ce->traits[i]->name), ZSTR_LEN(ce->traits[i]->name), 0, 0, NULL, 0);
+        if (matches>=0) {
+            return 1;
+        }
+    }
+#endif
+    ce = ce->parent;
+    while (ce != NULL) {
+        matches = pcre_exec(pc->re_class, NULL, ZSTR_VAL(ce->name), ZSTR_LEN(ce->name), 0, 0, NULL, 0);
+        if (matches >= 0) {
+            return 1;
+        }
+        ce = ce->parent;
+    }
+    return 0;
+}
+
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func) {
 //static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func, zend_execute_data *data) {
     int comp_start = 0;
@@ -212,7 +246,6 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
 }
 
 void make_regexp_on_pointcut (pointcut **pc) { 
-    return;
     pcre_extra *pcre_extra = NULL;
     int preg_options = 0;
     char *regexp;
@@ -278,7 +311,7 @@ void make_regexp_on_pointcut (pointcut **pc) {
 		}
         //efree(regexp);
         (*pc)->re_class = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
-        //efree(tempregexp);
+        efree(tempregexp);
         if (!(*pc)->re_class) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
         }
@@ -526,7 +559,11 @@ void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
 {
     if (execute_data->func && execute_data->func->common.function_name) {
         zval *retval = NULL;
-        if (pointcut_match_zend_function(aop_g(curr), execute_data->func)) {
+        
+        if (
+             (pointcut_match_zend_function(aop_g(curr), execute_data->func) && aop_g(curr)->kind_of_advice & AOP_KIND_FUNCTION)
+            || (pointcut_match_zend_function(aop_g(curr), execute_data->func) && aop_g(curr)->kind_of_advice & AOP_KIND_METHOD && pointcut_match_zend_class_entry(aop_g(curr), execute_data->called_scope ) ) 
+           ) {
             zval arg;
             ZVAL_OBJ(&arg, aop_joinpoint_object_new(aop_class_entry TSRMLS_CC));
             aop_joinpoint_object *jp_object = Z_AOP_JOINPOINT_OBJ_P(&arg);
