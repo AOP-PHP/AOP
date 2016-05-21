@@ -48,8 +48,6 @@ static void php_aop_init_globals(zend_aop_globals *aop_globals)
 
 static pointcut * alloc_pointcut () {
     pointcut *pc = (pointcut *)emalloc(sizeof(pointcut));
-
-
     pc->scope = 0;
     pc->static_state = 2;
     pc->method_jok = 0;
@@ -62,6 +60,231 @@ static pointcut * alloc_pointcut () {
     pc->re_class = NULL;
     return pc;
 }
+
+static aop_func_info_dtor(aop_func_info *info) {
+	if (!Z_ISUNDEF(info->obj)) {
+		zval_ptr_dtor(&info->obj);
+	}
+	if (!Z_ISUNDEF(info->closure)) {
+		zval_ptr_dtor(&info->closure);
+	}
+    zend_string_release(info->funcname);
+    
+	efree(info);
+}
+
+static pointcut_dtor(pointcut *pc) {
+    if (pc->class_name != NULL) {
+        zend_string_release(pc->class_name);
+    }
+    if (pc->method != NULL) {
+        zend_string_release(pc->method);
+    }
+    if (pc->selector != NULL) {
+        zend_string_release(pc->selector);
+    }
+    if (pc->function_info!=NULL) {
+        aop_func_info_dtor(pc->function_info);
+    }
+    efree(pc);
+
+}
+
+char *str_replace(const char *str, const char *from, const char *to) {
+
+	/* Adjust each of the below values to suit your needs. */
+
+	/* Increment positions cache size initially by this number. */
+	size_t cache_sz_inc = 16;
+	/* Thereafter, each time capacity needs to be increased,
+	 * multiply the increment by this factor. */
+	const size_t cache_sz_inc_factor = 3;
+	/* But never increment capacity by more than this number. */
+	const size_t cache_sz_inc_max = 1048576;
+
+	char *pret, *ret = NULL;
+	const char *pstr2, *pstr = str;
+	size_t i, count = 0;
+	ptrdiff_t *pos_cache = NULL;
+	size_t cache_sz = 0;
+	size_t cpylen, orglen, retlen, tolen, fromlen = strlen(from);
+
+	/* Find all matches and cache their positions. */
+	while ((pstr2 = strstr(pstr, from)) != NULL) {
+		count++;
+
+		/* Increase the cache size when necessary. */
+		if (cache_sz < count) {
+			cache_sz += cache_sz_inc;
+			pos_cache = realloc(pos_cache, sizeof(*pos_cache) * cache_sz);
+			if (pos_cache == NULL) {
+				goto end_repl_str;
+			}
+			cache_sz_inc *= cache_sz_inc_factor;
+			if (cache_sz_inc > cache_sz_inc_max) {
+				cache_sz_inc = cache_sz_inc_max;
+			}
+		}
+
+		pos_cache[count-1] = pstr2 - str;
+		pstr = pstr2 + fromlen;
+	}
+
+	orglen = pstr - str + strlen(pstr);
+
+	/* Allocate memory for the post-replacement string. */
+	if (count > 0) {
+		tolen = strlen(to);
+		retlen = orglen + (tolen - fromlen) * count;
+	} else	retlen = orglen;
+	ret = malloc(retlen + 1);
+	if (ret == NULL) {
+		goto end_repl_str;
+	}
+
+	if (count == 0) {
+		/* If no matches, then just duplicate the string. */
+		strcpy(ret, str);
+	} else {
+		/* Otherwise, duplicate the string whilst performing
+		 * the replacements using the position cache. */
+		pret = ret;
+		memcpy(pret, str, pos_cache[0]);
+		pret += pos_cache[0];
+		for (i = 0; i < count; i++) {
+			memcpy(pret, to, tolen);
+			pret += tolen;
+			pstr = str + pos_cache[i] + fromlen;
+			cpylen = (i == count-1 ? orglen : pos_cache[i+1]) - pos_cache[i] - fromlen;
+			memcpy(pret, pstr, cpylen);
+			pret += cpylen;
+		}
+		ret[retlen] = '\0';
+	}
+
+end_repl_str:
+	/* Free the cache and return the post-replacement string,
+	 * which will be NULL in the event of an error. */
+	free(pos_cache);
+	return ret;
+}
+
+static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func) {
+//static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func, zend_execute_data *data) {
+    int comp_start = 0;
+    TSRMLS_FETCH();
+    if (pc->static_state != 2) {
+        if (pc->static_state) {
+            if (!(curr_func->common.fn_flags & ZEND_ACC_STATIC)) {
+                return 0;
+            }
+        } else {
+            if ((curr_func->common.fn_flags & ZEND_ACC_STATIC)) {
+                return 0;
+            }
+        }
+    }
+    if (pc->scope != 0 && !(pc->scope & (curr_func->common.fn_flags & ZEND_ACC_PPP_MASK))) {
+        return 0;
+    }
+    if (pc->class_name == NULL && ZSTR_VAL(pc->method)[0] == '*' && ZSTR_VAL(pc->method)[1]=='\0') {
+        return 1;
+    }
+    if (pc->class_name == NULL && curr_func->common.scope != NULL) {    
+        return 0;
+    }
+    if (pc->method_jok) {
+        int matches = pcre_exec(pc->re_method, NULL, ZSTR_VAL(curr_func->common.function_name), ZSTR_LEN(curr_func->common.function_name), 0, 0, NULL, 0);
+
+        if (matches < 0) {
+            return 0;
+        }
+    } else {
+        if (ZSTR_VAL(pc->method)[0]=='\\') {
+            comp_start=1;
+        }
+
+        if (strcasecmp(ZSTR_VAL(pc->method)+comp_start, ZSTR_VAL(curr_func->common.function_name))) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void make_regexp_on_pointcut (pointcut **pc) { 
+    return;
+    pcre_extra *pcre_extra = NULL;
+    int preg_options = 0;
+    char *regexp;
+    char *regexp_buffer;
+    zend_string *tempregexp;
+    TSRMLS_FETCH();
+    (*pc)->method_jok = (strchr(ZSTR_VAL((*pc)->method), '*') != NULL);
+    regexp = (ZSTR_VAL((*pc)->method));
+    regexp_buffer = str_replace(regexp, "**\\", "[.#}");
+    //efree(regexp);
+    regexp = regexp_buffer;
+    regexp_buffer = str_replace(regexp, "**", "[.#]");
+    //efree(regexp);
+    regexp = regexp_buffer;
+    regexp_buffer = str_replace(regexp, "\\", "\\\\");
+    //efree(regexp);
+    regexp = regexp_buffer;
+    regexp_buffer = str_replace(regexp, "*", "[^\\\\]*");
+    //efree(regexp);
+    regexp = regexp_buffer;
+    regexp_buffer = str_replace(regexp, "[.#]", ".*");
+    //efree(regexp);
+    regexp = regexp_buffer;
+    regexp_buffer = str_replace(regexp, "[.#}", "(.*\\\\)?");
+    //efree(regexp);
+    regexp = regexp_buffer;
+    if (regexp[0]!='\\') {
+		tempregexp = strpprintf(500,  "/^%s$/i", regexp);
+    } else {
+		tempregexp = strpprintf(500,  "/^%s$/i", regexp+2);
+    }
+    
+    //efree(regexp);
+    (*pc)->re_method = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
+    efree(tempregexp);
+    if (!(*pc)->re_method) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
+    }
+    if ((*pc)->class_name != NULL) {
+        regexp = ZSTR_VAL((*pc)->class_name);
+        regexp_buffer = str_replace(regexp, "**\\", "[.#}");
+        //efree(regexp);
+        regexp = regexp_buffer;
+        regexp_buffer = str_replace(regexp, "**", "[.#]");
+        //efree(regexp);
+        regexp = regexp_buffer;
+        regexp_buffer = str_replace(regexp, "\\", "\\\\");
+        //efree(regexp);
+        regexp = regexp_buffer;
+        regexp_buffer = str_replace(regexp, "*", "[^\\\\]*");
+        //efree(regexp);
+        regexp = regexp_buffer;
+        regexp_buffer = str_replace(regexp, "[.#]", ".*");
+        //efree(regexp);
+        regexp = regexp_buffer;
+        regexp_buffer = str_replace(regexp, "[.#}", "(.*\\\\)?");
+        //efree(regexp);
+        regexp = regexp_buffer;
+		if (regexp[0]!='\\') {
+			tempregexp = strpprintf(500,  "/^%s$/i", regexp);
+		} else {
+			tempregexp = strpprintf(500,  "/^%s$/i", regexp+2);
+		}
+        //efree(regexp);
+        (*pc)->re_class = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
+        //efree(tempregexp);
+        if (!(*pc)->re_class) {
+            php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid expression");
+        }
+    }
+}
+
 
 static void add_pointcut (aop_func_info *function_info, zend_string *selector, int type TSRMLS_DC) {
     pointcut *pc = NULL;
@@ -77,6 +300,8 @@ static void add_pointcut (aop_func_info *function_info, zend_string *selector, i
     
 
     pc = alloc_pointcut();
+    pc->function_info = function_info;
+
     pc->selector = selector;
     pc->kind_of_advice = type;
     pc->selector = selector;
@@ -116,15 +341,16 @@ static void add_pointcut (aop_func_info *function_info, zend_string *selector, i
                 break;
         }
     }
-
     pc->method = zend_string_init(temp_str, strlen(temp_str), 0);;
+    efree(temp_str);
     
     efree(state);
     efree(token);
     aop_g(curr) = pc;
-    /*
     make_regexp_on_pointcut(&pc);
+    //php_printf("%s", ZSTR_VAL(pc->method));
 
+    /*
     zend_hash_next_index_insert(aop_g(pointcuts), &pc, sizeof(pointcut **),NULL);
     aop_g(pointcut_version)++;
     */
@@ -201,21 +427,16 @@ static const zend_function_entry aop_methods[] = {
 
 PHP_RSHUTDOWN_FUNCTION(aop)
 {
-    if (!Z_ISUNDEF(aop_g(alfi).obj)) {
-        zval_ptr_dtor(&(aop_g(alfi).obj));
-    }
-    if (!Z_ISUNDEF(aop_g(alfi).closure)) {
-        zval_ptr_dtor(&aop_g(alfi).closure);
-    }
-    zend_string_release(aop_g(alfi).funcname);
-    zend_string_release(aop_g(funcname));
-
+    if (aop_g(curr) != NULL) {
+        pointcut_dtor(aop_g(curr));
+    } 
     return SUCCESS;
 }
 
 
 PHP_RINIT_FUNCTION(aop)
 {
+    aop_g(curr) = NULL;
     return SUCCESS;
 }
 
@@ -305,7 +526,7 @@ void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
 {
     if (execute_data->func && execute_data->func->common.function_name) {
         zval *retval = NULL;
-        if (zend_string_equals_ci(execute_data->func->common.function_name, aop_g(curr)->selector)) {
+        if (pointcut_match_zend_function(aop_g(curr), execute_data->func)) {
             zval arg;
             ZVAL_OBJ(&arg, aop_joinpoint_object_new(aop_class_entry TSRMLS_CC));
             aop_joinpoint_object *jp_object = Z_AOP_JOINPOINT_OBJ_P(&arg);
@@ -313,6 +534,7 @@ void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
             zend_call_method(Z_ISUNDEF(aop_g(curr)->function_info->obj)? NULL : &(aop_g(curr)->function_info->obj), aop_g(curr)->function_info->ce, &(aop_g(curr)->function_info->func_ptr), ZSTR_VAL(aop_g(curr)->function_info->funcname), ZSTR_LEN(aop_g(curr)->function_info->funcname), retval, 1, &arg, NULL);
 
             zval_dtor(&arg);
+            //aop_old_execute_ex(execute_data TSRMLS_CC);
         } else {
             aop_old_execute_ex(execute_data TSRMLS_CC);
         }
@@ -341,6 +563,7 @@ aop_func_info *make_function_info(zend_execute_data *execute_data, zval *zcallab
 	zend_fcall_info_cache fcc;
 
     aop_func_info *to_return_ptr = emalloc(sizeof(aop_func_info));
+    
 
     if (!zend_is_callable_ex(zcallable, NULL, IS_CALLABLE_STRICT, &func_name, &fcc, &error)) {
         to_return_ptr->ce = fcc.calling_scope;
@@ -394,7 +617,6 @@ aop_func_info *make_function_info(zend_execute_data *execute_data, zval *zcallab
 
     if (Z_TYPE_P(zcallable) == IS_OBJECT) {
         ZVAL_COPY(&to_return_ptr->closure, zcallable);
-
     } else {
         ZVAL_UNDEF(&to_return_ptr->closure);
     }
@@ -420,7 +642,6 @@ PHP_FUNCTION(aop_add_around)
 	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
 		return;
 	}
-
     add_pointcut(make_function_info(execute_data, zcallable), selector, AOP_KIND_AROUND TSRMLS_CC);
 
 }
