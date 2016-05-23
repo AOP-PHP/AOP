@@ -38,10 +38,6 @@
 #define AOP_KIND_AFTER_FUNCTION (AOP_KIND_AFTER+AOP_KIND_FUNCTION)
 
 
-typedef struct  {
-   zend_string *funcname;
-   zend_object std;
-} aop_joinpoint_object;
 
 typedef struct {
 	zend_function *func_ptr;
@@ -65,13 +61,23 @@ typedef struct {
     aop_func_info *function_info;
 } pointcut;
 
+typedef struct  {
+   zend_string *funcname;
+   zend_execute_data *current_execute_data;
+   zval *return_ptr;
+   pointcut *current_pointcut;
+   Bucket *current_pointcut_zval_ptr;
+   zend_object std;
+   aop_func_info *original;
+} aop_joinpoint_object;
 
 
 ZEND_BEGIN_MODULE_GLOBALS(aop)
     zend_bool aop_enable;
     aop_func_info alfi;
     zend_string *funcname;
-    pointcut *curr;
+    int overloaded;
+    HashTable pointcuts;
 ZEND_END_MODULE_GLOBALS(aop)
 
 #ifdef ZTS
@@ -79,6 +85,8 @@ ZEND_END_MODULE_GLOBALS(aop)
 #else
 #define aop_g(v) (aop_globals.v)
 #endif
+
+ZEND_EXTERN_MODULE_GLOBALS(aop)
 
 PHP_MINIT_FUNCTION(aop);
 PHP_RINIT_FUNCTION(aop);
@@ -92,12 +100,15 @@ PHP_FUNCTION(aop_add_after_returning);
 PHP_FUNCTION(aop_add_after_throwing);
 
 aop_joinpoint_object * php_aop_joinpoint_object_fetch_object(zend_object *obj); 
+#define Z_AOP_JOINPOINT_OBJ_P(zv) php_aop_joinpoint_object_fetch_object(Z_OBJ_P(zv));
 
 void (*aop_old_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
 void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
 
 void (*aop_old_execute_internal)(zend_execute_data *current_execute_data, zval *return_value);
 void aop_execute_internal(zend_execute_data *current_execute_data, zval *return_value);
+
+static zval_pointcut_dtor(zval *zv); 
 
 extern zend_module_entry aop_module_entry;
 #define phpext_aop_ptr &aop_module_entry
