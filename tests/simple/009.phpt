@@ -15,7 +15,8 @@ echo $test->test();
 
 ?>
 --EXPECTF--
-Warning: aop_add_after() expects parameter 2 to be a valid callback, class 'Foo' not found in %s on line 9
-
-Fatal error: aop_add_after() expects a string for the pointcut as a first argument and a callback as a second argument in %s on line 9
-
+Fatal error: Uncaught LogicException: Passed array does not specify an existing static method (class 'Foo' not found) in %s
+Stack trace:
+#0 %s aop_add_after('mytest->test()', Array)
+#1 {main}
+  thrown in %s on line 9
