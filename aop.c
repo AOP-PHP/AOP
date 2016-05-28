@@ -524,7 +524,7 @@ static zend_class_entry* aop_const_class_entry;
 PHP_MINIT_FUNCTION(aop)
 {
     zend_class_entry ce;
-    INIT_CLASS_ENTRY(ce, "aop_joinpoint", aop_methods);
+    INIT_CLASS_ENTRY(ce, "AopJoinpoint", aop_methods);
     aop_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
     aop_class_entry->create_object = aop_joinpoint_object_new;
     ZEND_INIT_MODULE_GLOBALS(aop, php_aop_init_globals, NULL);

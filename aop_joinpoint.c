@@ -29,7 +29,7 @@
 #define GET_THIS() (aop_joinpoint_object *)((char *)Z_OBJ_P(getThis()) - XtOffsetOf(aop_joinpoint_object, std));
 
 PHP_METHOD(AopJoinpoint, getArguments){
-    struct aop_joinpoint_object* obj = Z_AOP_JOINPOINT_OBJ_P(getThis());
+    aop_joinpoint_object* this = GET_THIS();
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->args == NULL) {
@@ -43,6 +43,7 @@ PHP_METHOD(AopJoinpoint, getArguments){
 }
 
 PHP_METHOD(AopJoinpoint, setArguments){
+    aop_joinpoint_object* this = GET_THIS();
 /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zval *params;
@@ -61,6 +62,8 @@ PHP_METHOD(AopJoinpoint, setArguments){
 }
 
 PHP_METHOD(AopJoinpoint, getKindOfAdvice){
+    aop_joinpoint_object* this = GET_THIS();
+    RETURN_LONG(this->current_pointcut->kind_of_advice);
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     RETURN_LONG(obj->kind_of_advice);
@@ -68,6 +71,7 @@ PHP_METHOD(AopJoinpoint, getKindOfAdvice){
 }
 
 PHP_METHOD(AopJoinpoint, getPointcut){
+    aop_joinpoint_object* this = GET_THIS();
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     RETURN_STRING(obj->current_pointcut->selector, 1);
@@ -76,6 +80,7 @@ PHP_METHOD(AopJoinpoint, getPointcut){
 }
 
 PHP_METHOD(AopJoinpoint, getReturnedValue){
+    aop_joinpoint_object* this = GET_THIS();
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_BEFORE) {
@@ -92,6 +97,7 @@ PHP_METHOD(AopJoinpoint, getReturnedValue){
 
 
 PHP_METHOD(AopJoinpoint, setReturnedValue){
+    aop_joinpoint_object* this = GET_THIS();
     /*
     zval *ret;
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -109,6 +115,7 @@ PHP_METHOD(AopJoinpoint, setReturnedValue){
 }
 
 PHP_METHOD(AopJoinpoint, getObject) {
+    aop_joinpoint_object* this = GET_THIS();
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->object != NULL) {
@@ -120,6 +127,7 @@ PHP_METHOD(AopJoinpoint, getObject) {
 }
 
 PHP_METHOD(AopJoinpoint, getClassName){
+    aop_joinpoint_object* this = GET_THIS();
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     zend_class_entry *ce;
@@ -139,6 +147,9 @@ PHP_METHOD(AopJoinpoint, getClassName){
 
 PHP_METHOD(AopJoinpoint, getFunctionName){
     aop_joinpoint_object* this = GET_THIS();
+    if (this->current_pointcut->kind_of_advice & AOP_KIND_METHOD) {
+        zend_error(E_ERROR, "getFunctionName is only available when the JoinPoint is a function call"); 
+    }
     if (this->funcname!=NULL) {
         RETURN_STR(this->funcname);
     }
@@ -146,6 +157,7 @@ PHP_METHOD(AopJoinpoint, getFunctionName){
 }
 
 PHP_METHOD(AopJoinpoint, getException){
+    aop_joinpoint_object* this = GET_THIS();
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (!(obj->current_pointcut->kind_of_advice & AOP_KIND_CATCH)){
@@ -161,20 +173,14 @@ PHP_METHOD(AopJoinpoint, getException){
 
 
 PHP_METHOD(AopJoinpoint, getMethodName){
-    struct aop_joinpoint_object* obj = Z_AOP_JOINPOINT_OBJ_P(getThis());
-    /*
-    AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    zend_execute_data *data = obj->ex;
-    zend_function *curr_func;
-    if (obj->current_pointcut->kind_of_advice & AOP_KIND_FUNCTION) {
+    aop_joinpoint_object* this = GET_THIS();
+    if (this->current_pointcut->kind_of_advice & AOP_KIND_FUNCTION) {
         zend_error(E_ERROR, "getMethodName is only available when the JoinPoint is a method call"); 
     }
-    if (data == NULL) {
-        RETURN_NULL();
+    if (this->funcname!=NULL) {
+        RETURN_STR(this->funcname);
     }
-    curr_func = data->function_state.function;
-    RETURN_STRING(curr_func->common.function_name, 1);
-    */
+    RETURN_NULL();
 }
 
 PHP_METHOD(AopJoinpoint, process){
