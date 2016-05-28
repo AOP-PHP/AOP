@@ -81,6 +81,12 @@ PHP_METHOD(AopJoinpoint, getPointcut){
 
 PHP_METHOD(AopJoinpoint, getReturnedValue){
     aop_joinpoint_object* this = GET_THIS();
+    if (this->current_pointcut->kind_of_advice & AOP_KIND_BEFORE) {
+        zend_error(E_ERROR, "getReturnedValue is not available when the advice was added with aop_add_before");
+    }
+    if (this->retval_ptr!=NULL) {
+        RETURN_ZVAL(this->retval_ptr, 0, 1);
+    }
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->current_pointcut->kind_of_advice & AOP_KIND_BEFORE) {
@@ -98,6 +104,10 @@ PHP_METHOD(AopJoinpoint, getReturnedValue){
 
 PHP_METHOD(AopJoinpoint, setReturnedValue){
     aop_joinpoint_object* this = GET_THIS();
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", this->retval_ptr) == FAILURE) {
+        zend_error(E_ERROR, "Error");
+        return;
+    }
     /*
     zval *ret;
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -116,6 +126,7 @@ PHP_METHOD(AopJoinpoint, setReturnedValue){
 
 PHP_METHOD(AopJoinpoint, getObject) {
     aop_joinpoint_object* this = GET_THIS();
+    //RETURN_ZVAL(this->execute_data->This, 1, 0);
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
     if (obj->object != NULL) {

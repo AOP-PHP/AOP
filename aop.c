@@ -209,6 +209,9 @@ static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce) 
 
 static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func) {
 //static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func, zend_execute_data *data) {
+    if (curr_func->common.fn_flags & ZEND_ACC_CLOSURE) {
+        return 0;
+    }
     int comp_start = 0;
     TSRMLS_FETCH();
     if (pc->static_state != 2) {
@@ -231,6 +234,7 @@ static int pointcut_match_zend_function (pointcut *pc, zend_function *curr_func)
     if (pc->class_name == NULL && curr_func->common.scope != NULL) {    
         return 0;
     }
+
     if (pc->method_jok) {
         int matches = pcre_exec(pc->re_method, NULL, ZSTR_VAL(curr_func->common.function_name), ZSTR_LEN(curr_func->common.function_name), 0, 0, NULL, 0);
 
@@ -281,7 +285,6 @@ void make_regexp_on_pointcut (pointcut **pc) {
     } else {
 		tempregexp = strpprintf(500,  "/^%s$/i", regexp+2);
     }
-    
     //efree(regexp);
     (*pc)->re_method = pcre_get_compiled_regex(tempregexp, &pcre_extra, &preg_options TSRMLS_CC);
     efree(tempregexp);
@@ -557,6 +560,7 @@ aop_func_info * make_aop_func_info_from_execute_data(zend_execute_data *execute_
     aop_func_info *to_return_ptr = emalloc(sizeof(aop_func_info));
     to_return_ptr->func_ptr = execute_data->func;
     ZVAL_UNDEF(&to_return_ptr->obj);
+    ZVAL_UNDEF(&to_return_ptr->closure);
 
     if (execute_data->func->common.scope != NULL) {
         to_return_ptr->obj = execute_data->This;
@@ -628,6 +632,10 @@ void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
         aop_g(overloaded) = 0;
         aop_old_execute_ex(execute_data TSRMLS_CC);
         aop_g(overloaded) = 1;
+        return;
+    }
+    if (!aop_g(aop_enable)) {
+        aop_old_execute_ex(execute_data TSRMLS_CC);
         return;
     }
     if (execute_data->func && execute_data->func->common.function_name) {
