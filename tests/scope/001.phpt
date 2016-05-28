@@ -1,5 +1,7 @@
 --TEST--
 Scope
+--SKIPIF--
+skip "Bad test, to be corrected"
 --FILE--
 <?php 
 aop_add_around('public A::test*()',

@@ -45,6 +45,7 @@ typedef struct {
 	zval closure;
 	zend_class_entry *ce;
     zend_string *funcname;
+    zval *retval_ptr;
 } aop_func_info;
 
 typedef struct {
@@ -69,6 +70,8 @@ typedef struct  {
    Bucket *current_pointcut_zval_ptr;
    zend_object std;
    aop_func_info *original;
+   zend_execute_data *execute_data;
+   zval *retval_ptr;
 } aop_joinpoint_object;
 
 

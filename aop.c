@@ -174,7 +174,6 @@ end_repl_str:
 }
 
 static int pointcut_match_zend_class_entry (pointcut *pc, zend_class_entry *ce) {
-    //php_printf("{{%s}}", ZSTR_VAL(pc->selector));
     int i, matches;
     if (ce == NULL) {
         return 0;
@@ -557,45 +556,49 @@ PHP_MINIT_FUNCTION(aop)
 aop_func_info * make_aop_func_info_from_execute_data(zend_execute_data *execute_data) {
     aop_func_info *to_return_ptr = emalloc(sizeof(aop_func_info));
     to_return_ptr->func_ptr = execute_data->func;
+    ZVAL_UNDEF(&to_return_ptr->obj);
 
-    to_return_ptr->obj = execute_data->This;
-	if (Z_REFCOUNTED(to_return_ptr->obj)) {
-		Z_ADDREF(to_return_ptr->obj);
+    if (execute_data->func->common.scope != NULL) {
+        to_return_ptr->obj = execute_data->This;
+
+        if (!Z_ISUNDEF(to_return_ptr->obj) && Z_REFCOUNTED(to_return_ptr->obj) && Z_COUNTED(to_return_ptr->obj)) {
+            Z_ADDREF(to_return_ptr->obj);
+        }
+        to_return_ptr->ce = execute_data->called_scope; 
     }
-    to_return_ptr->ce = execute_data->called_scope; 
     to_return_ptr->funcname = zend_string_copy(execute_data->func->common.function_name);
 }
 
-void test_pointcut_and_execute(Bucket *p, zend_execute_data *execute_data, aop_func_info *original TSRMLS_DC) {
+void test_pointcut_and_execute(Bucket *p, zend_execute_data *execute_data, aop_func_info *original, zval *retval_ptr TSRMLS_DC) {
     if (p==NULL) {
 		p = aop_g(pointcuts).arData; 
     }
     Bucket *end =  aop_g(pointcuts).arData + aop_g(pointcuts).nNumUsed; 
     if (p>=end) {
-        if (execute_data!=NULL) {
+        if (original==NULL) {
             aop_old_execute_ex(execute_data TSRMLS_CC);
         } else {
-            zval *retval = NULL;
+            zval retval;
             zval arg;
-            zend_call_method(Z_ISUNDEF(original->obj)? NULL : &(original->obj), original->ce, &(original->func_ptr), ZSTR_VAL(original->funcname), ZSTR_LEN(original->funcname), retval, 0, &arg, NULL);
+            retval_ptr = zend_call_method(Z_ISUNDEF(original->obj)? NULL : &(original->obj), original->ce, &(original->func_ptr), ZSTR_VAL(original->funcname), ZSTR_LEN(original->funcname), retval_ptr, 0, &arg, NULL);
         }
         return;
     }
 
     zval *_z = &p->val;
     if (UNEXPECTED(Z_TYPE_P(_z) == IS_UNDEF)) {
-        test_pointcut_and_execute(p+1, execute_data, NULL TSRMLS_CC);
+        test_pointcut_and_execute(p+1, execute_data, NULL, retval_ptr TSRMLS_CC);
         return;
     }
     pointcut *current_pointcut = Z_PTR_P(_z);
-    zval *retval = NULL;
+    zval retval;
 
     if (
             (pointcut_match_zend_function(current_pointcut, execute_data->func) && current_pointcut->kind_of_advice & AOP_KIND_FUNCTION)
             || (pointcut_match_zend_function(current_pointcut, execute_data->func) && current_pointcut->kind_of_advice & AOP_KIND_METHOD && pointcut_match_zend_class_entry(current_pointcut, execute_data->called_scope ) ) 
        ) {
         if (current_pointcut->kind_of_advice & AOP_KIND_AFTER) {
-            test_pointcut_and_execute(p+1, execute_data, NULL TSRMLS_CC);
+            test_pointcut_and_execute(p+1, execute_data, NULL, retval_ptr TSRMLS_CC);
         }
         zval arg;
         ZVAL_OBJ(&arg, aop_joinpoint_object_new(aop_class_entry TSRMLS_CC));
@@ -605,15 +608,17 @@ void test_pointcut_and_execute(Bucket *p, zend_execute_data *execute_data, aop_f
         jp_object->current_pointcut = current_pointcut;
         jp_object->original = make_aop_func_info_from_execute_data(execute_data);
         jp_object->current_pointcut_zval_ptr = p;
-        zend_call_method(Z_ISUNDEF(current_pointcut->function_info->obj)? NULL : &(current_pointcut->function_info->obj), current_pointcut->function_info->ce, &(current_pointcut->function_info->func_ptr), ZSTR_VAL(current_pointcut->function_info->funcname), ZSTR_LEN(current_pointcut->function_info->funcname), retval, 1, &arg, NULL);
+        jp_object->execute_data = execute_data;
+        jp_object->retval_ptr = retval_ptr;
+        zend_call_method(Z_ISUNDEF(current_pointcut->function_info->obj)? NULL : &(current_pointcut->function_info->obj), current_pointcut->function_info->ce, &(current_pointcut->function_info->func_ptr), ZSTR_VAL(current_pointcut->function_info->funcname), ZSTR_LEN(current_pointcut->function_info->funcname), retval_ptr, 1, &arg, NULL);
         aop_func_info_dtor(jp_object->original);
 
         zval_dtor(&arg);
         if (current_pointcut->kind_of_advice & AOP_KIND_BEFORE) {
-            test_pointcut_and_execute(p+1, execute_data, NULL TSRMLS_CC);
+            test_pointcut_and_execute(p+1, execute_data, NULL, retval_ptr TSRMLS_CC);
         }
     } else {
-            test_pointcut_and_execute(p+1, execute_data, NULL TSRMLS_CC);
+        test_pointcut_and_execute(p+1, execute_data, NULL, retval_ptr TSRMLS_CC);
     }
 }
 
@@ -626,7 +631,7 @@ void aop_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
         return;
     }
     if (execute_data->func && execute_data->func->common.function_name) {
-        test_pointcut_and_execute(NULL, execute_data, NULL TSRMLS_CC);
+        test_pointcut_and_execute(NULL, execute_data, NULL, execute_data->return_value TSRMLS_CC);
     } else {
         aop_old_execute_ex(execute_data TSRMLS_CC);
     }
@@ -728,7 +733,7 @@ PHP_FUNCTION(aop_add_around)
     zend_string *selector;
 	zval *zcallable = NULL;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_THROW, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
 		return;
 	}
     add_pointcut(make_function_info(execute_data, zcallable), selector, AOP_KIND_AROUND TSRMLS_CC);
@@ -740,7 +745,7 @@ PHP_FUNCTION(aop_add_before)
     zend_string *selector;
 	zval *zcallable = NULL;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_THROW, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
 		return;
 	}
 
@@ -752,7 +757,7 @@ PHP_FUNCTION(aop_add_after_throwing)
     zend_string *selector;
 	zval *zcallable = NULL;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_THROW, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
 		return;
 	}
 
@@ -765,7 +770,7 @@ PHP_FUNCTION(aop_add_after_returning)
     zend_string *selector;
 	zval *zcallable = NULL;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_THROW, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
 		return;
 	}
 
@@ -777,7 +782,7 @@ PHP_FUNCTION(aop_add_after)
     zend_string *selector;
 	zval *zcallable = NULL;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_THROW, ZEND_NUM_ARGS(), "Sz", &selector, &zcallable) == FAILURE) {
 		return;
 	}
 

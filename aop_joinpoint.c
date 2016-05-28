@@ -183,12 +183,15 @@ PHP_METHOD(AopJoinpoint, process){
     if (!(this->current_pointcut->kind_of_advice & AOP_KIND_AROUND)) {
         zend_error(E_ERROR, "process is only available when the advice was added with aop_add_around"); 
     }
-    zval *retval = NULL;
     zval arg;
     aop_g(overloaded) = 1; 
-    test_pointcut_and_execute(this->current_pointcut_zval_ptr+1, NULL, this->original TSRMLS_CC);
+    test_pointcut_and_execute(this->current_pointcut_zval_ptr+1, this->execute_data, this->original, this->retval_ptr TSRMLS_CC);
     //zend_call_method(Z_ISUNDEF(this->original->obj)? NULL : &(this->original->obj), this->original->ce, &(this->original->func_ptr), ZSTR_VAL(this->original->funcname), ZSTR_LEN(this->original->funcname), retval, 0, &arg, NULL);
     aop_g(overloaded) = 0; 
+    if (this->retval_ptr!=NULL) {
+        RETURN_ZVAL(this->retval_ptr, 0, 1);
+    }
+    
     //aop_old_execute_ex(this->current_execute_data TSRMLS_CC);
     /*
     AopJoinpoint_object *obj = (AopJoinpoint_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
