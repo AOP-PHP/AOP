@@ -171,7 +171,7 @@ execution of the matching methods join points.
 AOP is a whole different way of thinking for developing application. It is as different as object oriented programming
  can be opposed to procedural programming.
 
-Event if you don't want to base your future development on this approach, you may find it very useful for debugging
+Even if you don't want to base your future development on this approach, you may find it very useful for debugging
 purposes. Imagine a world where you can debug or get informations on your code based on information only collected for
 a given user, a given context, a given procedure. A world where you can hunt weird and old code execution without even
  trying to update multiple and sparse PHP files, but just by adding advices on given conditions.
